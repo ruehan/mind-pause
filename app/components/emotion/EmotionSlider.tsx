@@ -6,17 +6,17 @@ interface EmotionSliderProps {
 }
 
 const emotionData = {
-  "-5": { emoji: "😭", label: "매우 안좋음", color: "bg-error" },
-  "-4": { emoji: "😢", label: "안좋음", color: "bg-error-light" },
-  "-3": { emoji: "😟", label: "조금 안좋음", color: "bg-warning" },
-  "-2": { emoji: "😕", label: "약간 안좋음", color: "bg-warning-light" },
-  "-1": { emoji: "😐", label: "조금 그럼", color: "bg-neutral-300" },
-  "0": { emoji: "😐", label: "보통", color: "bg-neutral-400" },
-  "1": { emoji: "🙂", label: "조금 좋음", color: "bg-mint-300" },
-  "2": { emoji: "😊", label: "좋음", color: "bg-mint-400" },
-  "3": { emoji: "😄", label: "꽤 좋음", color: "bg-mint-500" },
-  "4": { emoji: "😁", label: "매우 좋음", color: "bg-mint-600" },
-  "5": { emoji: "🥰", label: "최고로 좋음", color: "bg-mint-700" },
+  "-5": { emoji: "😭", label: "매우 안좋음", color: "bg-error-500" },
+  "-4": { emoji: "😢", label: "안좋음", color: "bg-error-500" },
+  "-3": { emoji: "😟", label: "조금 안좋음", color: "bg-orange-600" },
+  "-2": { emoji: "😕", label: "약간 안좋음", color: "bg-orange-600" },
+  "-1": { emoji: "😐", label: "조금 그럼", color: "bg-neutral-500" },
+  "0": { emoji: "😐", label: "보통", color: "bg-neutral-500" },
+  "1": { emoji: "🙂", label: "조금 좋음", color: "bg-neutral-500" },
+  "2": { emoji: "😊", label: "좋음", color: "bg-emerald-500" },
+  "3": { emoji: "😄", label: "꽤 좋음", color: "bg-emerald-500" },
+  "4": { emoji: "😁", label: "매우 좋음", color: "bg-mint-500" },
+  "5": { emoji: "🥰", label: "최고로 좋음", color: "bg-mint-500" },
 };
 
 export function EmotionSlider({ value, onChange }: EmotionSliderProps) {
@@ -53,7 +53,7 @@ export function EmotionSlider({ value, onChange }: EmotionSliderProps) {
         </div>
 
         {/* Slider Track */}
-        <div className="relative h-3 bg-gradient-to-r from-error via-neutral-300 to-mint-500 rounded-full">
+        <div className="relative h-3 bg-gradient-to-r from-error-500 via-neutral-500 to-mint-500 rounded-full">
           {/* Slider Thumb */}
           <input
             type="range"
