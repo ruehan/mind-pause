@@ -5,4 +5,5 @@ export default [
   route("login", "routes/login.tsx"),
   route("emotion", "routes/emotion.tsx"),
   route("chat", "routes/chat.tsx"),
+  route("community", "routes/community.tsx"),
 ] satisfies RouteConfig;
