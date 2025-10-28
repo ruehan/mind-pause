@@ -10,4 +10,5 @@ export default [
   route("profile", "routes/profile.tsx"),
   route("challenge", "routes/challenge.tsx"),
   route("help", "routes/help.tsx"),
+  route("admin", "routes/admin.tsx"),
 ] satisfies RouteConfig;
