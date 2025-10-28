@@ -7,4 +7,5 @@ export default [
   route("chat", "routes/chat.tsx"),
   route("community", "routes/community.tsx"),
   route("dashboard", "routes/dashboard.tsx"),
+  route("profile", "routes/profile.tsx"),
 ] satisfies RouteConfig;
