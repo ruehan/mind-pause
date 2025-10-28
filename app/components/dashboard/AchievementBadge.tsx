@@ -1,12 +1,14 @@
+import type { LucideIcon } from "lucide-react";
+
 interface AchievementBadgeProps {
-  icon: string;
+  icon: LucideIcon;
   value: string;
   label: string;
   onClick?: () => void;
 }
 
 export function AchievementBadge({
-  icon,
+  icon: Icon,
   value,
   label,
   onClick,
@@ -17,7 +19,9 @@ export function AchievementBadge({
       className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4 text-center hover:shadow-md hover:scale-102 transition-all duration-200"
     >
       {/* Icon */}
-      <div className="text-4xl mb-2">{icon}</div>
+      <div className="mb-2 flex justify-center">
+        <Icon className="w-10 h-10 text-primary-600" />
+      </div>
 
       {/* Value */}
       <p className="text-lg font-bold text-neutral-900 mb-1">{value}</p>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { User, Lock, Globe, Heart, MessageCircle, Link2, MoreVertical } from "lucide-react";
 
 interface PostCardProps {
   id: string;
@@ -54,8 +55,8 @@ export function PostCard({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           {/* Avatar */}
-          <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center text-lg">
-            👤
+          <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center">
+            <User className="w-5 h-5 text-neutral-600" />
           </div>
 
           {/* Author Info */}
@@ -63,9 +64,11 @@ export function PostCard({
             <span className="text-sm font-medium text-neutral-800">
               {author}
             </span>
-            <span className="text-lg">
-              {isAnonymous ? "🔒" : "🌐"}
-            </span>
+            {isAnonymous ? (
+              <Lock className="w-4 h-4 text-neutral-600" />
+            ) : (
+              <Globe className="w-4 h-4 text-neutral-600" />
+            )}
             <span className="text-xs text-neutral-500">{timestamp}</span>
           </div>
         </div>
@@ -76,7 +79,7 @@ export function PostCard({
             onClick={handleMenuClick}
             className="w-8 h-8 rounded hover:bg-neutral-100 flex items-center justify-center text-neutral-600 transition-colors"
           >
-            ⋮
+            <MoreVertical className="w-5 h-5" />
           </button>
 
           {isMenuOpen && (
@@ -177,7 +180,7 @@ export function PostCard({
             }
           `}
         >
-          <span className={liked ? "scale-110" : ""}>❤️</span>
+          <Heart className={`w-5 h-5 ${liked ? "fill-current scale-110" : ""}`} />
           <span className="text-sm">{likes}</span>
         </button>
 
@@ -189,7 +192,7 @@ export function PostCard({
           }}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-50 hover:text-primary-600 transition-colors"
         >
-          <span>💬</span>
+          <MessageCircle className="w-5 h-5" />
           <span className="text-sm">{commentCount}</span>
         </button>
 
@@ -201,7 +204,7 @@ export function PostCard({
           }}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-50 hover:text-primary-600 transition-colors"
         >
-          <span>🔗</span>
+          <Link2 className="w-5 h-5" />
           <span className="text-sm">공유</span>
         </button>
       </div>

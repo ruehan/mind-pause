@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Button } from "../Button";
+import type { LucideIcon } from "lucide-react";
 
 interface ActiveChallengeCardProps {
   id: string;
-  icon: string;
+  icon: LucideIcon;
   title: string;
   description: string;
   progress: number;
@@ -18,7 +19,7 @@ interface ActiveChallengeCardProps {
 }
 
 export function ActiveChallengeCard({
-  icon,
+  icon: Icon,
   title,
   description,
   progress,
@@ -38,7 +39,7 @@ export function ActiveChallengeCard({
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-h4 text-neutral-900 flex items-center gap-2">
-          <span className="text-2xl">{icon}</span>
+          <Icon className="w-6 h-6 text-primary-600" />
           {title}
         </h3>
         <div className="relative">

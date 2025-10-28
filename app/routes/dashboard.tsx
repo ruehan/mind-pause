@@ -5,6 +5,7 @@ import { StatCard } from "../components/dashboard/StatCard";
 import { EmotionChart } from "../components/dashboard/EmotionChart";
 import { AIInsightCard } from "../components/dashboard/AIInsightCard";
 import { AchievementBadge } from "../components/dashboard/AchievementBadge";
+import { Smile, FileText, Flame, MessageCircle, Trophy, BarChart3, Target, TrendingUp, Heart } from "lucide-react";
 
 export function meta() {
   return [
@@ -35,20 +36,20 @@ const mockEmotionFrequency = [
 ];
 
 const mockActivitySummary = [
-  { icon: "💬", label: "AI 대화", count: 12 },
-  { icon: "📝", label: "커뮤니티 글", count: 5 },
-  { icon: "❤️", label: "공감 보냄", count: 34 },
-  { icon: "🏆", label: "챌린지 완료", count: 3 },
-  { icon: "📊", label: "성찰 일기", count: 18 },
+  { icon: MessageCircle, label: "AI 대화", count: 12 },
+  { icon: FileText, label: "커뮤니티 글", count: 5 },
+  { icon: Heart, label: "공감 보냄", count: 34 },
+  { icon: Trophy, label: "챌린지 완료", count: 3 },
+  { icon: BarChart3, label: "성찰 일기", count: 18 },
 ];
 
 const mockAchievements = [
-  { icon: "🔥", value: "7일 연속", label: "기록 달성" },
-  { icon: "✍️", value: "23일 기록", label: "목표 달성" },
-  { icon: "💬", value: "12회 대화", label: "AI 코칭" },
-  { icon: "❤️", value: "34회 공감", label: "나눔 실천" },
-  { icon: "🎯", value: "3개 완료", label: "챌린지" },
-  { icon: "📈", value: "+0.5점", label: "감정 향상" },
+  { icon: Flame, value: "7일 연속", label: "기록 달성" },
+  { icon: FileText, value: "23일 기록", label: "목표 달성" },
+  { icon: MessageCircle, value: "12회 대화", label: "AI 코칭" },
+  { icon: Heart, value: "34회 공감", label: "나눔 실천" },
+  { icon: Target, value: "3개 완료", label: "챌린지" },
+  { icon: TrendingUp, value: "+0.5점", label: "감정 향상" },
 ];
 
 export default function Dashboard() {
@@ -123,21 +124,21 @@ export default function Dashboard() {
         {/* Summary Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <StatCard
-            icon="😊"
+            icon={Smile}
             title="평균 감정 점수"
             value="+2.3"
             subtitle="이번 달: +2.3"
             trend="지난 달: +1.8"
           />
           <StatCard
-            icon="📝"
+            icon={FileText}
             title="기록 일수"
             value="23일"
             subtitle="이번 달: 23/31"
             trend="목표: 25일"
           />
           <StatCard
-            icon="🔥"
+            icon={Flame}
             title="연속 기록"
             value="7일 연속"
             subtitle="최고 기록: 14일"
@@ -183,25 +184,29 @@ export default function Dashboard() {
           {/* Activity Summary Card */}
           <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
             <h2 className="text-h4 text-neutral-900 mb-4 flex items-center gap-2">
-              📋 활동 요약
+              <BarChart3 className="w-6 h-6 text-primary-600" />
+              활동 요약
             </h2>
             <div className="space-y-3">
-              {mockActivitySummary.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between py-2 border-b border-neutral-100 last:border-0"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{activity.icon}</span>
-                    <span className="text-body text-neutral-700">
-                      {activity.label}
+              {mockActivitySummary.map((activity, index) => {
+                const ActivityIcon = activity.icon;
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between py-2 border-b border-neutral-100 last:border-0"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ActivityIcon className="w-5 h-5 text-primary-600" />
+                      <span className="text-body text-neutral-700">
+                        {activity.label}
+                      </span>
+                    </div>
+                    <span className="text-body font-semibold text-neutral-900">
+                      {activity.count}회
                     </span>
                   </div>
-                  <span className="text-body font-semibold text-neutral-900">
-                    {activity.count}회
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <button className="mt-4 text-body-sm text-primary-600 hover:text-primary-700 font-medium transition-colors">
               활동 상세 →
@@ -213,19 +218,19 @@ export default function Dashboard() {
         <div className="mb-6">
           <AIInsightCard
             weeklyChange={{
-              icon: "🎯",
+              icon: Target,
               title: "이번 주 변화",
               content:
                 "지난 주보다 평균 감정 점수가 +0.5점 상승했어요! 특히 주말에 감정이 긍정적으로 변화했네요.",
             }}
             pattern={{
-              icon: "📊",
+              icon: BarChart3,
               title: "패턴 발견",
               content:
                 "평일 오후 시간대에 감정이 낮아지는 경향이 있어요.\n💡 제안: 오후 3시에 5분 명상 루틴을 추천드립니다.",
             }}
             achievement={{
-              icon: "🏆",
+              icon: Trophy,
               title: "성취",
               content:
                 "7일 연속 기록 달성! 꾸준한 자기 돌봄을 실천하고 계시네요 👏",

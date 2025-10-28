@@ -5,6 +5,7 @@ import { SearchBar } from "../components/help/SearchBar";
 import { CategorySidebar } from "../components/help/CategorySidebar";
 import { FAQItem } from "../components/help/FAQItem";
 import { ContactOptionCard } from "../components/help/ContactOptionCard";
+import { Mail, MessageCircle, Phone } from "lucide-react";
 
 export function meta() {
   return [
@@ -172,7 +173,7 @@ export default function Help() {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <ContactOptionCard
-                  icon="📧"
+                  icon={Mail}
                   title="이메일"
                   details="답변: 24시간 이내"
                   action={{
@@ -181,7 +182,7 @@ export default function Help() {
                   }}
                 />
                 <ContactOptionCard
-                  icon="💬"
+                  icon={MessageCircle}
                   title="1:1 채팅"
                   details="답변: 즉시"
                   action={{
@@ -190,7 +191,7 @@ export default function Help() {
                   }}
                 />
                 <ContactOptionCard
-                  icon="📞"
+                  icon={Phone}
                   title="전화"
                   details="평일 9-18시"
                   action={{
