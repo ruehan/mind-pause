@@ -1,7 +1,8 @@
 import { Button } from "../Button";
+import type { LucideIcon } from "lucide-react";
 
 interface ContactOptionCardProps {
-  icon: string;
+  icon: LucideIcon;
   title: string;
   details: string;
   action: {
@@ -12,14 +13,16 @@ interface ContactOptionCardProps {
 }
 
 export function ContactOptionCard({
-  icon,
+  icon: Icon,
   title,
   details,
   action,
 }: ContactOptionCardProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 text-center hover:shadow-md transition-shadow">
-      <div className="text-4xl mb-3">{icon}</div>
+      <div className="mb-3 flex justify-center">
+        <Icon className="w-10 h-10 text-primary-600" />
+      </div>
       <h4 className="text-lg font-semibold text-neutral-800 mb-1">{title}</h4>
       <p className="text-sm text-neutral-600 mb-4">{details}</p>
       {action.href ? (

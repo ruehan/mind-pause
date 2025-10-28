@@ -1,12 +1,14 @@
+import type { LucideIcon } from "lucide-react";
+
 interface AdminStatCardProps {
-  icon: string;
+  icon: LucideIcon;
   title: string;
   value: string | number;
   change: number;
 }
 
 export function AdminStatCard({
-  icon,
+  icon: Icon,
   title,
   value,
   change,
@@ -16,7 +18,7 @@ export function AdminStatCard({
   return (
     <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-4xl">{icon}</span>
+        <Icon className="w-10 h-10 text-primary-600" />
         <span
           className={`text-sm font-semibold ${
             isPositive ? "text-green-600" : "text-red-600"

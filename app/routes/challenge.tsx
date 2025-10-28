@@ -5,6 +5,7 @@ import { StatCard } from "../components/dashboard/StatCard";
 import { ChallengeFilterTabs } from "../components/challenge/ChallengeFilterTabs";
 import { ActiveChallengeCard } from "../components/challenge/ActiveChallengeCard";
 import { RecommendedChallengeCard } from "../components/challenge/RecommendedChallengeCard";
+import { Brain, Footprints, Moon, BookOpen, Coffee, Droplet, Music, Sunrise, Trophy, Target, CheckCircle, Flame } from "lucide-react";
 
 export function meta() {
   return [
@@ -20,7 +21,7 @@ export function meta() {
 const mockActiveChallenges = [
   {
     id: "1",
-    icon: "🧘",
+    icon: Brain,
     title: "명상 5분",
     description: "매일 5분 명상으로 마음의 평화를 찾아보세요",
     progress: 40,
@@ -33,7 +34,7 @@ const mockActiveChallenges = [
   },
   {
     id: "2",
-    icon: "🚶",
+    icon: Footprints,
     title: "매일 산책 30분",
     description: "규칙적인 산책으로 스트레스를 낮추고 활력을 되찾으세요",
     progress: 60,
@@ -49,42 +50,42 @@ const mockActiveChallenges = [
 const mockRecommendedChallenges = [
   {
     id: "r1",
-    icon: "💤",
+    icon: Moon,
     title: "수면 루틴",
     duration: "7일 챌린지",
     participants: 234,
   },
   {
     id: "r2",
-    icon: "📖",
+    icon: BookOpen,
     title: "독서 10분",
     duration: "5일 챌린지",
     participants: 156,
   },
   {
     id: "r3",
-    icon: "☕",
+    icon: Coffee,
     title: "카페인 줄이기",
     duration: "7일 챌린지",
     participants: 98,
   },
   {
     id: "r4",
-    icon: "💧",
+    icon: Droplet,
     title: "물 8잔 마시기",
     duration: "5일 챌린지",
     participants: 189,
   },
   {
     id: "r5",
-    icon: "🎵",
+    icon: Music,
     title: "음악 감상",
     duration: "3일 챌린지",
     participants: 145,
   },
   {
     id: "r6",
-    icon: "🌅",
+    icon: Sunrise,
     title: "아침 루틴",
     duration: "7일 챌린지",
     participants: 210,
@@ -133,7 +134,7 @@ export default function Challenge() {
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
-            <span className="text-4xl">🏆</span>
+            <Trophy className="w-10 h-10 text-primary-600" />
             <div>
               <h1 className="text-h2 text-neutral-900">챌린지</h1>
               <p className="text-body text-neutral-600 mt-1">
@@ -152,19 +153,19 @@ export default function Challenge() {
         {/* Summary Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <StatCard
-            icon="📝"
+            icon={Target}
             title="진행중 챌린지"
             value="2개"
             subtitle="목표: 5개"
           />
           <StatCard
-            icon="✅"
+            icon={CheckCircle}
             title="이번 주 성취"
             value="3개"
             subtitle="목표: 5개"
           />
           <StatCard
-            icon="🔥"
+            icon={Flame}
             title="연속 달성"
             value="5일 연속"
             subtitle="최고: 14일"

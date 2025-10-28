@@ -1,33 +1,34 @@
 import { FeatureCard } from "./FeatureCard";
+import { FileText, MessageCircle, BarChart3, Users, Target, Lock } from "lucide-react";
 
 const features = [
   {
-    icon: "📝",
+    icon: FileText,
     title: "감정 기록",
     description: "간단한 기록으로 하루를 돌아봐요",
   },
   {
-    icon: "💬",
+    icon: MessageCircle,
     title: "AI 코칭",
     description: "따뜻한 AI와 대화하세요",
   },
   {
-    icon: "📊",
+    icon: BarChart3,
     title: "데이터 분석",
     description: "감정 변화를 한눈에 확인",
   },
   {
-    icon: "👥",
+    icon: Users,
     title: "커뮤니티",
     description: "익명으로 공감과 위로를 나눠요",
   },
   {
-    icon: "🎯",
+    icon: Target,
     title: "챌린지",
     description: "회복 습관을 만들어가요",
   },
   {
-    icon: "🔒",
+    icon: Lock,
     title: "프라이버시",
     description: "철저한 보안과 익명성 보장",
   },

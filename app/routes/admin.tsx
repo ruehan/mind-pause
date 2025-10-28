@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AdminHeader } from "../components/admin/AdminHeader";
 import { AdminSidebar } from "../components/admin/AdminSidebar";
 import { AdminStatCard } from "../components/admin/AdminStatCard";
+import { Users, FileText, MessageSquare, Trophy } from "lucide-react";
 
 export function meta() {
   return [
@@ -63,25 +64,25 @@ export default function Admin() {
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <AdminStatCard
-                  icon="👥"
+                  icon={Users}
                   title="총 사용자"
                   value={mockStats.users.total}
                   change={mockStats.users.change}
                 />
                 <AdminStatCard
-                  icon="📝"
+                  icon={FileText}
                   title="감정 기록수"
                   value={mockStats.emotions.total}
                   change={mockStats.emotions.change}
                 />
                 <AdminStatCard
-                  icon="💬"
+                  icon={MessageSquare}
                   title="커뮤니티"
                   value={mockStats.community.total}
                   change={mockStats.community.change}
                 />
                 <AdminStatCard
-                  icon="🏆"
+                  icon={Trophy}
                   title="챌린지"
                   value={mockStats.challenges.total}
                   change={mockStats.challenges.change}
