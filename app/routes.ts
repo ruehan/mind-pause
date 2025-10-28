@@ -11,4 +11,5 @@ export default [
   route("challenge", "routes/challenge.tsx"),
   route("help", "routes/help.tsx"),
   route("admin", "routes/admin.tsx"),
+  route("error", "routes/error.tsx"),
 ] satisfies RouteConfig;
