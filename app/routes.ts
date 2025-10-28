@@ -9,4 +9,5 @@ export default [
   route("dashboard", "routes/dashboard.tsx"),
   route("profile", "routes/profile.tsx"),
   route("challenge", "routes/challenge.tsx"),
+  route("help", "routes/help.tsx"),
 ] satisfies RouteConfig;
