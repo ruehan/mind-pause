@@ -1,3 +1,4 @@
+import { Lightbulb } from "lucide-react";
 import { Button } from "../Button";
 
 interface ActionSuggestionCardProps {
@@ -11,7 +12,7 @@ export function ActionSuggestionCard({ title, onClick }: ActionSuggestionCardPro
       <div className="max-w-[70%] sm:max-w-[85%]">
         <div className="bg-gradient-to-r from-primary-50 to-lavender-50 border-2 border-primary-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-xl">💡</span>
+            <Lightbulb className="w-5 h-5 text-primary-600" />
             <span className="text-body font-medium text-neutral-800">
               제안: {title}
             </span>

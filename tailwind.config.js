@@ -6,121 +6,28 @@ export default {
   ],
   theme: {
     extend: {
-      colors: {
-        // Primary Colors
-        primary: {
-          50: '#EEF4FF',
-          100: '#D9E6FF',
-          200: '#BCD4FF',
-          300: '#8EB8FF',
-          400: '#5B8CFF',  // Main primary color
-          500: '#3E6FFF',
-          600: '#2850F5',
-          700: '#1F3DD8',
-          800: '#1F35AE',
-          900: '#1E3189',
-        },
-
-        // Lavender (Secondary)
-        lavender: {
-          50: '#FAF5FF',
-          100: '#F3E8FF',
-          200: '#E9D5FF',
-          300: '#D8B4FE',
-          400: '#C084FC',
-          500: '#8B5CF6',  // Main lavender color
-          600: '#7C3AED',
-          700: '#6D28D9',
-          800: '#5B21B6',
-          900: '#4C1D95',
-        },
-
-        // Mint Green (Accent)
-        mint: {
-          50: '#ECFDF5',
-          100: '#D1FAE5',
-          200: '#A7F3D0',
-          300: '#6EE7B7',
-          400: '#34D399',
-          500: '#10B981',  // Main mint color
-          600: '#059669',
-          700: '#047857',
-          800: '#065F46',
-          900: '#064E3B',
-        },
-
-        // Warm Pink (Accent)
-        warmPink: {
-          50: '#FFF1F2',
-          100: '#FFE4E6',
-          200: '#FECDD3',
-          300: '#FDA4AF',
-          400: '#FB7185',
-          500: '#F43F5E',  // Main warm pink color
-          600: '#E11D48',
-          700: '#BE123C',
-          800: '#9F1239',
-          900: '#881337',
-        },
-
-        // Neutral (Grays)
-        neutral: {
-          50: '#FAFAFA',
-          100: '#F5F5F5',
-          200: '#E5E5E5',
-          300: '#D4D4D4',
-          400: '#A3A3A3',
-          500: '#737373',
-          600: '#525252',
-          700: '#404040',
-          800: '#262626',
-          900: '#171717',
-        },
-
-        // Semantic Colors
-        success: {
-          light: '#D1FAE5',
-          DEFAULT: '#10B981',
-          dark: '#047857',
-        },
-        warning: {
-          light: '#FED7AA',
-          DEFAULT: '#F59E0B',
-          dark: '#B45309',
-        },
-        error: {
-          light: '#FECACA',
-          DEFAULT: '#EF4444',
-          dark: '#B91C1C',
-        },
-        info: {
-          light: '#DBEAFE',
-          DEFAULT: '#3B82F6',
-          dark: '#1E40AF',
-        },
-      },
-
-      fontFamily: {
-        sans: ['Pretendard Variable', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'sans-serif'],
-      },
+      /*
+        색상과 폰트는 app.css의 @theme에서 관리
+        여기서는 spacing, borderRadius, shadow 등 복잡한 설정만 정의
+      */
 
       fontSize: {
-        // Headings
-        'h1': ['2.25rem', { lineHeight: '1.25', letterSpacing: '-0.02em', fontWeight: '700' }],  // 36px
-        'h2': ['1.875rem', { lineHeight: '1.3', letterSpacing: '-0.01em', fontWeight: '700' }],  // 30px
-        'h3': ['1.5rem', { lineHeight: '1.35', letterSpacing: '0', fontWeight: '600' }],          // 24px
-        'h4': ['1.25rem', { lineHeight: '1.4', letterSpacing: '0', fontWeight: '600' }],          // 20px
-        'h5': ['1.125rem', { lineHeight: '1.5', letterSpacing: '0', fontWeight: '600' }],         // 18px
-        'h6': ['1rem', { lineHeight: '1.5', letterSpacing: '0', fontWeight: '600' }],             // 16px
+        // Headings - line-height, letter-spacing, font-weight 포함
+        'h1': ['2.25rem', { lineHeight: '1.25', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'h2': ['1.875rem', { lineHeight: '1.3', letterSpacing: '-0.01em', fontWeight: '700' }],
+        'h3': ['1.5rem', { lineHeight: '1.35', letterSpacing: '0', fontWeight: '600' }],
+        'h4': ['1.25rem', { lineHeight: '1.4', letterSpacing: '0', fontWeight: '600' }],
+        'h5': ['1.125rem', { lineHeight: '1.5', letterSpacing: '0', fontWeight: '600' }],
+        'h6': ['1rem', { lineHeight: '1.5', letterSpacing: '0', fontWeight: '600' }],
 
         // Body text
-        'body-lg': ['1.125rem', { lineHeight: '1.6', letterSpacing: '0', fontWeight: '400' }],    // 18px
-        'body': ['1rem', { lineHeight: '1.6', letterSpacing: '0', fontWeight: '400' }],           // 16px
-        'body-sm': ['0.875rem', { lineHeight: '1.5', letterSpacing: '0', fontWeight: '400' }],    // 14px
+        'body-lg': ['1.125rem', { lineHeight: '1.6', letterSpacing: '0', fontWeight: '400' }],
+        'body': ['1rem', { lineHeight: '1.6', letterSpacing: '0', fontWeight: '400' }],
+        'body-sm': ['0.875rem', { lineHeight: '1.5', letterSpacing: '0', fontWeight: '400' }],
 
         // Captions and labels
-        'caption': ['0.75rem', { lineHeight: '1.4', letterSpacing: '0.01em', fontWeight: '400' }], // 12px
-        'label': ['0.875rem', { lineHeight: '1.5', letterSpacing: '0', fontWeight: '500' }],       // 14px
+        'caption': ['0.75rem', { lineHeight: '1.4', letterSpacing: '0.01em', fontWeight: '400' }],
+        'label': ['0.875rem', { lineHeight: '1.5', letterSpacing: '0', fontWeight: '500' }],
       },
 
       spacing: {

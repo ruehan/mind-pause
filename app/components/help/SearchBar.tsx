@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Search } from "lucide-react";
 import { Button } from "../Button";
 
 interface SearchBarProps {
@@ -18,7 +19,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
       onSubmit={handleSubmit}
       className="w-full flex items-center gap-2 bg-white rounded-lg shadow-sm border-2 border-neutral-300 p-4 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-200 transition-all"
     >
-      <span className="text-xl">🔍</span>
+      <Search className="w-5 h-5 text-neutral-500" />
       <input
         type="text"
         value={query}

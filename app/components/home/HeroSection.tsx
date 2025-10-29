@@ -1,3 +1,4 @@
+import { Heart } from "lucide-react";
 import { Button } from "../Button";
 
 export function HeroSection() {
@@ -37,20 +38,10 @@ export function HeroSection() {
 
               {/* Center illustration placeholder */}
               <div className="relative z-10 flex items-center justify-center h-full">
-                <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm">
+                <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
                   <div className="flex items-center justify-center mb-6">
                     <div className="w-24 h-24 bg-gradient-to-br from-primary-400 to-lavender-500 rounded-full flex items-center justify-center shadow-lg">
-                      <svg
-                        className="w-12 h-12 text-white"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
+                      <Heart className="w-12 h-12 text-white" />
                     </div>
                   </div>
                   <div className="text-center">

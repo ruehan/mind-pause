@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { Menu, X } from "lucide-react";
 import { Button } from "./Button";
 
 export function Header() {
@@ -57,21 +58,11 @@ export function Header() {
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="메뉴 열기"
           >
-            <svg
-              className="w-6 h-6 text-neutral-700"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              {isMenuOpen ? (
-                <path d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
+            {isMenuOpen ? (
+              <X className="w-6 h-6 text-neutral-700" />
+            ) : (
+              <Menu className="w-6 h-6 text-neutral-700" />
+            )}
           </button>
         </div>
 

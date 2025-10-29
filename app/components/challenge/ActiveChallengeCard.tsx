@@ -46,6 +46,7 @@ export function ActiveChallengeCard({
           <button
             onClick={() => setShowMenu(!showMenu)}
             className="text-neutral-500 hover:text-neutral-700 text-xl"
+            aria-label="챌린지 메뉴 열기"
           >
             ⋮
           </button>

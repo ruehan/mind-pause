@@ -59,14 +59,23 @@ export function SignupForm() {
       return;
     }
 
-    // TODO: Implement signup API call
     setIsLoading(true);
-    console.log("Signup attempt:", { nickname, email, password });
 
-    // Simulate API call
-    setTimeout(() => {
+    // API 호출: 회원가입
+    // POST /api/auth/signup
+    // Body: { nickname, email, password, agreeTerms, agreePrivacy, agreeMarketing }
+    try {
+      // TODO: 실제 API 엔드포인트 연결 필요
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // 회원가입 성공 시 로그인 페이지로 이동 또는 자동 로그인
+      // navigate('/login');
+    } catch (error) {
+      // 회원가입 실패 처리 (이메일 중복 등)
+      setErrors({ email: "이미 사용 중인 이메일입니다" });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

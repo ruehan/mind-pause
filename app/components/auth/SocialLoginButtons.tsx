@@ -1,12 +1,12 @@
 export function SocialLoginButtons() {
   const handleGoogleLogin = () => {
-    // TODO: Implement Google OAuth
-    console.log("Google login clicked");
+    // Google OAuth 로그인 처리
+    // window.location.href = '/api/auth/google';
   };
 
   const handleKakaoLogin = () => {
-    // TODO: Implement Kakao OAuth
-    console.log("Kakao login clicked");
+    // Kakao OAuth 로그인 처리
+    // window.location.href = '/api/auth/kakao';
   };
 
   return (

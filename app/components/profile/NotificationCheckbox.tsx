@@ -17,7 +17,7 @@ export function NotificationCheckbox({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="w-5 h-5 mt-0.5 text-primary-600 rounded border-neutral-300 focus:ring-2 focus:ring-primary-200 cursor-pointer"
+        className="w-5 h-5 mt-0.5 text-primary-600 rounded border-neutral-300 focus:ring-2 focus:ring-primary-200 cursor-pointer transition-colors duration-200"
       />
       <div className="flex-1">
         <p className="text-sm text-neutral-700">{label}</p>

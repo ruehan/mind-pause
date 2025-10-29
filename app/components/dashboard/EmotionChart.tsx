@@ -1,3 +1,4 @@
+import { TrendingUp, Download } from "lucide-react";
 import { Button } from "../Button";
 
 interface DataPoint {
@@ -25,7 +26,8 @@ export function EmotionChart({ data, onExport }: EmotionChartProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-h4 text-neutral-900 flex items-center gap-2">
-          📈 감정 변화 추이
+          <TrendingUp className="w-5 h-5 text-primary-600" />
+          감정 변화 추이
         </h2>
         {onExport && (
           <Button
@@ -34,7 +36,8 @@ export function EmotionChart({ data, onExport }: EmotionChartProps) {
             onClick={onExport}
             className="flex items-center gap-2"
           >
-            📥 내보내기
+            <Download className="w-4 h-4" />
+            내보내기
           </Button>
         )}
       </div>

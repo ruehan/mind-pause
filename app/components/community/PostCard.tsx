@@ -78,6 +78,7 @@ export function PostCard({
           <button
             onClick={handleMenuClick}
             className="w-8 h-8 rounded hover:bg-neutral-100 flex items-center justify-center text-neutral-600 transition-colors"
+            aria-label="게시글 메뉴 열기"
           >
             <MoreVertical className="w-5 h-5" />
           </button>
@@ -97,7 +98,7 @@ export function PostCard({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log("Edit post");
+                        // 게시글 수정 모달 열기
                       }}
                       className="w-full text-left px-4 py-3 hover:bg-neutral-50 text-sm text-neutral-700 transition-colors"
                     >
@@ -106,7 +107,7 @@ export function PostCard({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log("Delete post");
+                        // 삭제 확인 모달 열기
                       }}
                       className="w-full text-left px-4 py-3 hover:bg-error-50 text-sm text-error-500 transition-colors"
                     >
@@ -117,7 +118,7 @@ export function PostCard({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      console.log("Report post");
+                      // 신고 모달 열기
                     }}
                     className="w-full text-left px-4 py-3 hover:bg-orange-50 text-sm text-orange-600 transition-colors"
                   >
@@ -127,7 +128,7 @@ export function PostCard({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    console.log("Hide post");
+                    // 게시글 숨기기 처리
                   }}
                   className="w-full text-left px-4 py-3 hover:bg-neutral-50 text-sm text-neutral-700 transition-colors"
                 >
@@ -152,7 +153,7 @@ export function PostCard({
               key={index}
               onClick={(e) => {
                 e.stopPropagation();
-                console.log("Tag clicked:", tag);
+                // 태그로 필터링된 게시글 목록으로 이동
               }}
               className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm hover:bg-primary-100 transition-colors"
             >
@@ -179,6 +180,7 @@ export function PostCard({
               : "text-neutral-600 hover:bg-neutral-50"
             }
           `}
+          aria-label={liked ? "좋아요 취소" : "좋아요"}
         >
           <Heart className={`w-5 h-5 ${liked ? "fill-current scale-110" : ""}`} />
           <span className="text-sm">{likes}</span>
@@ -188,9 +190,10 @@ export function PostCard({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            console.log("Open comments");
+            // 댓글 목록 열기 또는 상세 페이지로 이동
           }}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-50 hover:text-primary-600 transition-colors"
+          aria-label="댓글 보기"
         >
           <MessageCircle className="w-5 h-5" />
           <span className="text-sm">{commentCount}</span>
@@ -200,7 +203,7 @@ export function PostCard({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            console.log("Share post");
+            // 공유 모달 열기 (SNS, 링크 복사 등)
           }}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-50 hover:text-primary-600 transition-colors"
         >

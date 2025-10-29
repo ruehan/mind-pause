@@ -67,7 +67,7 @@ export default function Login() {
 
               {/* Center illustration */}
               <div className="relative z-10 flex items-center justify-center">
-                <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-sm">
+                <div className="bg-white rounded-2xl shadow-lg p-12 max-w-sm">
                   <div className="flex items-center justify-center mb-8">
                     <div className="w-32 h-32 bg-gradient-to-br from-primary-400 to-lavender-500 rounded-full flex items-center justify-center shadow-lg">
                       <svg

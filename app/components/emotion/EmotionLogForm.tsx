@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Edit, Lightbulb } from "lucide-react";
 import { EmotionSlider } from "./EmotionSlider";
 import { Button } from "../Button";
 import { Checkbox } from "../Checkbox";
@@ -27,19 +28,24 @@ export function EmotionLogForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // TODO: API call to save emotion log
     setIsSubmitting(true);
-    console.log("Emotion log:", {
-      emotionValue,
-      note,
-      selectedPrompts,
-    });
 
-    // Simulate API call
-    setTimeout(() => {
+    // API 호출: 감정 기록 저장
+    // POST /api/emotions
+    // Body: { emotionValue, note, selectedPrompts }
+    try {
+      // TODO: 실제 API 엔드포인트 연결 필요
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // 성공 시 폼 초기화 또는 페이지 이동
+      setEmotionValue(0);
+      setNote("");
+      setSelectedPrompts([]);
+    } catch (error) {
+      // 에러 처리
+    } finally {
       setIsSubmitting(false);
-      // Reset form or redirect
-    }, 1000);
+    }
   };
 
   const handleCancel = () => {
@@ -54,7 +60,7 @@ export function EmotionLogForm() {
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
       <div className="flex items-center gap-2 mb-6">
-        <span className="text-2xl">📝</span>
+        <Edit className="w-6 h-6 text-primary-600" />
         <h2 className="text-h3 text-neutral-900">오늘의 감정 기록하기</h2>
       </div>
 
@@ -109,9 +115,12 @@ export function EmotionLogForm() {
               />
             ))}
           </div>
-          <p className="text-body-sm text-neutral-500 mt-3">
-            💡 선택한 프롬프트로 AI가 맞춤형 피드백을 제공합니다
-          </p>
+          <div className="flex items-center gap-2 mt-3">
+            <Lightbulb className="w-4 h-4 text-neutral-500" />
+            <p className="text-body-sm text-neutral-500">
+              선택한 프롬프트로 AI가 맞춤형 피드백을 제공합니다
+            </p>
+          </div>
         </div>
 
         {/* Action Buttons */}

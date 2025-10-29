@@ -33,14 +33,24 @@ export function LoginForm() {
       return;
     }
 
-    // TODO: Implement login API call
     setIsLoading(true);
-    console.log("Login attempt:", { email, password });
 
-    // Simulate API call
-    setTimeout(() => {
+    // API 호출: 로그인
+    // POST /api/auth/login
+    // Body: { email, password }
+    try {
+      // TODO: 실제 API 엔드포인트 연결 필요
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // 로그인 성공 시 토큰 저장 및 리다이렉트
+      // localStorage.setItem('token', response.token);
+      // navigate('/dashboard');
+    } catch (error) {
+      // 로그인 실패 처리
+      setErrors({ email: "이메일 또는 비밀번호가 올바르지 않습니다" });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
