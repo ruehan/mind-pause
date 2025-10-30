@@ -72,34 +72,57 @@ export default function ErrorPage({ type = "404" }: ErrorPageProps) {
   const errorConfig = {
     "404": {
       icon: iconMap["404"],
-      title: "페이지를 찾을 수 없습니다",
+      emoji: "🧭",
+      title: "길을 잃으셨나요?",
+      subtitle: "괜찮아요, 함께 찾아봐요!",
       description:
-        "요청하신 페이지가 존재하지 않거나 이동/삭제되었을 수 있습니다. 잘못 입력된 주소인지 확인해주세요.",
+        "요청하신 페이지가 존재하지 않거나 이동/삭제되었을 수 있습니다. 주소를 다시 한 번 확인해주세요.",
       primaryAction: { label: "홈으로", icon: Home, onClick: handleGoHome },
       secondaryAction: { label: "이전 페이지", onClick: handleGoBack },
       showSuggestions: true,
+      solutions: [
+        "URL 주소가 정확한지 확인해보세요",
+        "북마크나 링크가 오래된 것일 수 있어요",
+        "검색을 통해 원하는 페이지를 찾아보세요",
+      ],
     },
     "500": {
       icon: iconMap["500"],
-      title: "서버 오류가 발생했습니다",
+      emoji: "😴",
+      title: "앗, 서버가 잠시 쉬고 있어요",
+      subtitle: "곧 돌아올게요!",
       description:
         "일시적인 오류로 서비스를 이용할 수 없습니다. 잠시 후 다시 시도해주세요. 문제가 계속되면 고객센터로 문의해주세요.",
       primaryAction: { label: "다시시도", icon: RotateCw, onClick: handleRetry },
       secondaryAction: { label: "홈으로", icon: Home, onClick: handleGoHome },
       showErrorCode: true,
       errorCode: `ERR_500_${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}`,
+      solutions: [
+        "잠시 후 다시 시도해주세요 (1-2분 정도)",
+        "페이지를 새로고침해보세요",
+        "문제가 계속되면 고객센터로 문의해주세요",
+      ],
     },
     "403": {
       icon: iconMap["403"],
-      title: "접근 권한이 없습니다",
+      emoji: "🎫",
+      title: "이 페이지는 특별 초대장이 필요해요",
+      subtitle: "로그인하고 입장하세요!",
       description:
         "이 페이지에 접근할 수 있는 권한이 없습니다. 로그인이 필요하거나 관리자 권한이 필요한 페이지일 수 있습니다.",
       primaryAction: { label: "로그인", icon: Key, onClick: handleLogin },
       secondaryAction: { label: "홈으로", icon: Home, onClick: handleGoHome },
+      solutions: [
+        "로그인 후 다시 시도해보세요",
+        "다른 계정으로 로그인해보세요",
+        "관리자 권한이 필요한 페이지인지 확인하세요",
+      ],
     },
     "network": {
       icon: iconMap["network"],
-      title: "인터넷 연결을 확인해주세요",
+      emoji: "📡",
+      title: "인터넷이 숨바꼭질 중이에요",
+      subtitle: "연결을 확인해주세요",
       description:
         "네트워크 연결이 끊어졌거나 불안정합니다. Wi-Fi 또는 모바일 데이터 연결을 확인해주세요.",
       primaryAction: { label: "다시시도", icon: RotateCw, onClick: handleRetry },
@@ -110,10 +133,17 @@ export default function ErrorPage({ type = "404" }: ErrorPageProps) {
           // localStorage에 오프라인 플래그 설정 등
         }
       },
+      solutions: [
+        "Wi-Fi 또는 모바일 데이터가 켜져 있는지 확인하세요",
+        "기내 모드가 활성화되어 있지 않은지 확인하세요",
+        "라우터를 재시작해보세요",
+      ],
     },
     "maintenance": {
       icon: iconMap["maintenance"],
-      title: "서비스 점검 중입니다",
+      emoji: "🔧",
+      title: "더 나은 서비스를 위해 업그레이드 중!",
+      subtitle: "잠시만 기다려주세요",
       description:
         "더 나은 서비스를 위해 시스템 점검을 진행하고 있습니다. 점검 시간: 2024년 1월 15일 02:00 - 04:00 (약 1시간 30분 남음)",
       primaryAction: {
@@ -125,17 +155,31 @@ export default function ErrorPage({ type = "404" }: ErrorPageProps) {
         }
       },
       showMaintenanceInfo: true,
+      solutions: [
+        "점검 완료 예정 시간을 확인하세요",
+        "알림을 신청하면 점검 완료 시 알려드려요",
+        "SNS에서 실시간 업데이트를 확인하세요",
+      ],
     },
     "session": {
       icon: iconMap["session"],
-      title: "세션이 만료되었습니다",
+      emoji: "⏰",
+      title: "시간이 멈춰버렸네요",
+      subtitle: "다시 로그인해주세요",
       description:
         "보안을 위해 일정 시간 활동이 없으면 자동으로 로그아웃됩니다. 다시 로그인해주세요.",
       primaryAction: { label: "다시 로그인하기", icon: Key, onClick: handleLogin },
+      solutions: [
+        "다시 로그인하면 바로 이용할 수 있어요",
+        "자동 로그인을 설정하면 더 편리해요",
+        "작성 중이던 내용은 자동 저장되었어요",
+      ],
     },
     "ratelimit": {
       icon: iconMap["ratelimit"],
-      title: "요청 횟수 제한 초과",
+      emoji: "🐌",
+      title: "잠깐, 너무 빨라요!",
+      subtitle: "조금만 천천히 해주세요",
       description:
         "짧은 시간에 너무 많은 요청을 보내셨습니다. 잠시 후 다시 시도해주세요. (약 5분 후 이용 가능)",
       primaryAction: { label: "홈으로", icon: Home, onClick: handleGoHome },
@@ -146,6 +190,11 @@ export default function ErrorPage({ type = "404" }: ErrorPageProps) {
           // 타이머 표시 또는 자동 새로고침 설정
         }
       },
+      solutions: [
+        "5분 정도 기다린 후 다시 시도해주세요",
+        "자동 새로고침 스크립트를 사용하지 마세요",
+        "정상적인 속도로 이용해주세요",
+      ],
     },
   };
 
@@ -157,23 +206,63 @@ export default function ErrorPage({ type = "404" }: ErrorPageProps) {
 
       <main className="flex-1 flex items-center justify-center px-4 py-16">
         <div className="max-w-2xl w-full text-center">
-          {/* Error Icon */}
-          <div className="mb-6 flex justify-center">
-            {React.createElement(config.icon, {
-              className: "w-24 h-24 text-neutral-400",
-              strokeWidth: 1.5,
-            })}
+          {/* Error Icon with Gradient Background */}
+          <div className="mb-8 flex justify-center">
+            <div className="relative">
+              {/* Emoji Background */}
+              {"emoji" in config && (
+                <div className="text-8xl mb-4 animate-pulse">
+                  {config.emoji}
+                </div>
+              )}
+              {/* Icon with Gradient */}
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary-100 via-lavender-100 to-accent-100 flex items-center justify-center mx-auto mb-2">
+                {React.createElement(config.icon, {
+                  className: "w-16 h-16 text-primary-600",
+                  strokeWidth: 1.5,
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Error Title */}
-          <h1 className="text-3xl font-bold text-neutral-800 mb-4">
+          <h1 className="text-h1 text-neutral-900 mb-2">
             {config.title}
           </h1>
 
+          {/* Subtitle */}
+          {"subtitle" in config && config.subtitle && (
+            <p className="text-h4 text-primary-600 mb-6">
+              {config.subtitle}
+            </p>
+          )}
+
           {/* Error Description */}
-          <p className="text-base text-neutral-600 leading-relaxed max-w-md mx-auto mb-8">
+          <p className="text-body text-neutral-600 leading-relaxed max-w-md mx-auto mb-8">
             {config.description}
           </p>
+
+          {/* Solution Suggestions */}
+          {"solutions" in config && config.solutions && (
+            <div className="glass-strong rounded-2xl shadow-soft p-6 mb-8 border border-primary-200 bg-gradient-to-br from-primary-50 via-white to-lavender-50 text-left max-w-lg mx-auto">
+              <h3 className="text-h4 text-neutral-900 mb-4 flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-primary-600" />
+                이렇게 해보세요
+              </h3>
+              <ul className="space-y-3">
+                {config.solutions.map((solution: string, index: number) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 text-caption font-bold mt-0.5">
+                      {index + 1}
+                    </div>
+                    <p className="text-body text-neutral-700 flex-1">
+                      {solution}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -181,7 +270,7 @@ export default function ErrorPage({ type = "404" }: ErrorPageProps) {
               variant="primary"
               size="lg"
               onClick={config.primaryAction.onClick}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 min-w-[160px]"
             >
               {"icon" in config.primaryAction &&
                 config.primaryAction.icon &&
@@ -195,7 +284,7 @@ export default function ErrorPage({ type = "404" }: ErrorPageProps) {
                 variant="ghost"
                 size="lg"
                 onClick={config.secondaryAction.onClick}
-                className="border-2 border-neutral-300 flex items-center gap-2"
+                className="border-2 border-neutral-300 flex items-center gap-2 min-w-[160px]"
               >
                 {"icon" in config.secondaryAction &&
                   config.secondaryAction.icon &&
@@ -205,6 +294,17 @@ export default function ErrorPage({ type = "404" }: ErrorPageProps) {
                 {config.secondaryAction.label}
               </Button>
             )}
+          </div>
+
+          {/* Help Link */}
+          <div className="mb-8">
+            <button
+              onClick={handleContactSupport}
+              className="text-body text-neutral-600 hover:text-primary-600 transition-colors flex items-center gap-2 mx-auto"
+            >
+              <Lightbulb className="w-4 h-4" />
+              여전히 문제가 있나요? 도움말 보기 →
+            </button>
           </div>
 
           {/* Additional Info */}
