@@ -2,6 +2,8 @@ import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { EmotionLogForm } from "../components/emotion/EmotionLogForm";
 import { EmotionHistoryCard } from "../components/emotion/EmotionHistoryCard";
+import { WeeklyEmotionCalendar } from "../components/emotion/WeeklyEmotionCalendar";
+import { MonthlyEmotionChart } from "../components/emotion/MonthlyEmotionChart";
 
 export function meta() {
   return [
@@ -47,6 +49,51 @@ const mockHistory = [
   },
 ];
 
+// Mock data for weekly calendar
+const mockWeekData = [
+  { day: "월", emoji: "😊", value: 2, hasRecord: true },
+  { day: "화", emoji: "😄", value: 3, hasRecord: true },
+  { day: "수", emoji: "😐", value: 0, hasRecord: true },
+  { day: "목", emoji: "😕", value: -2, hasRecord: true },
+  { day: "금", emoji: "🙂", value: 1, hasRecord: true },
+  { day: "토", emoji: "😊", value: 2, hasRecord: true },
+  { day: "일", emoji: "😐", value: 0, hasRecord: false },
+];
+
+// Mock data for monthly chart
+const mockMonthData = [
+  { date: "1/1", value: 1 },
+  { date: "1/2", value: 2 },
+  { date: "1/3", value: 0 },
+  { date: "1/4", value: -1 },
+  { date: "1/5", value: -2 },
+  { date: "1/6", value: 0 },
+  { date: "1/7", value: 1 },
+  { date: "1/8", value: 3 },
+  { date: "1/9", value: 2 },
+  { date: "1/10", value: 1 },
+  { date: "1/11", value: 0 },
+  { date: "1/12", value: -1 },
+  { date: "1/13", value: -2 },
+  { date: "1/14", value: 0 },
+  { date: "1/15", value: 3 },
+  { date: "1/16", value: 2 },
+  { date: "1/17", value: 1 },
+  { date: "1/18", value: 2 },
+  { date: "1/19", value: 3 },
+  { date: "1/20", value: 2 },
+  { date: "1/21", value: 1 },
+  { date: "1/22", value: 0 },
+  { date: "1/23", value: -1 },
+  { date: "1/24", value: 1 },
+  { date: "1/25", value: 2 },
+  { date: "1/26", value: 3 },
+  { date: "1/27", value: 2 },
+  { date: "1/28", value: 1 },
+  { date: "1/29", value: 0 },
+  { date: "1/30", value: 2 },
+];
+
 export default function EmotionLog() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary-50 via-white to-lavender-50 relative">
@@ -68,38 +115,45 @@ export default function EmotionLog() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left: Emotion Log Form */}
-          <div className="lg:col-span-2">
-            <EmotionLogForm />
+        {/* Weekly Calendar - Compact View */}
+        <div className="max-w-4xl mx-auto mb-8">
+          <WeeklyEmotionCalendar
+            weekData={mockWeekData}
+            averageValue={1.0}
+          />
+        </div>
+
+        {/* Emotion Log Form - Centered */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <EmotionLogForm />
+        </div>
+
+        {/* Statistics Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Monthly Chart */}
+          <div>
+            <MonthlyEmotionChart data={mockMonthData} title="월간 감정 추이" />
           </div>
 
-          {/* Right: History Summary (Desktop) */}
-          <div className="hidden lg:block">
-            <div className="glass-strong rounded-2xl shadow-soft hover:shadow-primary transition-all duration-300 p-6 sticky top-24 border border-white/20">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-xl">📈</span>
-                <h3 className="text-h4 text-neutral-900">최근 기록</h3>
+          {/* Quick Stats Placeholder */}
+          <div className="glass-strong rounded-2xl shadow-soft p-6 border border-white/20">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">📊</span>
+              <h3 className="text-h4 text-neutral-900">감정 통계</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="p-4 bg-gradient-to-r from-mint-50 to-mint-100 rounded-lg">
+                <p className="text-body-sm text-neutral-600 mb-1">이번 달 평균</p>
+                <p className="text-h3 font-bold text-mint-600">+1.8</p>
               </div>
-
-              {/* Weekly Calendar Mini */}
-              <div className="grid grid-cols-7 gap-2 mb-6">
-                {["월", "화", "수", "목", "금", "토", "일"].map((day, index) => (
-                  <div
-                    key={day}
-                    className="text-center p-2 rounded-lg bg-neutral-100"
-                  >
-                    <div className="text-caption text-neutral-500 mb-1">
-                      {day}
-                    </div>
-                    <div className="text-2xl">{index % 2 === 0 ? "😊" : "😐"}</div>
-                  </div>
-                ))}
+              <div className="p-4 bg-gradient-to-r from-primary-50 to-lavender-50 rounded-lg">
+                <p className="text-body-sm text-neutral-600 mb-1">연속 기록일</p>
+                <p className="text-h3 font-bold text-primary-600">7일 🔥</p>
               </div>
-
-              <p className="text-body-sm text-neutral-600 text-center">
-                이번 주 평균 감정: <span className="font-bold text-mint-600">+1.5</span>
-              </p>
+              <div className="p-4 bg-gradient-to-r from-neutral-50 to-neutral-100 rounded-lg">
+                <p className="text-body-sm text-neutral-600 mb-1">총 기록 수</p>
+                <p className="text-h3 font-bold text-neutral-700">24회</p>
+              </div>
             </div>
           </div>
         </div>
