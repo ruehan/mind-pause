@@ -5,6 +5,9 @@ import { StatCard } from "../components/dashboard/StatCard";
 import { ChallengeFilterTabs } from "../components/challenge/ChallengeFilterTabs";
 import { ActiveChallengeCard } from "../components/challenge/ActiveChallengeCard";
 import { RecommendedChallengeCard } from "../components/challenge/RecommendedChallengeCard";
+import { StreakHighlightCard } from "../components/challenge/StreakHighlightCard";
+import { BadgeShowcase, defaultBadges } from "../components/challenge/BadgeShowcase";
+import { CompletionCelebrationModal } from "../components/challenge/CompletionCelebrationModal";
 import { Brain, Footprints, Moon, BookOpen, Coffee, Droplet, Music, Sunrise, Trophy, Target, CheckCircle, Flame } from "lucide-react";
 
 export function meta() {
@@ -101,12 +104,30 @@ export default function Challenge() {
     mockActiveChallenges
   );
 
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationData, setCelebrationData] = useState({
+    challengeTitle: "",
+    streakCount: 0,
+  });
+
   const handleCompleteChallenge = (id: string) => {
-    setActiveChallenges(
-      activeChallenges.map((c) =>
-        c.id === id ? { ...c, todayCompleted: !c.todayCompleted } : c
-      )
-    );
+    const challenge = activeChallenges.find((c) => c.id === id);
+    if (challenge) {
+      setActiveChallenges(
+        activeChallenges.map((c) =>
+          c.id === id ? { ...c, todayCompleted: !c.todayCompleted } : c
+        )
+      );
+
+      // Show celebration modal when completing
+      if (!challenge.todayCompleted) {
+        setCelebrationData({
+          challengeTitle: challenge.title,
+          streakCount: 5, // Mock streak count
+        });
+        setShowCelebration(true);
+      }
+    }
     console.log("Challenge completed:", id);
   };
 
@@ -150,26 +171,15 @@ export default function Challenge() {
           onFilterChange={setActiveFilter}
         />
 
-        {/* Summary Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <StatCard
-            icon={Target}
-            title="진행중 챌린지"
-            value="2개"
-            subtitle="목표: 5개"
+        {/* Streak Highlight & Badge Showcase */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <StreakHighlightCard
+            currentStreak={5}
+            longestStreak={14}
+            todayCompleted={2}
+            todayTotal={2}
           />
-          <StatCard
-            icon={CheckCircle}
-            title="이번 주 성취"
-            value="3개"
-            subtitle="목표: 5개"
-          />
-          <StatCard
-            icon={Flame}
-            title="연속 달성"
-            value="5일 연속"
-            subtitle="최고: 14일"
-          />
+          <BadgeShowcase badges={defaultBadges} />
         </div>
 
         {/* Active Challenges */}
@@ -244,6 +254,14 @@ export default function Challenge() {
       </main>
 
       <Footer />
+
+      {/* Celebration Modal */}
+      <CompletionCelebrationModal
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        challengeTitle={celebrationData.challengeTitle}
+        streakCount={celebrationData.streakCount}
+      />
     </div>
   );
 }
