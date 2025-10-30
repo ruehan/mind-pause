@@ -5,6 +5,9 @@ import { StatCard } from "../components/dashboard/StatCard";
 import { EmotionChart } from "../components/dashboard/EmotionChart";
 import { AIInsightCard } from "../components/dashboard/AIInsightCard";
 import { AchievementBadge } from "../components/dashboard/AchievementBadge";
+import { RecentChatCard } from "../components/dashboard/RecentChatCard";
+import { ChallengeProgressCard } from "../components/dashboard/ChallengeProgressCard";
+import { TodayTasksWidget } from "../components/dashboard/TodayTasksWidget";
 import { Smile, FileText, Flame, MessageCircle, Trophy, BarChart3, Target, TrendingUp, Heart } from "lucide-react";
 
 export function meta() {
@@ -50,6 +53,72 @@ const mockAchievements = [
   { icon: Heart, value: "34회 공감", label: "나눔 실천" },
   { icon: Target, value: "3개 완료", label: "챌린지" },
   { icon: TrendingUp, value: "+0.5점", label: "감정 향상" },
+];
+
+const mockRecentChats = [
+  {
+    id: "1",
+    title: "오늘의 스트레스 대처법",
+    summary: "업무 스트레스에 대해 이야기했어요. AI 코치가 호흡 명상을 추천했습니다.",
+    date: "2시간 전",
+    emotionChange: "+1.5",
+  },
+  {
+    id: "2",
+    title: "주말 계획 세우기",
+    summary: "즐거운 주말을 보내기 위한 활동들을 함께 계획했어요.",
+    date: "어제",
+    emotionChange: "+2.0",
+  },
+  {
+    id: "3",
+    title: "불안감 해소하기",
+    summary: "앞으로의 일에 대한 불안감을 나누고 긍정적 시각을 찾았어요.",
+    date: "2일 전",
+    emotionChange: "+0.8",
+  },
+];
+
+const mockChallenges = [
+  {
+    id: "1",
+    title: "아침 명상 루틴",
+    progress: 5,
+    total: 7,
+    streak: 5,
+    category: "명상",
+  },
+  {
+    id: "2",
+    title: "30분 산책하기",
+    progress: 3,
+    total: 7,
+    streak: 3,
+    category: "운동",
+  },
+];
+
+const mockTodayTasks = [
+  {
+    id: "1",
+    title: "아침 명상 5분",
+    type: "challenge" as const,
+    completed: true,
+  },
+  {
+    id: "2",
+    title: "30분 산책하기",
+    type: "challenge" as const,
+    completed: false,
+    time: "오후 6시",
+  },
+  {
+    id: "3",
+    title: "오늘의 감정 기록",
+    type: "reminder" as const,
+    completed: false,
+    time: "오후 9시",
+  },
 ];
 
 export default function Dashboard() {
@@ -153,6 +222,22 @@ export default function Dashboard() {
         {/* Emotion Trend Chart */}
         <div className="mb-6">
           <EmotionChart data={mockChartData} onExport={handleExport} />
+        </div>
+
+        {/* Three-Column Grid: Today Tasks, Recent Chats, Challenge Progress */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          <TodayTasksWidget
+            tasks={mockTodayTasks}
+            onTaskToggle={(taskId) => console.log("Task toggled:", taskId)}
+          />
+          <RecentChatCard
+            chats={mockRecentChats}
+            onViewAll={() => console.log("View all chats")}
+          />
+          <ChallengeProgressCard
+            challenges={mockChallenges}
+            onViewAll={() => console.log("View all challenges")}
+          />
         </div>
 
         {/* Two-Column Analytics */}
