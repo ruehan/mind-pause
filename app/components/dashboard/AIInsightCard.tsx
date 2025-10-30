@@ -23,11 +23,11 @@ export function AIInsightCard({
   const sections = [weeklyChange, pattern, achievement];
 
   return (
-    <div className="bg-gradient-to-br from-primary-50 to-lavender-50 border-2 border-primary-200 rounded-xl p-6">
+    <div className="bg-gradient-to-br from-primary-50 to-lavender-50 border-2 border-primary-200 rounded-xl p-6 shadow-soft hover:shadow-primary transition-all duration-300 transform hover:-translate-y-1">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-h4 text-neutral-900 flex items-center gap-2">
-          <Lightbulb className="w-6 h-6 text-primary-600" />
+          <Lightbulb className="w-6 h-6 text-primary-600 animate-float" />
           AI 인사이트
         </h2>
         {onViewDetail && (
@@ -50,7 +50,7 @@ export function AIInsightCard({
               className={`${index < sections.length - 1 ? "mb-4 pb-4 border-b border-neutral-200" : ""}`}
             >
               <h3 className="font-semibold text-neutral-800 mb-2 flex items-center gap-2">
-                <SectionIcon className="w-5 h-5 text-primary-600" />
+                <SectionIcon className="w-5 h-5 text-primary-600 animate-float" />
                 {section.title}
               </h3>
               <p className="text-sm text-neutral-700 leading-relaxed">

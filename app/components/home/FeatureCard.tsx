@@ -8,11 +8,11 @@ interface FeatureCardProps {
 
 export function FeatureCard({ icon: Icon, title, description }: FeatureCardProps) {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transform hover:-translate-y-1 transition-all duration-300 border border-neutral-100">
+    <div className="glass rounded-xl p-6 shadow-soft hover:shadow-primary transform hover:-translate-y-2 transition-all duration-300 border border-white/20">
       <div className="flex flex-col items-center text-center">
         {/* Icon */}
         <div className="mb-4 flex items-center justify-center">
-          <Icon className="w-16 h-16 text-primary-600" />
+          <Icon className="w-16 h-16 text-primary-600 animate-float" />
         </div>
 
         {/* Title */}

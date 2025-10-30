@@ -10,7 +10,7 @@ interface StatCardProps {
 
 export function StatCard({ icon: Icon, title, value, subtitle, trend }: StatCardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6 hover:shadow-md transition-shadow">
+    <div className="glass rounded-xl shadow-soft hover:shadow-primary transition-all duration-300 transform hover:-translate-y-1 p-6">
       {/* Title */}
       <h3 className="text-body-sm font-medium text-neutral-600 mb-4">
         {title}
@@ -18,7 +18,7 @@ export function StatCard({ icon: Icon, title, value, subtitle, trend }: StatCard
 
       {/* Icon & Value */}
       <div className="flex items-center justify-center mb-3">
-        <Icon className="w-12 h-12 text-primary-600" />
+        <Icon className="w-12 h-12 text-primary-600 animate-float" />
       </div>
       <p className="text-center text-h2 font-bold text-neutral-900 mb-2">
         {value}

@@ -22,11 +22,11 @@ export function EmotionChart({ data, onExport }: EmotionChartProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
+    <div className="glass rounded-xl shadow-soft hover:shadow-elevation-3 transition-all duration-300 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-h4 text-neutral-900 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary-600" />
+          <TrendingUp className="w-5 h-5 text-primary-600 animate-float" />
           감정 변화 추이
         </h2>
         {onExport && (

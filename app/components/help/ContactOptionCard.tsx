@@ -19,9 +19,9 @@ export function ContactOptionCard({
   action,
 }: ContactOptionCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 text-center hover:shadow-md transition-shadow">
+    <div className="glass rounded-lg shadow-soft hover:shadow-elevation-3 p-6 text-center transition-all duration-300 transform hover:-translate-y-1 border border-white/20">
       <div className="mb-3 flex justify-center">
-        <Icon className="w-10 h-10 text-primary-600" />
+        <Icon className="w-10 h-10 text-primary-600 animate-float" />
       </div>
       <h4 className="text-lg font-semibold text-neutral-800 mb-1">{title}</h4>
       <p className="text-sm text-neutral-600 mb-4">{details}</p>

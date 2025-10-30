@@ -42,11 +42,11 @@ export function SocialLoginCard({
   return (
     <div
       className={`
-        flex items-center justify-between p-4 border rounded-lg transition-all
+        flex items-center justify-between p-4 border rounded-lg transition-all duration-300 transform hover:-translate-y-1
         ${
           connected
-            ? `${config.bgColor} ${config.borderColor}`
-            : "bg-white border-neutral-200"
+            ? `${config.bgColor} ${config.borderColor} shadow-soft hover:shadow-elevation-2`
+            : "glass border-white/20 shadow-soft hover:shadow-primary"
         }
       `}
     >

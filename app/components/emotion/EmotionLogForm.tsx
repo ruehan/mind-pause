@@ -58,10 +58,10 @@ export function EmotionLogForm() {
   const maxChars = 500;
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+    <div className="glass-strong rounded-2xl shadow-soft hover:shadow-elevation-3 transition-all duration-300 p-6 sm:p-8">
       <div className="flex items-center gap-2 mb-6">
-        <Edit className="w-6 h-6 text-primary-600" />
-        <h2 className="text-h3 text-neutral-900">오늘의 감정 기록하기</h2>
+        <Edit className="w-6 h-6 text-primary-600 animate-float" />
+        <h2 className="text-h3 text-gradient-primary font-bold">오늘의 감정 기록하기</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">

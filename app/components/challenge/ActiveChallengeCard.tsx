@@ -35,11 +35,11 @@ export function ActiveChallengeCard({
   const [showMenu, setShowMenu] = useState(false);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6 mb-4">
+    <div className="glass rounded-xl shadow-soft hover:shadow-elevation-3 p-6 mb-4 transition-all duration-300 transform hover:-translate-y-1 border border-white/20">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-h4 text-neutral-900 flex items-center gap-2">
-          <Icon className="w-6 h-6 text-primary-600" />
+          <Icon className="w-6 h-6 text-primary-600 animate-float" />
           {title}
         </h3>
         <div className="relative">

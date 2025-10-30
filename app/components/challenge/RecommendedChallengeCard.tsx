@@ -18,10 +18,10 @@ export function RecommendedChallengeCard({
   onStart,
 }: RecommendedChallengeCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4 text-center hover:shadow-md hover:scale-102 transition-all duration-200">
+    <div className="glass rounded-lg shadow-soft hover:shadow-primary p-4 text-center hover:scale-105 transition-all duration-300 transform border border-white/20">
       {/* Icon */}
       <div className="mb-2 flex justify-center">
-        <Icon className="w-10 h-10 text-primary-600" />
+        <Icon className="w-10 h-10 text-primary-600 animate-float" />
       </div>
 
       {/* Title */}

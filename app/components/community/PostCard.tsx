@@ -49,7 +49,7 @@ export function PostCard({
   return (
     <article
       onClick={onClick}
-      className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6 mb-4 hover:shadow-md transition-all duration-200 cursor-pointer"
+      className="glass rounded-xl shadow-soft hover:shadow-primary p-6 mb-4 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-white/20"
     >
       {/* Post Header */}
       <div className="flex items-center justify-between mb-4">
