@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { User, Lock, Globe, Heart, MessageCircle, Link2, MoreVertical } from "lucide-react";
 
+interface RecentComment {
+  author: string;
+  content: string;
+  timestamp: string;
+}
+
 interface PostCardProps {
   id: string;
   author: string;
@@ -12,8 +18,33 @@ interface PostCardProps {
   commentCount: number;
   isLiked?: boolean;
   isAuthor?: boolean;
+  recentComments?: RecentComment[];
   onClick?: () => void;
 }
+
+// Emotion tag color mapping
+const emotionTagColors: Record<string, string> = {
+  "불안": "bg-error-100 text-error-700 hover:bg-error-200",
+  "우울": "bg-neutral-200 text-neutral-700 hover:bg-neutral-300",
+  "스트레스": "bg-orange-100 text-orange-700 hover:bg-orange-200",
+  "행복": "bg-mint-100 text-mint-700 hover:bg-mint-200",
+  "감사": "bg-primary-100 text-primary-700 hover:bg-primary-200",
+  "걱정": "bg-lavender-100 text-lavender-700 hover:bg-lavender-200",
+  "분노": "bg-error-100 text-error-700 hover:bg-error-200",
+  "외로움": "bg-neutral-200 text-neutral-700 hover:bg-neutral-300",
+  "희망": "bg-mint-100 text-mint-700 hover:bg-mint-200",
+  "자책": "bg-orange-100 text-orange-700 hover:bg-orange-200",
+  "직장스트레스": "bg-orange-100 text-orange-700 hover:bg-orange-200",
+  "실수": "bg-lavender-100 text-lavender-700 hover:bg-lavender-200",
+  "대처방법": "bg-mint-100 text-mint-700 hover:bg-mint-200",
+  "공유": "bg-primary-100 text-primary-700 hover:bg-primary-200",
+  "무기력": "bg-neutral-200 text-neutral-700 hover:bg-neutral-300",
+  "조언구함": "bg-lavender-100 text-lavender-700 hover:bg-lavender-200",
+};
+
+const getTagColor = (tag: string): string => {
+  return emotionTagColors[tag] || "bg-primary-50 text-primary-700 hover:bg-primary-100";
+};
 
 export function PostCard({
   author,
@@ -25,6 +56,7 @@ export function PostCard({
   commentCount,
   isLiked = false,
   isAuthor = false,
+  recentComments = [],
   onClick,
 }: PostCardProps) {
   const [liked, setLiked] = useState(isLiked);
@@ -155,7 +187,7 @@ export function PostCard({
                 e.stopPropagation();
                 // 태그로 필터링된 게시글 목록으로 이동
               }}
-              className="px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm hover:bg-primary-100 transition-colors"
+              className={`px-3 py-1 rounded-full text-sm transition-colors ${getTagColor(tag)}`}
             >
               #{tag}
             </button>
@@ -211,6 +243,46 @@ export function PostCard({
           <span className="text-sm">공유</span>
         </button>
       </div>
+
+      {/* Recent Comments Inline Preview */}
+      {recentComments.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-neutral-100">
+          <div className="space-y-3">
+            {recentComments.slice(0, 2).map((comment, index) => (
+              <div
+                key={index}
+                className="bg-neutral-50 rounded-lg p-3 hover:bg-neutral-100 transition-colors"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-6 h-6 rounded-full bg-neutral-200 flex items-center justify-center">
+                    <User className="w-3 h-3 text-neutral-600" />
+                  </div>
+                  <span className="text-body-sm font-medium text-neutral-700">
+                    {comment.author}
+                  </span>
+                  <span className="text-caption text-neutral-500">
+                    {comment.timestamp}
+                  </span>
+                </div>
+                <p className="text-body-sm text-neutral-700 leading-relaxed ml-8 line-clamp-2">
+                  {comment.content}
+                </p>
+              </div>
+            ))}
+            {commentCount > 2 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClick?.();
+                }}
+                className="text-body-sm text-primary-600 hover:text-primary-700 font-medium ml-8"
+              >
+                댓글 {commentCount - 2}개 더 보기 →
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </article>
   );
 }

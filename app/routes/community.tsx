@@ -3,6 +3,7 @@ import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { PostCard } from "../components/community/PostCard";
 import { FilterTabs } from "../components/community/FilterTabs";
+import { SafetyGuidelineBanner } from "../components/community/SafetyGuidelineBanner";
 import { Button } from "../components/Button";
 
 export function meta() {
@@ -29,6 +30,18 @@ const mockPosts = [
     commentCount: 18,
     isLiked: false,
     isAuthor: false,
+    recentComments: [
+      {
+        author: "격려왕",
+        content: "실수는 누구나 합니다. 중요한 건 거기서 배우는 거예요. 너무 자책하지 마세요!",
+        timestamp: "2시간 전",
+      },
+      {
+        author: "익명456",
+        content: "저도 비슷한 경험이 있어요. 시간이 지나면 괜찮아질 거예요. 힘내세요!",
+        timestamp: "1시간 전",
+      },
+    ],
   },
   {
     id: "2",
@@ -42,6 +55,18 @@ const mockPosts = [
     commentCount: 67,
     isLiked: true,
     isAuthor: false,
+    recentComments: [
+      {
+        author: "평온함",
+        content: "저는 명상 앱을 사용해요. 하루 10분만 해도 많이 달라지더라고요!",
+        timestamp: "20시간 전",
+      },
+      {
+        author: "산책러버",
+        content: "공원 산책이 최고예요. 자연 소리 들으면서 걷다 보면 마음이 편안해져요.",
+        timestamp: "18시간 전",
+      },
+    ],
   },
   {
     id: "3",
@@ -55,6 +80,13 @@ const mockPosts = [
     commentCount: 23,
     isLiked: false,
     isAuthor: false,
+    recentComments: [
+      {
+        author: "공감100",
+        content: "저도 그런 시기가 있었어요. 작은 것부터 시작해보세요. 창문 열고 햇빛 보기, 물 한 잔 마시기... 작은 성공이 모여요.",
+        timestamp: "1일 전",
+      },
+    ],
   },
 ];
 
@@ -110,6 +142,9 @@ export default function Community() {
           </div>
         </div>
 
+        {/* Safety Guidelines Banner */}
+        <SafetyGuidelineBanner />
+
         {/* Filter Tabs */}
         <FilterTabs
           activeFilter={activeFilter}
@@ -132,6 +167,7 @@ export default function Community() {
               commentCount={post.commentCount}
               isLiked={post.isLiked}
               isAuthor={post.isAuthor}
+              recentComments={post.recentComments}
               onClick={() => handlePostClick(post.id)}
             />
           ))}
