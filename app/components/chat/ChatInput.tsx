@@ -1,13 +1,20 @@
 import { useState } from "react";
 import { Button } from "../Button";
+import { Mic, Paperclip } from "lucide-react";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
   disabled?: boolean;
+  onVoiceInput?: () => void;
 }
 
-export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  disabled = false,
+  onVoiceInput,
+}: ChatInputProps) {
   const [message, setMessage] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,19 +31,40 @@ export function ChatInput({ onSend, disabled = false }: ChatInputProps) {
     }
   };
 
+  const handleVoiceClick = () => {
+    setIsRecording(!isRecording);
+    onVoiceInput?.();
+  };
+
   return (
     <form
       onSubmit={handleSubmit}
       className="border-t border-neutral-200 bg-white p-4"
     >
-      <div className="flex items-end gap-3">
-        {/* Attachment Button (placeholder) */}
+      <div className="flex items-end gap-2">
+        {/* Attachment Button */}
         <button
           type="button"
           className="flex-shrink-0 w-10 h-10 rounded-lg border border-neutral-300 flex items-center justify-center text-neutral-600 hover:bg-neutral-50 transition-colors"
           disabled={disabled}
+          title="파일 첨부"
         >
-          📎
+          <Paperclip className="w-5 h-5" />
+        </button>
+
+        {/* Voice Input Button */}
+        <button
+          type="button"
+          onClick={handleVoiceClick}
+          className={`flex-shrink-0 w-10 h-10 rounded-lg border flex items-center justify-center transition-colors ${
+            isRecording
+              ? "border-error-500 bg-error-50 text-error-600 animate-pulse"
+              : "border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+          }`}
+          disabled={disabled}
+          title={isRecording ? "녹음 중..." : "음성 입력"}
+        >
+          <Mic className="w-5 h-5" />
         </button>
 
         {/* Message Input */}

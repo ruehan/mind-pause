@@ -5,6 +5,8 @@ import { ChatMessage } from "../components/chat/ChatMessage";
 import { ActionSuggestionCard } from "../components/chat/ActionSuggestionCard";
 import { ConversationListItem } from "../components/chat/ConversationListItem";
 import { ChatInput } from "../components/chat/ChatInput";
+import { TypingIndicator } from "../components/chat/TypingIndicator";
+import { EmotionQuickSelect } from "../components/chat/EmotionQuickSelect";
 import { Button } from "../components/Button";
 
 export function meta() {
@@ -75,15 +77,33 @@ export default function Chat() {
   const [activeConversation, setActiveConversation] = useState("1");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [showEmotionSelect, setShowEmotionSelect] = useState(true);
 
   const handleSendMessage = (message: string) => {
     console.log("Sending message:", message);
+    setIsTyping(true);
+    // Simulate AI typing
+    setTimeout(() => {
+      setIsTyping(false);
+    }, 2000);
     // TODO: API call to send message
   };
 
   const handleActionSuggestion = () => {
     console.log("Starting action suggestion");
     // TODO: Navigate to activity
+  };
+
+  const handleEmotionSelect = (emotion: string) => {
+    console.log("Selected emotion:", emotion);
+    handleSendMessage(`오늘 기분: ${emotion}`);
+    setShowEmotionSelect(false);
+  };
+
+  const handleVoiceInput = () => {
+    console.log("Voice input started");
+    // TODO: Implement voice recognition
   };
 
   return (
@@ -229,6 +249,11 @@ export default function Chat() {
 
           {/* Messages Container */}
           <div className="flex-1 overflow-y-auto p-6">
+            {/* Emotion Quick Select */}
+            {showEmotionSelect && (
+              <EmotionQuickSelect onSelect={handleEmotionSelect} />
+            )}
+
             {mockMessages.map((msg) => (
               <ChatMessage
                 key={msg.id}
@@ -238,6 +263,9 @@ export default function Chat() {
               />
             ))}
 
+            {/* Typing Indicator */}
+            {isTyping && <TypingIndicator />}
+
             {/* Action Suggestion */}
             <ActionSuggestionCard
               title={mockSuggestion.title}
@@ -245,23 +273,44 @@ export default function Chat() {
             />
 
             {/* Suggested Questions */}
-            <div className="mt-8 p-4 bg-white rounded-lg border border-neutral-200">
-              <p className="text-body font-medium text-neutral-700 mb-3 flex items-center gap-2">
-                💡 추천 질문:
+            <div className="mt-8 p-4 glass rounded-xl border border-primary-100">
+              <p className="text-body font-medium text-neutral-800 mb-3 flex items-center gap-2">
+                💡 이런 이야기를 해보시겠어요?
               </p>
               <div className="space-y-2">
-                <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-neutral-50 text-body-sm text-neutral-600 transition-colors">
+                <button
+                  onClick={() =>
+                    handleSendMessage("오늘 스트레스 관리 방법 알려줘")
+                  }
+                  className="w-full text-left px-4 py-2 rounded-lg bg-white/50 hover:bg-white transition-all text-body-sm text-neutral-700"
+                >
                   • "오늘 스트레스 관리 방법 알려줘"
                 </button>
-                <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-neutral-50 text-body-sm text-neutral-600 transition-colors">
+                <button
+                  onClick={() =>
+                    handleSendMessage("불안할 때 어떻게 해야 할까?")
+                  }
+                  className="w-full text-left px-4 py-2 rounded-lg bg-white/50 hover:bg-white transition-all text-body-sm text-neutral-700"
+                >
                   • "불안할 때 어떻게 해야 할까?"
+                </button>
+                <button
+                  onClick={() =>
+                    handleSendMessage("긍정적인 마음가짐 유지하는 방법")
+                  }
+                  className="w-full text-left px-4 py-2 rounded-lg bg-white/50 hover:bg-white transition-all text-body-sm text-neutral-700"
+                >
+                  • "긍정적인 마음가짐 유지하는 방법"
                 </button>
               </div>
             </div>
           </div>
 
           {/* Chat Input */}
-          <ChatInput onSend={handleSendMessage} />
+          <ChatInput
+            onSend={handleSendMessage}
+            onVoiceInput={handleVoiceInput}
+          />
         </div>
       </main>
 
