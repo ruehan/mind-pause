@@ -9,6 +9,8 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { DevSidebar } from "./components/DevSidebar";
+import ErrorPage from "./routes/error";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://cdn.jsdelivr.net" },
@@ -28,7 +30,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <DevSidebar />
+        <div className="ml-56 transition-all duration-300">
+          {children}
+        </div>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -41,30 +46,21 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
-  let stack: string | undefined;
+  let errorType: "404" | "500" | "403" | "network" | "maintenance" | "session" | "ratelimit" = "500";
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
-      error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
-    stack = error.stack;
+    if (error.status === 404) {
+      errorType = "404";
+    } else if (error.status === 403) {
+      errorType = "403";
+    } else if (error.status === 429) {
+      errorType = "ratelimit";
+    } else if (error.status === 503) {
+      errorType = "maintenance";
+    } else {
+      errorType = "500";
+    }
   }
 
-  return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
-        </pre>
-      )}
-    </main>
-  );
+  return <ErrorPage type={errorType} />;
 }
