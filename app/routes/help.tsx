@@ -5,6 +5,8 @@ import { SearchBar } from "../components/help/SearchBar";
 import { CategorySidebar } from "../components/help/CategorySidebar";
 import { FAQItem } from "../components/help/FAQItem";
 import { ContactOptionCard } from "../components/help/ContactOptionCard";
+import { PopularFAQSection } from "../components/help/PopularFAQSection";
+import { VideoTutorialSection } from "../components/help/VideoTutorialSection";
 import { Mail, MessageCircle, Phone } from "lucide-react";
 
 export function meta() {
@@ -21,40 +23,86 @@ export function meta() {
 const mockFAQs = [
   {
     id: "1",
-    category: "emotion_log",
+    category: "감정 기록",
     question: "감정 기록을 어떻게 수정하나요?",
     shortAnswer:
       "감정 기록 페이지에서 해당 기록을 찾아 수정 버튼을 클릭하면 됩니다.",
+    fullAnswer:
+      "감정 기록을 수정하려면:\n\n1. 감정 기록 페이지로 이동하세요\n2. 수정하고 싶은 기록을 찾아 클릭합니다\n3. '수정하기' 버튼을 클릭하세요\n4. 내용을 수정한 후 '저장' 버튼을 누르면 됩니다\n\n과거 7일 이내의 기록만 수정 가능합니다.",
     isPopular: true,
   },
   {
     id: "2",
-    category: "ai_coach",
+    category: "AI 채팅",
     question: "AI 코치는 어떻게 이용하나요?",
     shortAnswer: "채팅 페이지에서 AI와 대화를 시작하실 수 있습니다.",
+    fullAnswer:
+      "AI 코치 이용 방법:\n\n1. 상단 메뉴에서 '채팅' 탭을 클릭하세요\n2. 화면 하단의 입력창에 고민이나 질문을 입력합니다\n3. AI가 24시간 언제든지 답변을 제공합니다\n\n무료 플랜에서는 하루 10회까지 이용 가능합니다.",
     isPopular: true,
   },
   {
     id: "3",
-    category: "account",
+    category: "계정",
     question: "계정을 삭제하려면 어떻게 하나요?",
     shortAnswer: "설정 > 계정 관리에서 계정 탈퇴를 진행하실 수 있습니다.",
+    fullAnswer:
+      "계정 삭제 절차:\n\n1. 프로필 > 설정으로 이동하세요\n2. '계정 관리' 섹션을 찾습니다\n3. '계정 탈퇴하기' 버튼을 클릭합니다\n4. 탈퇴 사유를 선택하고 확인합니다\n\n⚠️ 주의: 탈퇴 후 7일 이내 복구 가능하며, 이후 모든 데이터가 영구 삭제됩니다.",
     isPopular: true,
   },
   {
     id: "4",
-    category: "community",
+    category: "커뮤니티",
     question: "커뮤니티 글이 삭제되었어요",
     shortAnswer:
       "커뮤니티 가이드라인을 위반한 게시물은 관리자에 의해 삭제될 수 있습니다.",
+    fullAnswer:
+      "게시물 삭제 사유:\n\n• 욕설, 비방, 혐오 표현\n• 개인정보 노출\n• 상업적 광고\n• 불법 정보 유포\n\n게시물이 부당하게 삭제되었다고 생각하신다면 고객센터로 문의해주세요.",
     isPopular: false,
   },
   {
     id: "5",
-    category: "challenge",
+    category: "챌린지",
     question: "챌린지를 중도에 포기할 수 있나요?",
     shortAnswer: "네, 가능합니다. 챌린지 카드에서 포기하기를 선택하세요.",
+    fullAnswer:
+      "챌린지 포기 방법:\n\n1. 챌린지 페이지에서 진행 중인 챌린지를 찾습니다\n2. 챌린지 카드의 '포기하기' 버튼을 클릭합니다\n3. 확인 메시지에서 '확인'을 누릅니다\n\n포기하면 해당 챌린지의 진행 기록이 초기화되며, 언제든지 다시 시작할 수 있습니다.",
     isPopular: false,
+  },
+  {
+    id: "6",
+    category: "감정 기록",
+    question: "감정 기록은 얼마나 보관되나요?",
+    shortAnswer: "모든 감정 기록은 영구적으로 보관됩니다.",
+    fullAnswer:
+      "감정 기록 보관:\n\n• 모든 기록은 계정이 유지되는 한 영구 보관됩니다\n• 언제든지 과거 기록을 조회할 수 있습니다\n• 데이터는 암호화되어 안전하게 저장됩니다\n• 백업 기능을 통해 내보내기도 가능합니다",
+    isPopular: true,
+  },
+];
+
+const mockVideoTutorials = [
+  {
+    id: "v1",
+    title: "마음쉼표 시작하기",
+    description: "회원가입부터 첫 감정 기록까지, 5분 만에 시작하는 방법",
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    duration: "5:23",
+    thumbnail: "https://placehold.co/400x225/6366F1/FFFFFF?text=Tutorial+1",
+  },
+  {
+    id: "v2",
+    title: "AI 코치 활용법",
+    description: "AI 코치와 효과적으로 대화하는 방법과 팁",
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    duration: "7:15",
+    thumbnail: "https://placehold.co/400x225/A78BFA/FFFFFF?text=Tutorial+2",
+  },
+  {
+    id: "v3",
+    title: "커뮤니티 이용하기",
+    description: "안전하고 따뜻한 커뮤니티 참여 가이드",
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    duration: "4:50",
+    thumbnail: "https://placehold.co/400x225/34D399/FFFFFF?text=Tutorial+3",
   },
 ];
 
@@ -70,7 +118,11 @@ export default function Help() {
 
   const handleViewDetail = (faqId: string) => {
     console.log("Viewing FAQ detail:", faqId);
-    // TODO: Navigate to FAQ detail page or show modal
+    // Scroll to the FAQ in the list
+    const element = document.getElementById(`faq-${faqId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   };
 
   const handleEmailInquiry = () => {
@@ -87,6 +139,9 @@ export default function Help() {
   const filteredFAQs = mockFAQs.filter(
     (faq) => activeCategory === "getting_started" || faq.category === activeCategory
   );
+
+  // Get popular FAQs for the top section
+  const popularFAQs = mockFAQs.filter((faq) => faq.isPopular);
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
@@ -107,9 +162,15 @@ export default function Help() {
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-8">
           <SearchBar onSearch={handleSearch} />
         </div>
+
+        {/* Popular FAQ Section */}
+        <PopularFAQSection faqs={popularFAQs} onViewDetail={handleViewDetail} />
+
+        {/* Video Tutorials */}
+        <VideoTutorialSection tutorials={mockVideoTutorials} />
 
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-6">
@@ -132,26 +193,23 @@ export default function Help() {
           {/* FAQ List */}
           <div className="flex-1">
             <div className="mb-8">
-              <h2 className="text-h3 text-neutral-900 mb-4 flex items-center gap-2">
-                ❓ 자주 묻는 질문
+              <h2 className="text-h3 text-neutral-900 mb-6">
+                카테고리별 질문
               </h2>
               {filteredFAQs.length > 0 ? (
-                <>
+                <div className="space-y-3">
                   {filteredFAQs.map((faq) => (
-                    <FAQItem
-                      key={faq.id}
-                      question={faq.question}
-                      shortAnswer={faq.shortAnswer}
-                      isPopular={faq.isPopular}
-                      onViewDetail={() => handleViewDetail(faq.id)}
-                    />
+                    <div key={faq.id} id={`faq-${faq.id}`}>
+                      <FAQItem
+                        question={faq.question}
+                        shortAnswer={faq.shortAnswer}
+                        fullAnswer={faq.fullAnswer}
+                        isPopular={faq.isPopular}
+                        category={faq.category}
+                      />
+                    </div>
                   ))}
-                  <div className="text-center mt-4">
-                    <button className="text-body text-primary-600 hover:text-primary-700 font-medium transition-colors">
-                      더보기 →
-                    </button>
-                  </div>
-                </>
+                </div>
               ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-12 text-center">
                   <div className="text-6xl mb-4">🔍</div>
