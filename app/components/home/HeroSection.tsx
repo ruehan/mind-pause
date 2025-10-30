@@ -4,11 +4,14 @@ import { Button } from "../Button";
 export function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-lavender-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32">
+      {/* Mesh Gradient Overlay */}
+      <div className="absolute inset-0 gradient-mesh opacity-40 animate-gradient bg-[length:200%_200%]"></div>
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Text Content */}
           <div className="text-center lg:text-left">
-            <h1 className="text-h1 text-neutral-900 mb-6 animate-fade-in">
+            <h1 className="text-h1 text-gradient-primary mb-6 animate-fade-in font-bold">
               마음의 쉼표,
               <br />
               당신의 감정을 돌보세요
@@ -19,10 +22,10 @@ export function HeroSection() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-slide-up">
-              <Button variant="primary" size="lg" href="/login?mode=signup">
+              <Button variant="gradient" size="lg" href="/login?mode=signup">
                 무료로 시작하기 →
               </Button>
-              <Button variant="secondary" size="lg" href="#features">
+              <Button variant="glass" size="lg" href="#features">
                 체험해보기
               </Button>
             </div>
@@ -38,9 +41,9 @@ export function HeroSection() {
 
               {/* Center illustration placeholder */}
               <div className="relative z-10 flex items-center justify-center h-full">
-                <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
+                <div className="glass-strong rounded-2xl shadow-soft hover:shadow-primary transition-all duration-300 p-8 w-full max-w-sm transform hover:-translate-y-1">
                   <div className="flex items-center justify-center mb-6">
-                    <div className="w-24 h-24 bg-gradient-to-br from-primary-400 to-lavender-500 rounded-full flex items-center justify-center shadow-lg">
+                    <div className="w-24 h-24 gradient-primary rounded-full flex items-center justify-center shadow-primary animate-float">
                       <Heart className="w-12 h-12 text-white" />
                     </div>
                   </div>

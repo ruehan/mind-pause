@@ -1,6 +1,7 @@
 # Data Model Planning Worksheet
 
 ## 소개
+
 - 개발에 앞서 애플리케이션의 **데이터 구조를 최대한 체계적으로 정의**하는 것이 이 과제의 목표입니다.
 - 엔터티, 필드, 관계, 권한, 비즈니스 규칙 등을 사전에 정리하는 작업은 **데이터 모델링의 오류나 누락을 줄이고**, 이후 개발의 방향성을 명확히 하는 데 큰 도움이 됩니다.
 - **어떤 엔터티(데이터 객체)** 들이 존재하며, **서로 어떤 관계와 규칙**을 가지고 있는지를 중심으로 워크시트를 작성해보세요.
@@ -24,6 +25,7 @@
 ## 2. 각 엔터티의 필드를 정의하세요
 
 **User**
+
 - `id` (UUID / Primary Key)
 - `email` (String, unique, nullable for 익명)
 - `nickname` (String, unique)
@@ -40,6 +42,7 @@
 - `last_login_at` (Datetime)
 
 **EmotionLog**
+
 - `id` (UUID / Primary Key)
 - `user_id` (UUID, FK: User)
 - `recorded_at` (Datetime)
@@ -50,6 +53,7 @@
 - `created_at` (Datetime)
 
 **CommunityPost**
+
 - `id` (UUID / Primary Key)
 - `user_id` (UUID, FK: User, 익명 시 null)
 - `title` (String)
@@ -61,6 +65,7 @@
 - `num_comments` (Integer, default: 0)
 
 **Comment**
+
 - `id` (UUID / Primary Key)
 - `post_id` (UUID, FK: CommunityPost)
 - `user_id` (UUID, FK: User, 익명 시 null)
@@ -69,6 +74,7 @@
 - `created_at` (Datetime)
 
 **Challenge**
+
 - `id` (UUID / Primary Key)
 - `user_id` (UUID, FK: User)
 - `title` (String)
@@ -79,6 +85,7 @@
 - `feedback` (String, optional)
 
 **ChatConversation**
+
 - `id` (UUID / Primary Key)
 - `user_id` (UUID, FK: User)
 - `session_id` (String, unique)
@@ -88,6 +95,7 @@
 - `updated_at` (Datetime)
 
 **ChatMessage**
+
 - `id` (UUID / Primary Key)
 - `conversation_id` (UUID, FK: ChatConversation)
 - `role` (Enum: USER, ASSISTANT, SYSTEM)
@@ -96,6 +104,7 @@
 - `created_at` (Datetime)
 
 **Notification**
+
 - `id` (UUID / Primary Key)
 - `user_id` (UUID, FK: User)
 - `type` (Enum: CHALLENGE, COMMENT, LIKE, SYSTEM, AI_FEEDBACK)
@@ -106,6 +115,7 @@
 - `created_at` (Datetime)
 
 **FileAttachment**
+
 - `id` (UUID / Primary Key)
 - `entity_type` (Enum: POST, COMMENT, USER_PROFILE)
 - `entity_id` (UUID, 연결된 엔터티 ID)
@@ -136,18 +146,17 @@
 
 ## 4. 어떤 CRUD 작업이 필요한가요?
 
-| Entity            | Create                  | Read                  | Update                | Delete                |
-|-------------------|------------------------|-----------------------|-----------------------|-----------------------|
-| User              | 자체/소셜가입(누구나)      | 본인, 관리자 전체      | 본인(닉네임, 비번 등)  | 본인(탈퇴), 관리자     |
-| EmotionLog        | 회원/익명(본인)           | 본인, 통계(관리자/AI)  | 본인                  | 본인, 관리자          |
-| ChatConversation  | 회원(본인, 자동생성)      | 본인, 관리자          | 본인(제목), 관리자     | 본인, 관리자          |
-| ChatMessage       | 회원(본인+AI 자동)        | 본인(대화 내), 관리자  | 불가                  | 대화 삭제 시 연쇄     |
-| CommunityPost     | 회원/익명(글쓰기)         | 전체(익명허용)         | 작성자(본인), 관리자   | 작성자, 관리자        |
-| Comment           | 회원/익명(댓글)           | 전체(게시글 하위)      | 작성자(본인), 관리자   | 작성자, 관리자        |
-| Challenge         | 회원(본인)               | 본인/통계(관리자/AI)   | 본인(상태), 관리자     | 본인, 관리자          |
-| Notification      | 시스템(자동생성)          | 본인                  | 본인(읽음상태)         | 본인, 관리자          |
-| FileAttachment    | 회원(본인)               | 본인, 게시글 열람자    | 불가                  | 본인, 관리자          |
-
+| Entity           | Create                | Read                  | Update                | Delete             |
+| ---------------- | --------------------- | --------------------- | --------------------- | ------------------ |
+| User             | 자체/소셜가입(누구나) | 본인, 관리자 전체     | 본인(닉네임, 비번 등) | 본인(탈퇴), 관리자 |
+| EmotionLog       | 회원/익명(본인)       | 본인, 통계(관리자/AI) | 본인                  | 본인, 관리자       |
+| ChatConversation | 회원(본인, 자동생성)  | 본인, 관리자          | 본인(제목), 관리자    | 본인, 관리자       |
+| ChatMessage      | 회원(본인+AI 자동)    | 본인(대화 내), 관리자 | 불가                  | 대화 삭제 시 연쇄  |
+| CommunityPost    | 회원/익명(글쓰기)     | 전체(익명허용)        | 작성자(본인), 관리자  | 작성자, 관리자     |
+| Comment          | 회원/익명(댓글)       | 전체(게시글 하위)     | 작성자(본인), 관리자  | 작성자, 관리자     |
+| Challenge        | 회원(본인)            | 본인/통계(관리자/AI)  | 본인(상태), 관리자    | 본인, 관리자       |
+| Notification     | 시스템(자동생성)      | 본인                  | 본인(읽음상태)        | 본인, 관리자       |
+| FileAttachment   | 회원(본인)            | 본인, 게시글 열람자   | 불가                  | 본인, 관리자       |
 
 ---
 
@@ -176,6 +185,7 @@
 성능 최적화를 위한 인덱스 설계:
 
 ### User
+
 ```sql
 CREATE UNIQUE INDEX idx_user_email ON User(email) WHERE email IS NOT NULL;
 CREATE UNIQUE INDEX idx_user_nickname ON User(nickname);
@@ -185,6 +195,7 @@ CREATE INDEX idx_user_deleted ON User(is_deleted) WHERE is_deleted = false;
 ```
 
 ### EmotionLog
+
 ```sql
 CREATE INDEX idx_emotion_user_date ON EmotionLog(user_id, recorded_at DESC);
 CREATE INDEX idx_emotion_date ON EmotionLog(recorded_at DESC);
@@ -192,6 +203,7 @@ CREATE INDEX idx_emotion_score ON EmotionLog(emotion_score);
 ```
 
 ### ChatConversation
+
 ```sql
 CREATE INDEX idx_chat_conv_user ON ChatConversation(user_id, updated_at DESC);
 CREATE UNIQUE INDEX idx_chat_conv_session ON ChatConversation(session_id);
@@ -199,12 +211,14 @@ CREATE INDEX idx_chat_conv_updated ON ChatConversation(updated_at DESC);
 ```
 
 ### ChatMessage
+
 ```sql
 CREATE INDEX idx_chat_msg_conv ON ChatMessage(conversation_id, created_at);
 CREATE INDEX idx_chat_msg_created ON ChatMessage(created_at DESC);
 ```
 
 ### CommunityPost
+
 ```sql
 CREATE INDEX idx_post_created ON CommunityPost(created_at DESC);
 CREATE INDEX idx_post_user ON CommunityPost(user_id) WHERE user_id IS NOT NULL;
@@ -213,6 +227,7 @@ CREATE INDEX idx_post_deleted ON CommunityPost(is_deleted) WHERE is_deleted = fa
 ```
 
 ### Comment
+
 ```sql
 CREATE INDEX idx_comment_post ON Comment(post_id, created_at);
 CREATE INDEX idx_comment_user ON Comment(user_id) WHERE user_id IS NOT NULL;
@@ -220,6 +235,7 @@ CREATE INDEX idx_comment_created ON Comment(created_at DESC);
 ```
 
 ### Challenge
+
 ```sql
 CREATE INDEX idx_challenge_user_status ON Challenge(user_id, status);
 CREATE INDEX idx_challenge_started ON Challenge(started_at DESC);
@@ -227,6 +243,7 @@ CREATE INDEX idx_challenge_completed ON Challenge(completed_at DESC) WHERE compl
 ```
 
 ### Notification
+
 ```sql
 CREATE INDEX idx_notif_user_read ON Notification(user_id, is_read, created_at DESC);
 CREATE INDEX idx_notif_created ON Notification(created_at DESC);
@@ -234,9 +251,9 @@ CREATE INDEX idx_notif_type ON Notification(type, created_at DESC);
 ```
 
 ### FileAttachment
+
 ```sql
 CREATE INDEX idx_file_entity ON FileAttachment(entity_type, entity_id);
 CREATE INDEX idx_file_uploader ON FileAttachment(uploaded_by);
 CREATE INDEX idx_file_created ON FileAttachment(created_at DESC);
 ```
-

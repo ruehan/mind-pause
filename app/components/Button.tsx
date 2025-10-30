@@ -2,7 +2,7 @@ import { Link } from "react-router";
 
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "gradient" | "glass";
   size?: "sm" | "md" | "lg";
   href?: string;
   onClick?: () => void;
@@ -28,11 +28,15 @@ export function Button({
   // Variant styles
   const variantStyles = {
     primary:
-      "bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500 shadow-sm hover:shadow-md",
+      "bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500 shadow-sm hover:shadow-md transform hover:-translate-y-0.5",
     secondary:
-      "bg-white text-primary-600 border-2 border-primary-500 hover:bg-primary-50 focus:ring-primary-500",
+      "bg-white text-primary-600 border-2 border-primary-500 hover:bg-primary-50 focus:ring-primary-500 transform hover:-translate-y-0.5",
     ghost:
       "bg-transparent text-neutral-700 hover:bg-neutral-100 focus:ring-neutral-500",
+    gradient:
+      "gradient-primary text-white hover:shadow-primary shadow-lg transform hover:scale-105 focus:ring-primary-500",
+    glass:
+      "glass text-neutral-900 hover:bg-white/80 border border-white/20 backdrop-blur-lg focus:ring-primary-500 shadow-soft",
   };
 
   // Size styles

@@ -80,7 +80,7 @@ export function SignupForm() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12">
+      <div className="glass-strong rounded-2xl shadow-soft hover:shadow-elevation-3 transition-all duration-300 p-8 sm:p-12">
         {/* Title */}
         <h1 className="text-h2 text-neutral-900 mb-2 text-center">
           마음쉼표와 함께

@@ -17,9 +17,11 @@ export default function Login() {
   const mode = searchParams.get("mode") || "login";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-lavender-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-lavender-50 relative">
+      {/* Mesh Gradient Overlay */}
+      <div className="absolute inset-0 gradient-mesh opacity-30 animate-gradient bg-[length:200%_200%]"></div>
       {/* Simple Header */}
-      <header className="border-b border-neutral-200 bg-white">
+      <header className="border-b border-neutral-200 bg-white relative z-10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
             <Link
@@ -53,7 +55,7 @@ export default function Login() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
           {/* Left Illustration (Desktop Only) */}
           <div className="hidden lg:block lg:col-span-2">
