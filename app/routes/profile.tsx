@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { SettingsNav } from "../components/profile/SettingsNav";
+import { ProfileHeader } from "../components/profile/ProfileHeader";
+import { ProfileStatistics } from "../components/profile/ProfileStatistics";
+import { BadgeShowcase, defaultBadges } from "../components/challenge/BadgeShowcase";
 import { ProfileImageSection } from "../components/profile/ProfileImageSection";
 import { SocialLoginCard } from "../components/profile/SocialLoginCard";
 import { NotificationCheckbox } from "../components/profile/NotificationCheckbox";
@@ -19,7 +22,7 @@ export function meta() {
 
 export default function Profile() {
   const [activeSection, setActiveSection] = useState<
-    "profile" | "notification" | "security" | "account" | "data" | "info"
+    "profile" | "stats" | "notification" | "security" | "account" | "data" | "info"
   >("profile");
 
   // Mock user data
@@ -82,98 +85,44 @@ export default function Profile() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 p-6 lg:p-8 max-w-4xl mx-auto w-full">
-          {/* Profile Section */}
+        <div className="flex-1 p-6 lg:p-8 max-w-6xl mx-auto w-full">
+          {/* Profile Overview Section */}
           {activeSection === "profile" && (
+            <div className="space-y-8">
+              {/* Profile Header */}
+              <ProfileHeader
+                nickname={nickname}
+                email="hangyu@example.com"
+                joinDate="2024년 1월 1일"
+                profileImage={profileImage}
+                completionPercentage={75}
+              />
+
+              {/* Statistics */}
+              <ProfileStatistics
+                totalEmotionLogs={125}
+                averageEmotionScore={2.3}
+                challengeCompletionRate={87}
+                communityLikes={42}
+                communityComments={18}
+                currentStreak={5}
+              />
+
+              {/* Badges */}
+              <BadgeShowcase badges={defaultBadges} />
+            </div>
+          )}
+
+          {/* Stats Detail Section */}
+          {activeSection === "stats" && (
             <div>
               <h1 className="text-h2 text-neutral-900 mb-6 flex items-center gap-2">
-                👤 프로필
+                📊 상세 통계
               </h1>
-
               <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-                <ProfileImageSection
-                  imageUrl={profileImage}
-                  onImageChange={handleImageChange}
-                  onImageDelete={handleImageDelete}
-                />
-
-                {/* Nickname */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    닉네임
-                  </label>
-                  <input
-                    type="text"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    className="w-full p-3 border border-neutral-300 rounded-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all"
-                    placeholder="닉네임을 입력하세요"
-                  />
-                  <p className="text-xs text-neutral-500 mt-1">
-                    2-20자, 한글/영문/숫자 가능
-                  </p>
-                </div>
-
-                {/* Email (read-only) */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
-                    이메일
-                  </label>
-                  <input
-                    type="email"
-                    value="hangyu@example.com"
-                    disabled
-                    className="w-full p-3 border border-neutral-200 rounded-lg bg-neutral-100 text-neutral-500 cursor-not-allowed"
-                  />
-                  <p className="text-xs text-neutral-500 mt-1">
-                    (이메일은 변경할 수 없습니다)
-                  </p>
-                </div>
-
-                {/* Social Logins */}
-                <div className="mb-6">
-                  <h3 className="text-h4 text-neutral-900 mb-4">
-                    소셜 연동 계정
-                  </h3>
-                  <div className="space-y-3">
-                    <SocialLoginCard
-                      provider="google"
-                      connected={true}
-                      email="hangyu@gmail.com"
-                      onConnect={() => handleSocialConnect("google")}
-                      onDisconnect={() => handleSocialDisconnect("google")}
-                    />
-                    <SocialLoginCard
-                      provider="kakao"
-                      connected={false}
-                      onConnect={() => handleSocialConnect("kakao")}
-                      onDisconnect={() => handleSocialDisconnect("kakao")}
-                    />
-                    <SocialLoginCard
-                      provider="naver"
-                      connected={false}
-                      onConnect={() => handleSocialConnect("naver")}
-                      onDisconnect={() => handleSocialDisconnect("naver")}
-                    />
-                  </div>
-                </div>
-
-                {/* Account Info */}
-                <div className="pt-6 border-t border-neutral-200 text-sm text-neutral-600 space-y-1">
-                  <p>가입일: 2024년 1월 1일</p>
-                  <p>마지막 로그인: 2024년 1월 15일 14:30</p>
-                </div>
-
-                {/* Save Button */}
-                <div className="mt-6 text-center">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    onClick={handleSaveProfile}
-                  >
-                    변경사항 저장
-                  </Button>
-                </div>
+                <p className="text-body text-neutral-600">
+                  상세 통계 기능은 곧 제공될 예정입니다.
+                </p>
               </div>
             </div>
           )}
