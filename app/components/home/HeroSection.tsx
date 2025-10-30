@@ -8,9 +8,9 @@ export function HeroSection() {
       <div className="absolute inset-0 gradient-mesh opacity-40 animate-gradient bg-[length:200%_200%]"></div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
           {/* Text Content */}
-          <div className="text-center lg:text-left">
+          <div className="text-center lg:col-span-3">
             <h1 className="text-h1 text-gradient-primary mb-6 animate-fade-in font-bold">
               마음의 쉼표,
               <br />
@@ -21,7 +21,7 @@ export function HeroSection() {
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-slide-up">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up">
               <Button variant="gradient" size="lg" href="/login?mode=signup">
                 무료로 시작하기 →
               </Button>
@@ -32,8 +32,8 @@ export function HeroSection() {
           </div>
 
           {/* Hero Illustration */}
-          <div className="relative animate-fade-in">
-            <div className="relative w-full aspect-square max-w-md mx-auto">
+          <div className="relative animate-fade-in lg:col-span-2">
+            <div className="relative w-full aspect-square max-w-md mx-auto lg:max-w-sm">
               {/* Decorative circles */}
               <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary-200 rounded-full opacity-60 blur-3xl animate-pulse-slow"></div>
               <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-lavender-200 rounded-full opacity-60 blur-3xl animate-pulse-slow" style={{ animationDelay: "1s" }}></div>

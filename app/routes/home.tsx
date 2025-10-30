@@ -3,7 +3,13 @@ import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { HeroSection } from "../components/home/HeroSection";
 import { FeaturesSection } from "../components/home/FeaturesSection";
+import { CoreValuesSection } from "../components/home/CoreValuesSection";
+import { TargetAudienceSection } from "../components/home/TargetAudienceSection";
 import { FinalCTASection } from "../components/home/FinalCTASection";
+
+// 실제 데이터가 생기면 아래 섹션들로 교체 가능:
+// import { RealStatisticsSection } from "../components/home/RealStatisticsSection";
+// import { RealTestimonialsSection } from "../components/home/RealTestimonialsSection";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -33,6 +39,8 @@ export default function Home() {
       <main className="flex-1">
         <HeroSection />
         <FeaturesSection />
+        <CoreValuesSection />
+        <TargetAudienceSection />
         <FinalCTASection />
       </main>
       <Footer />

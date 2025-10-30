@@ -1,5 +1,5 @@
 import { FeatureCard } from "./FeatureCard";
-import { FileText, MessageCircle, BarChart3, Users, Target, Lock } from "lucide-react";
+import { FileText, MessageCircle, BarChart3, Target } from "lucide-react";
 
 const features = [
   {
@@ -18,19 +18,9 @@ const features = [
     description: "감정 변화를 한눈에 확인",
   },
   {
-    icon: Users,
-    title: "커뮤니티",
-    description: "익명으로 공감과 위로를 나눠요",
-  },
-  {
     icon: Target,
     title: "챌린지",
     description: "회복 습관을 만들어가요",
-  },
-  {
-    icon: Lock,
-    title: "프라이버시",
-    description: "철저한 보안과 익명성 보장",
   },
 ];
 
@@ -49,7 +39,7 @@ export function FeaturesSection() {
         </div>
 
         {/* Feature Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto">
           {features.map((feature, index) => (
             <FeatureCard
               key={index}
