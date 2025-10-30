@@ -9,6 +9,16 @@ export function SocialLoginButtons() {
     // window.location.href = '/api/auth/kakao';
   };
 
+  const handleNaverLogin = () => {
+    // Naver OAuth 로그인 처리
+    // window.location.href = '/api/auth/naver';
+  };
+
+  const handleAnonymousStart = () => {
+    // 익명 세션 생성 및 대시보드로 이동
+    // window.location.href = '/dashboard?anonymous=true';
+  };
+
   return (
     <div className="space-y-3">
       {/* Divider */}
@@ -17,7 +27,7 @@ export function SocialLoginButtons() {
           <div className="w-full border-t border-neutral-200"></div>
         </div>
         <div className="relative flex justify-center text-body-sm">
-          <span className="px-4 bg-white text-neutral-500">또는</span>
+          <span className="px-4 bg-white text-neutral-500">또는 소셜 계정으로</span>
         </div>
       </div>
 
@@ -59,6 +69,34 @@ export function SocialLoginButtons() {
         </svg>
         Kakao로 계속하기
       </button>
+
+      {/* Naver Login Button */}
+      <button
+        type="button"
+        onClick={handleNaverLogin}
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg bg-[#03C75A] text-white hover:bg-[#02B350] transition-colors duration-200 text-body font-medium"
+      >
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16.273 12.845L7.376 0H0v24h7.726V11.156L16.624 24H24V0h-7.727v12.845z" />
+        </svg>
+        Naver로 계속하기
+      </button>
+
+      {/* Anonymous Start Button */}
+      <button
+        type="button"
+        onClick={handleAnonymousStart}
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-neutral-300 rounded-lg bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-colors duration-200 text-body font-medium"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+        </svg>
+        익명으로 시작하기
+      </button>
+
+      <p className="text-caption text-neutral-500 text-center mt-2">
+        익명으로 시작하면 일부 기능이 제한됩니다
+      </p>
     </div>
   );
 }
