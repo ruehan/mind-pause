@@ -80,10 +80,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary-50 via-white to-lavender-50 relative">
+      {/* Mesh Gradient Overlay */}
+      <div className="absolute inset-0 gradient-mesh opacity-20 animate-gradient bg-[length:200%_200%] pointer-events-none"></div>
+      <div className="relative z-10">
+        <Header />
+      </div>
 
-      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
@@ -98,7 +102,7 @@ export default function Dashboard() {
         </div>
 
         {/* Date Range Selector */}
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-4 mb-6">
+        <div className="glass rounded-lg shadow-soft hover:shadow-elevation-2 transition-all duration-300 p-4 mb-6 border border-white/20">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
               {filters.map((filter) => (
@@ -154,7 +158,7 @@ export default function Dashboard() {
         {/* Two-Column Analytics */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Emotion Frequency Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
+          <div className="glass rounded-xl shadow-soft hover:shadow-elevation-3 transition-all duration-300 transform hover:-translate-y-1 p-6 border border-white/20">
             <h2 className="text-h4 text-neutral-900 mb-4 flex items-center gap-2">
               🎯 자주 느낀 감정
             </h2>
@@ -182,9 +186,9 @@ export default function Dashboard() {
           </div>
 
           {/* Activity Summary Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
+          <div className="glass rounded-xl shadow-soft hover:shadow-elevation-3 transition-all duration-300 transform hover:-translate-y-1 p-6 border border-white/20">
             <h2 className="text-h4 text-neutral-900 mb-4 flex items-center gap-2">
-              <BarChart3 className="w-6 h-6 text-primary-600" />
+              <BarChart3 className="w-6 h-6 text-primary-600 animate-float" />
               활동 요약
             </h2>
             <div className="space-y-3">
@@ -240,7 +244,7 @@ export default function Dashboard() {
         </div>
 
         {/* Monthly Achievements Grid */}
-        <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
+        <div className="glass rounded-xl shadow-soft hover:shadow-elevation-3 transition-all duration-300 p-6 border border-white/20">
           <h2 className="text-h4 text-neutral-900 mb-6 flex items-center gap-2">
             🏅 이번 달 성과
           </h2>
@@ -258,7 +262,9 @@ export default function Dashboard() {
         </div>
       </main>
 
-      <Footer />
+      <div className="relative z-10">
+        <Footer />
+      </div>
     </div>
   );
 }

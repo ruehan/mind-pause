@@ -49,10 +49,14 @@ const mockHistory = [
 
 export default function EmotionLog() {
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary-50 via-white to-lavender-50 relative">
+      {/* Mesh Gradient Overlay */}
+      <div className="absolute inset-0 gradient-mesh opacity-20 animate-gradient bg-[length:200%_200%] pointer-events-none"></div>
+      <div className="relative z-10">
+        <Header />
+      </div>
 
-      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
@@ -72,7 +76,7 @@ export default function EmotionLog() {
 
           {/* Right: History Summary (Desktop) */}
           <div className="hidden lg:block">
-            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
+            <div className="glass-strong rounded-2xl shadow-soft hover:shadow-primary transition-all duration-300 p-6 sticky top-24 border border-white/20">
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-xl">📈</span>
                 <h3 className="text-h4 text-neutral-900">최근 기록</h3>
@@ -132,7 +136,9 @@ export default function EmotionLog() {
         </div>
       </main>
 
-      <Footer />
+      <div className="relative z-10">
+        <Footer />
+      </div>
     </div>
   );
 }
