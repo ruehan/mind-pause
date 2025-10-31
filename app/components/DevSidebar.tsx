@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import {
   Home,
@@ -11,8 +10,6 @@ import {
   HelpCircle,
   AlertTriangle,
   Shield,
-  ChevronLeft,
-  ChevronRight,
   Code,
 } from "lucide-react";
 
@@ -36,7 +33,6 @@ const navItems: NavItem[] = [
 ];
 
 export function DevSidebar() {
-  const [isExpanded, setIsExpanded] = useState(true);
   const location = useLocation();
 
   const isActive = (path: string) => {
@@ -47,32 +43,10 @@ export function DevSidebar() {
   };
 
   return (
-    <div
-      className={`fixed left-0 top-0 h-screen bg-neutral-900/95 backdrop-blur-sm border-r border-neutral-700 transition-all duration-300 z-50 ${
-        isExpanded ? "w-56" : "w-16"
-      }`}
-    >
+    <div className="fixed left-0 top-0 h-screen w-16 bg-neutral-900/95 backdrop-blur-sm border-r border-neutral-700 transition-all duration-300 z-50">
       {/* Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-neutral-700">
-        {isExpanded && (
-          <div className="flex items-center gap-2">
-            <Code className="w-5 h-5 text-primary-400" />
-            <span className="text-body-sm font-semibold text-white">
-              Dev Navigation
-            </span>
-          </div>
-        )}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="p-2 rounded-lg hover:bg-neutral-800 transition-colors text-neutral-400 hover:text-white"
-          title={isExpanded ? "접기" : "펼치기"}
-        >
-          {isExpanded ? (
-            <ChevronLeft className="w-5 h-5" />
-          ) : (
-            <ChevronRight className="w-5 h-5" />
-          )}
-        </button>
+      <div className="h-16 flex items-center justify-center border-b border-neutral-700">
+        <Code className="w-5 h-5 text-primary-400" />
       </div>
 
       {/* Navigation Items */}
@@ -83,32 +57,28 @@ export function DevSidebar() {
             const active = isActive(item.path);
 
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
-                  active
-                    ? "bg-primary-600 text-white shadow-lg"
-                    : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
-                }`}
-                title={!isExpanded ? item.label : undefined}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                {isExpanded && (
-                  <span className="text-body-sm font-medium">{item.label}</span>
-                )}
-              </Link>
+              <div key={item.path} className="relative group">
+                <Link
+                  to={item.path}
+                  className={`flex items-center justify-center px-3 py-2.5 rounded-lg transition-all ${
+                    active
+                      ? "bg-primary-600 text-white shadow-lg"
+                      : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                </Link>
+
+                {/* Tooltip */}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white text-body-sm font-medium rounded-lg whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 shadow-lg z-[60]">
+                  {item.label}
+                  {/* Arrow */}
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-primary-600"></div>
+                </div>
+              </div>
             );
           })}
         </div>
-
-        {/* Footer Note */}
-        {isExpanded && (
-          <div className="mt-6 px-3 py-2 text-caption text-neutral-500 border-t border-neutral-700">
-            <p className="mb-1">🚧 개발 전용</p>
-            <p>배포 시 제거 예정</p>
-          </div>
-        )}
       </nav>
     </div>
   );

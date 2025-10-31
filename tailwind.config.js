@@ -116,7 +116,9 @@ export default {
       animation: {
         'spin-slow': 'spin 3s linear infinite',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'pulse-once': 'pulseOnce 0.6s cubic-bezier(0.4, 0, 0.6, 1)',
         'bounce-slow': 'bounce 2s infinite',
+        'bounce-subtle': 'bounceSubtle 0.6s ease-in-out',
         'fade-in': 'fadeIn 0.3s ease-out',
         'fade-out': 'fadeOut 0.3s ease-out',
         'slide-up': 'slideUp 0.3s ease-out',
@@ -128,6 +130,8 @@ export default {
         'glow': 'glow 2s ease-in-out infinite',
         'gradient': 'gradient 3s ease infinite',
         'shimmer': 'shimmer 2s linear infinite',
+        'ripple': 'ripple 0.6s ease-out',
+        'tilt': 'tilt 0.3s ease-out',
       },
 
       keyframes: {
@@ -171,6 +175,22 @@ export default {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        pulseOnce: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        },
+        bounceSubtle: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-5px)' },
+        },
+        ripple: {
+          '0%': { transform: 'scale(0)', opacity: '0.6' },
+          '100%': { transform: 'scale(4)', opacity: '0' },
+        },
+        tilt: {
+          '0%': { transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg)' },
+          '100%': { transform: 'perspective(1000px) rotateX(5deg) rotateY(5deg)' },
         },
       },
 

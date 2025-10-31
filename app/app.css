@@ -281,4 +281,35 @@ body {
   .glow-primary-strong {
     box-shadow: 0 0 40px rgba(62, 111, 255, 0.6);
   }
+
+  /* Ripple Effect */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.6);
+    animation: ripple 0.6s ease-out;
+    pointer-events: none;
+  }
+
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 0.6;
+    }
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  /* Smooth scroll */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Button hover effects */
+  button, a[href] {
+    position: relative;
+    overflow: hidden;
+  }
 }

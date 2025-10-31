@@ -62,6 +62,8 @@ export function PostCard({
   const [liked, setLiked] = useState(isLiked);
   const [likes, setLikes] = useState(likeCount);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [showLikeAnimation, setShowLikeAnimation] = useState(false);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -69,6 +71,8 @@ export function PostCard({
       setLikes(likes - 1);
     } else {
       setLikes(likes + 1);
+      setShowLikeAnimation(true);
+      setTimeout(() => setShowLikeAnimation(false), 600);
     }
     setLiked(!liked);
   };
@@ -81,8 +85,19 @@ export function PostCard({
   return (
     <article
       onClick={onClick}
-      className="glass rounded-xl shadow-soft hover:shadow-primary p-6 mb-4 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-white/20"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`glass rounded-xl shadow-soft p-6 mb-4 transition-all duration-300 transform cursor-pointer border border-white/20 relative overflow-hidden ${
+        isHovered ? "shadow-primary -translate-y-2 scale-102" : "translate-y-0 scale-100"
+      }`}
     >
+      {/* Hover gradient background */}
+      <div className={`absolute inset-0 bg-gradient-to-br from-primary-50/0 via-lavender-50/0 to-mint-50/0 transition-all duration-500 ${
+        isHovered ? "from-primary-50/30 via-lavender-50/20 to-mint-50/30" : ""
+      }`}></div>
+
+      {/* Content wrapper with relative positioning */}
+      <div className="relative z-10">
       {/* Post Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -206,16 +221,28 @@ export function PostCard({
         <button
           onClick={handleLike}
           className={`
-            flex items-center gap-2 px-3 py-2 rounded-lg transition-all
+            flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 transform relative
             ${liked
-              ? "bg-error-50 text-error-500 font-semibold"
-              : "text-neutral-600 hover:bg-neutral-50"
+              ? "bg-error-50 text-error-500 font-semibold scale-105"
+              : "text-neutral-600 hover:bg-neutral-50 hover:scale-110"
             }
           `}
           aria-label={liked ? "좋아요 취소" : "좋아요"}
         >
-          <Heart className={`w-5 h-5 ${liked ? "fill-current scale-110" : ""}`} />
-          <span className="text-sm">{likes}</span>
+          <div className="relative">
+            <Heart className={`w-5 h-5 transition-all duration-300 ${
+              liked ? "fill-current animate-bounce-subtle" : ""
+            }`} />
+            {showLikeAnimation && (
+              <>
+                <Heart className="absolute top-0 left-0 w-5 h-5 fill-current text-error-500 animate-ping" />
+                <div className="absolute -top-2 -right-2 text-lg animate-bounce">💕</div>
+              </>
+            )}
+          </div>
+          <span className={`text-sm transition-all duration-300 ${
+            liked ? "font-semibold" : ""
+          }`}>{likes}</span>
         </button>
 
         {/* Comment Button */}
@@ -283,6 +310,7 @@ export function PostCard({
           </div>
         </div>
       )}
+      </div>
     </article>
   );
 }

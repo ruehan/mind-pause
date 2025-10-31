@@ -31,7 +31,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <DevSidebar />
-        <div className="ml-56 transition-all duration-300">
+        <div className="ml-16">
           {children}
         </div>
         <ScrollRestoration />
