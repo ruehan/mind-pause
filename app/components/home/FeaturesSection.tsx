@@ -1,5 +1,6 @@
 import { FeatureCard } from "./FeatureCard";
 import { FileText, MessageCircle, BarChart3, Target } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 const features = [
   {
@@ -25,11 +26,43 @@ const features = [
 ];
 
 export function FeaturesSection() {
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Initial visibility after mount
+    const timer = setTimeout(() => setIsVisible(true), 100);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          }
+        });
+      },
+      { threshold: 0.05 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, []);
+
   return (
-    <section id="features" className="py-16 sm:py-24 bg-white">
+    <section ref={sectionRef} id="features" className="py-16 sm:py-24 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Title */}
-        <div className="text-center mb-12 sm:mb-16">
+        <div
+          className={`text-center mb-12 sm:mb-16 transition-all duration-700 ${
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-8"
+          }`}
+        >
           <h2 className="text-h2 text-neutral-900 mb-4">
             마음쉼표가 특별한 이유
           </h2>
@@ -41,12 +74,21 @@ export function FeaturesSection() {
         {/* Feature Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto">
           {features.map((feature, index) => (
-            <FeatureCard
+            <div
               key={index}
-              icon={feature.icon}
-              title={feature.title}
-              description={feature.description}
-            />
+              className={`transition-all duration-700 transform ${
+                isVisible
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-12"
+              }`}
+              style={{ transitionDelay: `${index * 100}ms` }}
+            >
+              <FeatureCard
+                icon={feature.icon}
+                title={feature.title}
+                description={feature.description}
+              />
+            </div>
           ))}
         </div>
       </div>

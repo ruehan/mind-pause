@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { TrendingUp, Download } from "lucide-react";
 import { Button } from "../Button";
 
@@ -12,6 +13,7 @@ interface EmotionChartProps {
 }
 
 export function EmotionChart({ data, onExport }: EmotionChartProps) {
+  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const maxValue = 5;
   const minValue = -5;
   const range = maxValue - minValue;
@@ -84,19 +86,55 @@ export function EmotionChart({ data, onExport }: EmotionChartProps) {
                 .join(" ")}
             />
 
+            {/* Gradient fill area */}
+            <defs>
+              <linearGradient id="emotionGradient" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="#5B8CFF" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#5B8CFF" stopOpacity="0.05" />
+              </linearGradient>
+            </defs>
+            <polygon
+              fill="url(#emotionGradient)"
+              points={
+                `0,100 ${data
+                  .map((point, index) => {
+                    const x = (index / (data.length - 1)) * 100;
+                    const y = getYPosition(point.value);
+                    return `${x},${y}`;
+                  })
+                  .join(" ")} 100,100`
+              }
+            />
+
             {/* Data points */}
             {data.map((point, index) => {
               const x = (index / (data.length - 1)) * 100;
               const y = getYPosition(point.value);
+              const isHovered = hoveredPoint === index;
               return (
-                <circle
-                  key={index}
-                  cx={`${x}%`}
-                  cy={`${y}%`}
-                  r="5"
-                  fill="#5B8CFF"
-                  className="hover:r-7 transition-all"
-                />
+                <g key={index}>
+                  <circle
+                    cx={`${x}%`}
+                    cy={`${y}%`}
+                    r={isHovered ? "7" : "5"}
+                    fill="#5B8CFF"
+                    className="transition-all duration-200 cursor-pointer"
+                    onMouseEnter={() => setHoveredPoint(index)}
+                    onMouseLeave={() => setHoveredPoint(null)}
+                  />
+                  {isHovered && (
+                    <g>
+                      <circle
+                        cx={`${x}%`}
+                        cy={`${y}%`}
+                        r="10"
+                        fill="#5B8CFF"
+                        opacity="0.2"
+                        className="animate-pulse"
+                      />
+                    </g>
+                  )}
+                </g>
               );
             })}
           </svg>
@@ -108,6 +146,25 @@ export function EmotionChart({ data, onExport }: EmotionChartProps) {
             <span key={index}>{point.date}</span>
           ))}
         </div>
+
+        {/* Tooltip */}
+        {hoveredPoint !== null && (
+          <div
+            className="absolute z-10 bg-neutral-900 text-white px-3 py-2 rounded-lg shadow-lg text-sm animate-fade-in"
+            style={{
+              left: `${((hoveredPoint / (data.length - 1)) * 100)}%`,
+              top: `${getYPosition(data[hoveredPoint].value)}%`,
+              transform: "translate(-50%, -120%)",
+            }}
+          >
+            <div className="font-medium">{data[hoveredPoint].date}</div>
+            <div className="text-primary-300">
+              {data[hoveredPoint].value > 0 ? "+" : ""}
+              {data[hoveredPoint].value}점
+            </div>
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full w-2 h-2 bg-neutral-900 rotate-45"></div>
+          </div>
+        )}
       </div>
     </div>
   );

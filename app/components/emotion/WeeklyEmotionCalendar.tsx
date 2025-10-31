@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 interface DayEmotion {
   day: string;
   emoji: string;
@@ -14,10 +16,13 @@ export function WeeklyEmotionCalendar({
   weekData,
   averageValue = 0,
 }: WeeklyEmotionCalendarProps) {
+  const [hoveredDay, setHoveredDay] = useState<number | null>(null);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+
   return (
-    <div className="glass-strong rounded-2xl shadow-soft p-6 border border-white/20">
+    <div className="glass-strong rounded-2xl shadow-soft hover:shadow-elevation-3 transition-all duration-300 p-6 border border-white/20">
       <div className="flex items-center gap-2 mb-4">
-        <span className="text-xl">📈</span>
+        <span className="text-xl animate-float">📈</span>
         <h3 className="text-h4 text-neutral-900">이번 주 감정</h3>
       </div>
 
@@ -26,33 +31,60 @@ export function WeeklyEmotionCalendar({
         {weekData.map((day, index) => (
           <div
             key={index}
-            className={`text-center p-2 rounded-lg transition-all duration-200 ${
+            onMouseEnter={() => setHoveredDay(index)}
+            onMouseLeave={() => setHoveredDay(null)}
+            onClick={() => setSelectedDay(selectedDay === index ? null : index)}
+            className={`text-center p-2 rounded-lg transition-all duration-300 cursor-pointer relative overflow-hidden ${
               day.hasRecord
-                ? "bg-gradient-to-br from-primary-50 to-lavender-50 hover:scale-105"
-                : "bg-neutral-100"
+                ? "bg-gradient-to-br from-primary-50 to-lavender-50 hover:from-primary-100 hover:to-lavender-100"
+                : "bg-neutral-100 hover:bg-neutral-200"
+            } ${
+              hoveredDay === index || selectedDay === index
+                ? "scale-110 shadow-md ring-2 ring-primary-300"
+                : "scale-100"
             }`}
           >
-            <div className="text-caption text-neutral-500 mb-1">{day.day}</div>
-            <div
-              className={`text-2xl ${
-                day.hasRecord ? "animate-scale-in" : "opacity-30"
-              }`}
-            >
-              {day.emoji}
-            </div>
-            {day.hasRecord && (
+            {/* Shimmer effect on hover */}
+            {hoveredDay === index && day.hasRecord && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+            )}
+
+            <div className="relative z-10">
+              <div className={`text-caption mb-1 transition-colors duration-200 ${
+                hoveredDay === index ? "text-primary-700 font-medium" : "text-neutral-500"
+              }`}>
+                {day.day}
+              </div>
               <div
-                className={`text-caption font-medium mt-1 ${
-                  day.value > 0
-                    ? "text-mint-600"
-                    : day.value < 0
-                    ? "text-error-600"
-                    : "text-neutral-600"
+                className={`text-2xl transition-all duration-300 ${
+                  day.hasRecord ? "animate-scale-in" : "opacity-30"
+                } ${
+                  hoveredDay === index ? "scale-125 animate-bounce-subtle" : ""
                 }`}
               >
-                {day.value > 0 ? "+" : ""}
-                {day.value}
+                {day.emoji}
               </div>
+              {day.hasRecord && (
+                <div
+                  className={`text-caption font-medium mt-1 transition-all duration-300 ${
+                    day.value > 0
+                      ? "text-mint-600"
+                      : day.value < 0
+                      ? "text-error-600"
+                      : "text-neutral-600"
+                  } ${
+                    hoveredDay === index ? "scale-110 font-bold" : ""
+                  }`}
+                >
+                  {day.value > 0 ? "+" : ""}
+                  {day.value}
+                </div>
+              )}
+            </div>
+
+            {/* Selected indicator */}
+            {selectedDay === index && (
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-1 bg-primary-500 rounded-full animate-pulse"></div>
             )}
           </div>
         ))}
