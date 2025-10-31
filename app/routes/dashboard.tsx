@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
+import { AppLayout } from "../components/AppLayout";
 import { StatCard } from "../components/dashboard/StatCard";
 import { EmotionChart } from "../components/dashboard/EmotionChart";
 import { AIInsightCard } from "../components/dashboard/AIInsightCard";
@@ -149,14 +148,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary-50 via-white to-lavender-50 relative">
-      {/* Mesh Gradient Overlay */}
-      <div className="absolute inset-0 gradient-mesh opacity-20 animate-gradient bg-[length:200%_200%] pointer-events-none"></div>
-      <div className="relative z-10">
-        <Header />
-      </div>
+    <AppLayout>
+      <div className="bg-gradient-to-br from-primary-50 via-white to-lavender-50 relative -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+        {/* Mesh Gradient Overlay */}
+        <div className="absolute inset-0 gradient-mesh opacity-20 animate-gradient bg-[length:200%_200%] pointer-events-none"></div>
 
-      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        <div className="relative z-10">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
@@ -345,11 +342,7 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
-      </main>
-
-      <div className="relative z-10">
-        <Footer />
       </div>
-    </div>
+    </AppLayout>
   );
 }
