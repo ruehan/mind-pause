@@ -1,14 +1,17 @@
 import { Link } from "react-router";
+import { Spinner } from "./Spinner";
 
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: "primary" | "secondary" | "ghost" | "gradient" | "glass";
+  variant?: "primary" | "secondary" | "ghost" | "gradient" | "glass" | "error";
   size?: "sm" | "md" | "lg";
   href?: string;
   onClick?: () => void;
   className?: string;
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
+  loading?: boolean;
+  loadingText?: string;
 }
 
 export function Button({
@@ -20,6 +23,8 @@ export function Button({
   className = "",
   type = "button",
   disabled = false,
+  loading = false,
+  loadingText,
 }: ButtonProps) {
   // Base styles
   const baseStyles =
@@ -37,6 +42,8 @@ export function Button({
       "gradient-primary text-white hover:shadow-primary shadow-lg transform hover:scale-105 focus:ring-primary-500",
     glass:
       "glass text-neutral-900 hover:bg-white/80 border border-white/20 backdrop-blur-lg focus:ring-primary-500 shadow-soft",
+    error:
+      "bg-error-500 text-white hover:bg-error-600 focus:ring-error-500 shadow-sm hover:shadow-md transform hover:-translate-y-0.5",
   };
 
   // Size styles
@@ -48,11 +55,24 @@ export function Button({
 
   const combinedClassName = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
 
+  const isDisabled = disabled || loading;
+  const spinnerColor = variant === "secondary" || variant === "ghost" ? "primary" : "white";
+  const spinnerSize = size === "sm" ? "sm" : "md";
+
+  const content = loading ? (
+    <div className="flex items-center gap-2">
+      <Spinner size={spinnerSize} color={spinnerColor} />
+      <span>{loadingText || children}</span>
+    </div>
+  ) : (
+    children
+  );
+
   // If href is provided, render as Link
-  if (href) {
+  if (href && !isDisabled) {
     return (
       <Link to={href} className={combinedClassName}>
-        {children}
+        {content}
       </Link>
     );
   }
@@ -62,12 +82,12 @@ export function Button({
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
+      disabled={isDisabled}
       className={`${combinedClassName} ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
+        isDisabled ? "opacity-50 cursor-not-allowed" : ""
       }`}
     >
-      {children}
+      {content}
     </button>
   );
 }

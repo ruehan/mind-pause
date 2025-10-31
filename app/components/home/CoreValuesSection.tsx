@@ -160,6 +160,9 @@ export function CoreValuesSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Initial visibility after mount
+    const timer = setTimeout(() => setIsVisible(true), 200);
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -168,7 +171,7 @@ export function CoreValuesSection() {
           }
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0.05 }
     );
 
     if (sectionRef.current) {
@@ -176,9 +179,8 @@ export function CoreValuesSection() {
     }
 
     return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
-      }
+      clearTimeout(timer);
+      observer.disconnect();
     };
   }, []);
 

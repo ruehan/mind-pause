@@ -30,6 +30,9 @@ export function FeaturesSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Initial visibility after mount
+    const timer = setTimeout(() => setIsVisible(true), 100);
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -38,7 +41,7 @@ export function FeaturesSection() {
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.05 }
     );
 
     if (sectionRef.current) {
@@ -46,9 +49,8 @@ export function FeaturesSection() {
     }
 
     return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
-      }
+      clearTimeout(timer);
+      observer.disconnect();
     };
   }, []);
 
