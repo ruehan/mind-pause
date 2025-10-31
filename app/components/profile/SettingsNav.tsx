@@ -8,7 +8,8 @@ interface SettingsNavProps {
     | "security"
     | "account"
     | "data"
-    | "info";
+    | "info"
+    | "stats";
   onSectionChange: (
     section:
       | "profile"
@@ -17,6 +18,7 @@ interface SettingsNavProps {
       | "account"
       | "data"
       | "info"
+      | "stats"
   ) => void;
 }
 
