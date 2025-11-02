@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
+import { AppLayout } from "../components/AppLayout";
 import { SearchBar } from "../components/help/SearchBar";
 import { CategorySidebar } from "../components/help/CategorySidebar";
 import { FAQItem } from "../components/help/FAQItem";
@@ -144,10 +143,18 @@ export default function Help() {
   const popularFAQs = mockFAQs.filter((faq) => faq.isPopular);
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
+    <AppLayout>
+      <div className="flex h-full -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
+        {/* Category Sidebar - Desktop */}
+        <div className="hidden lg:block w-64">
+          <CategorySidebar
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
+        </div>
 
-      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Main Content */}
+        <div className="flex-1 p-6 lg:p-8 bg-neutral-50 overflow-y-auto">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
@@ -320,9 +327,8 @@ export default function Help() {
             </div>
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </div>
+        </div>
+      </div>
+    </AppLayout>
   );
 }

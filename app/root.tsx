@@ -9,7 +9,6 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import { DevSidebar } from "./components/DevSidebar";
 import { ToastProvider } from "./components/ToastProvider";
 import ErrorPage from "./routes/error";
 
@@ -31,10 +30,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <DevSidebar />
-        <div className="ml-16">
-          {children}
-        </div>
+        {children}
         <ScrollRestoration />
         <Scripts />
       </body>
