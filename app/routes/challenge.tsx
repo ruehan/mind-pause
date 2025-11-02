@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
+import { AppLayout } from "../components/AppLayout";
 import { StatCard } from "../components/dashboard/StatCard";
 import { ChallengeFilterTabs } from "../components/challenge/ChallengeFilterTabs";
 import { ActiveChallengeCard } from "../components/challenge/ActiveChallengeCard";
@@ -148,10 +147,7 @@ export default function Challenge() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
-
-      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppLayout>
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
@@ -251,9 +247,6 @@ export default function Challenge() {
             </div>
           </div>
         )}
-      </main>
-
-      <Footer />
 
       {/* Celebration Modal */}
       <CompletionCelebrationModal
@@ -262,6 +255,6 @@ export default function Challenge() {
         challengeTitle={celebrationData.challengeTitle}
         streakCount={celebrationData.streakCount}
       />
-    </div>
+    </AppLayout>
   );
 }

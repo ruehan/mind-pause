@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
+import { AppLayout } from "../components/AppLayout";
 import { SettingsNav } from "../components/profile/SettingsNav";
 import { ProfileHeader } from "../components/profile/ProfileHeader";
 import { ProfileStatistics } from "../components/profile/ProfileStatistics";
@@ -9,6 +8,8 @@ import { ProfileImageSection } from "../components/profile/ProfileImageSection";
 import { SocialLoginCard } from "../components/profile/SocialLoginCard";
 import { NotificationCheckbox } from "../components/profile/NotificationCheckbox";
 import { Button } from "../components/Button";
+import { useToast } from "../components/ToastProvider";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 export function meta() {
   return [
@@ -21,9 +22,14 @@ export function meta() {
 }
 
 export default function Profile() {
+  const toast = useToast();
   const [activeSection, setActiveSection] = useState<
     "profile" | "stats" | "notification" | "security" | "account" | "data" | "info"
   >("profile");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Mock user data
   const [nickname, setNickname] = useState("마음쉼표");
@@ -51,14 +57,32 @@ export default function Profile() {
     console.log("Deleting profile image");
   };
 
-  const handleSaveProfile = () => {
-    console.log("Saving profile:", { nickname, profileImage });
-    alert("변경사항이 저장되었습니다");
+  const handleSaveProfile = async () => {
+    setIsSavingProfile(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("Saving profile:", { nickname, profileImage });
+      toast.success("변경사항이 저장되었습니다", "프로필이 성공적으로 업데이트되었습니다");
+    } catch (error) {
+      toast.error("저장 실패", "프로필 저장 중 오류가 발생했습니다");
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
-  const handleSaveNotifications = () => {
-    console.log("Saving notifications:", emailNotifications);
-    alert("알림 설정이 저장되었습니다");
+  const handleSaveNotifications = async () => {
+    setIsSavingNotifications(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("Saving notifications:", emailNotifications);
+      toast.success("알림 설정이 저장되었습니다", "변경사항이 적용되었습니다");
+    } catch (error) {
+      toast.error("저장 실패", "알림 설정 저장 중 오류가 발생했습니다");
+    } finally {
+      setIsSavingNotifications(false);
+    }
   };
 
   const handleSocialConnect = (provider: string) => {
@@ -71,12 +95,26 @@ export default function Profile() {
     // TODO: Implement disconnect
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log("Deleting account");
+      toast.success("계정 탈퇴 처리됨", "7일 이내 복구 가능합니다");
+      setIsDeleteDialogOpen(false);
+      // TODO: Redirect to login page
+    } catch (error) {
+      toast.error("탈퇴 실패", "계정 탈퇴 처리 중 오류가 발생했습니다");
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
 
-      <main className="flex-1 flex">
-        {/* Desktop Sidebar Navigation */}
+  return (
+    <AppLayout>
+      <div className="flex h-full -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
+        {/* Settings Navigation Sidebar */}
         <div className="hidden lg:block">
           <SettingsNav
             activeSection={activeSection}
@@ -85,7 +123,7 @@ export default function Profile() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 p-6 lg:p-8 max-w-6xl mx-auto w-full">
+        <div className="flex-1 p-6 lg:p-8 max-w-6xl mx-auto w-full bg-neutral-50 overflow-y-auto">
           {/* Profile Overview Section */}
           {activeSection === "profile" && (
             <div className="space-y-8">
@@ -195,6 +233,8 @@ export default function Profile() {
                   variant="primary"
                   size="lg"
                   onClick={handleSaveNotifications}
+                  loading={isSavingNotifications}
+                  loadingText="저장 중..."
                 >
                   변경사항 저장
                 </Button>
@@ -242,11 +282,23 @@ export default function Profile() {
                   variant="ghost"
                   size="lg"
                   className="w-full bg-red-600 text-white hover:bg-red-700"
-                  onClick={() => alert("계정 탈퇴 기능은 곧 제공될 예정입니다")}
+                  onClick={() => setIsDeleteDialogOpen(true)}
                 >
                   계정 탈퇴하기
                 </Button>
               </div>
+
+              <ConfirmDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                title="정말 탈퇴하시겠습니까?"
+                description="계정을 탈퇴하면 모든 데이터가 삭제됩니다. 탈퇴 후 7일 이내 복구 가능하며, 이후에는 영구적으로 삭제됩니다."
+                confirmText="탈퇴하기"
+                cancelText="취소"
+                variant="danger"
+                onConfirm={handleDeleteAccount}
+                loading={isDeletingAccount}
+              />
             </div>
           )}
 
@@ -302,9 +354,7 @@ export default function Profile() {
             </div>
           )}
         </div>
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </AppLayout>
   );
 }

@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
+import { AppLayout } from "../components/AppLayout";
 import { ChatMessage } from "../components/chat/ChatMessage";
 import { ActionSuggestionCard } from "../components/chat/ActionSuggestionCard";
 import { ConversationListItem } from "../components/chat/ConversationListItem";
@@ -8,6 +7,8 @@ import { ChatInput } from "../components/chat/ChatInput";
 import { TypingIndicator } from "../components/chat/TypingIndicator";
 import { EmotionQuickSelect } from "../components/chat/EmotionQuickSelect";
 import { Button } from "../components/Button";
+import { useToast } from "../components/ToastProvider";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 export function meta() {
   return [
@@ -74,11 +75,14 @@ const mockSuggestion = {
 };
 
 export default function Chat() {
+  const toast = useToast();
   const [activeConversation, setActiveConversation] = useState("1");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isConversationListOpen, setIsConversationListOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [showEmotionSelect, setShowEmotionSelect] = useState(true);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeletingConversation, setIsDeletingConversation] = useState(false);
 
   const handleSendMessage = (message: string) => {
     console.log("Sending message:", message);
@@ -106,106 +110,39 @@ export default function Chat() {
     // TODO: Implement voice recognition
   };
 
+  const handleDeleteConversation = async () => {
+    setIsDeletingConversation(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("Deleting conversation:", activeConversation);
+      toast.success("대화가 삭제되었습니다", "대화 내역이 영구적으로 삭제되었습니다");
+      setIsDeleteDialogOpen(false);
+      setIsMenuOpen(false);
+      // TODO: Update conversation list and navigate
+    } catch (error) {
+      toast.error("삭제 실패", "대화 삭제 중 오류가 발생했습니다");
+    } finally {
+      setIsDeletingConversation(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
-
-      <main className="flex-1 flex overflow-hidden">
-        {/* Sidebar - Desktop */}
-        <aside className="hidden lg:block w-80 bg-neutral-50 border-r border-neutral-200 overflow-y-auto">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-h4 text-neutral-900 flex items-center gap-2">
-                💬 대화 목록
-              </h2>
-            </div>
-
-            <Button
-              variant="primary"
-              size="md"
-              className="w-full mb-4"
-              onClick={() => console.log("New conversation")}
-            >
-              + 새 대화
-            </Button>
-
-            <div className="space-y-2">
-              {mockConversations.map((conv) => (
-                <ConversationListItem
-                  key={conv.id}
-                  id={conv.id}
-                  title={conv.title}
-                  timestamp={conv.timestamp}
-                  isOngoing={conv.isOngoing}
-                  isActive={activeConversation === conv.id}
-                  onClick={() => setActiveConversation(conv.id)}
-                />
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        {/* Mobile Sidebar Overlay */}
-        {isSidebarOpen && (
-          <>
-            <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-              onClick={() => setIsSidebarOpen(false)}
-            />
-            <aside className="fixed left-0 top-0 bottom-0 w-80 bg-white z-50 lg:hidden overflow-y-auto">
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-h4 text-neutral-900 flex items-center gap-2">
-                    💬 대화 목록
-                  </h2>
-                  <button
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="text-neutral-600 hover:text-neutral-900"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <Button
-                  variant="primary"
-                  size="md"
-                  className="w-full mb-4"
-                  onClick={() => console.log("New conversation")}
-                >
-                  + 새 대화
-                </Button>
-
-                <div className="space-y-2">
-                  {mockConversations.map((conv) => (
-                    <ConversationListItem
-                      key={conv.id}
-                      id={conv.id}
-                      title={conv.title}
-                      timestamp={conv.timestamp}
-                      isOngoing={conv.isOngoing}
-                      isActive={activeConversation === conv.id}
-                      onClick={() => {
-                        setActiveConversation(conv.id);
-                        setIsSidebarOpen(false);
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </aside>
-          </>
-        )}
-
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
+    <AppLayout>
+      <div className="flex h-full -mx-4 sm:-mx-6 lg:-mx-8 -my-6 relative">
+        {/* Chat Area - Full Width */}
+        <div className="flex-1 flex flex-col min-h-screen bg-neutral-50">
           {/* Chat Header */}
           <div className="bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden text-neutral-600 hover:text-neutral-900"
+                onClick={() => setIsConversationListOpen(true)}
+                className="text-neutral-600 hover:text-neutral-900 transition-colors"
+                aria-label="대화 목록 열기"
               >
-                ☰
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
               </button>
               <h1 className="text-h4 text-neutral-900 flex items-center gap-2">
                 🤖 AI 코치와의 대화
@@ -217,6 +154,7 @@ export default function Chat() {
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="text-neutral-600 hover:text-neutral-900 p-2"
+                aria-label="메뉴"
               >
                 ⋮
               </button>
@@ -238,7 +176,13 @@ export default function Chat() {
                       대화 기록 저장
                     </button>
                     <div className="border-t border-neutral-200" />
-                    <button className="w-full text-left px-4 py-3 hover:bg-error-50 text-body text-error-500 transition-colors">
+                    <button
+                      className="w-full text-left px-4 py-3 hover:bg-error-50 text-body text-error-500 transition-colors"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setIsDeleteDialogOpen(true);
+                      }}
+                    >
                       대화 삭제
                     </button>
                   </div>
@@ -246,6 +190,18 @@ export default function Chat() {
               )}
             </div>
           </div>
+
+          <ConfirmDialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+            title="대화를 삭제하시겠습니까?"
+            description="삭제된 대화는 복구할 수 없습니다. 정말로 삭제하시겠습니까?"
+            confirmText="삭제"
+            cancelText="취소"
+            variant="danger"
+            onConfirm={handleDeleteConversation}
+            loading={isDeletingConversation}
+          />
 
           {/* Messages Container */}
           <div className="flex-1 overflow-y-auto p-6">
@@ -312,9 +268,62 @@ export default function Chat() {
             onVoiceInput={handleVoiceInput}
           />
         </div>
-      </main>
 
-      <Footer />
-    </div>
+        {/* Conversation List Sidebar - Toggle Overlay */}
+        {isConversationListOpen && (
+          <>
+            {/* Overlay - 모바일에서만 표시 */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              onClick={() => setIsConversationListOpen(false)}
+            />
+            <aside className="fixed right-0 top-0 bottom-0 w-80 bg-white z-50 overflow-y-auto shadow-elevation-3 animate-slide-in-right border-l border-neutral-200">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-h4 text-neutral-900 flex items-center gap-2">
+                    💬 대화 목록
+                  </h2>
+                  <button
+                    onClick={() => setIsConversationListOpen(false)}
+                    className="text-neutral-600 hover:text-neutral-900 p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+                    aria-label="닫기"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="w-full mb-4"
+                  onClick={() => console.log("New conversation")}
+                >
+                  + 새 대화
+                </Button>
+
+                <div className="space-y-2">
+                  {mockConversations.map((conv) => (
+                    <ConversationListItem
+                      key={conv.id}
+                      id={conv.id}
+                      title={conv.title}
+                      timestamp={conv.timestamp}
+                      isOngoing={conv.isOngoing}
+                      isActive={activeConversation === conv.id}
+                      onClick={() => {
+                        setActiveConversation(conv.id);
+                        setIsConversationListOpen(false);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </aside>
+          </>
+        )}
+      </div>
+    </AppLayout>
   );
 }

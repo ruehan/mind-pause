@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router";
-import { Home, Heart, MessageCircle, Trophy, User, Settings } from "lucide-react";
+import { Home, Heart, MessageCircle, Trophy, User, Settings, Users, HelpCircle, BarChart3 } from "lucide-react";
 
 interface NavItem {
   path: string;
@@ -9,9 +9,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: "/", label: "홈", icon: Home },
+  { path: "/dashboard", label: "대시보드", icon: BarChart3 },
   { path: "/emotion", label: "감정기록", icon: Heart },
   { path: "/chat", label: "AI 채팅", icon: MessageCircle },
+  { path: "/community", label: "커뮤니티", icon: Users },
   { path: "/challenge", label: "챌린지", icon: Trophy },
+  { path: "/help", label: "도움말", icon: HelpCircle },
   { path: "/profile", label: "프로필", icon: User },
 ];
 

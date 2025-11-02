@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Header } from "../components/Header";
-import { Footer } from "../components/Footer";
+import { AppLayout } from "../components/AppLayout";
 import { PostCard } from "../components/community/PostCard";
 import { FilterTabs } from "../components/community/FilterTabs";
 import { SafetyGuidelineBanner } from "../components/community/SafetyGuidelineBanner";
@@ -111,10 +110,7 @@ export default function Community() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-50">
-      <Header />
-
-      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppLayout>
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
@@ -180,17 +176,14 @@ export default function Community() {
           </div>
         </div>
 
-        {/* Floating Write Button (Mobile) */}
-        <button
-          onClick={handleWritePost}
-          className="sm:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-primary-600 transition-colors z-10"
-          aria-label="글쓰기"
-        >
-          ✏️
-        </button>
-      </main>
-
-      <Footer />
-    </div>
+      {/* Floating Write Button (Mobile) */}
+      <button
+        onClick={handleWritePost}
+        className="sm:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-primary-600 transition-colors z-10"
+        aria-label="글쓰기"
+      >
+        ✏️
+      </button>
+    </AppLayout>
   );
 }
