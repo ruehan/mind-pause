@@ -10,6 +10,7 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 import { ToastProvider } from "./components/ToastProvider";
+import { AuthProvider } from "./contexts/AuthContext";
 import ErrorPage from "./routes/error";
 
 export const links: Route.LinksFunction = () => [
@@ -40,9 +41,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <Outlet />
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <Outlet />
+      </ToastProvider>
+    </AuthProvider>
   );
 }
 

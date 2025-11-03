@@ -1,11 +1,17 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Input } from "../Input";
 import { Button } from "../Button";
 import { Checkbox } from "../Checkbox";
 import { SocialLoginButtons } from "./SocialLoginButtons";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../ToastProvider";
 
 export function SignupForm() {
+  const navigate = useNavigate();
+  const { signup } = useAuth();
+  const { showToast } = useToast();
+
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,18 +67,24 @@ export function SignupForm() {
 
     setIsLoading(true);
 
-    // API 호출: 회원가입
-    // POST /api/auth/signup
-    // Body: { nickname, email, password, agreeTerms, agreePrivacy, agreeMarketing }
     try {
-      // TODO: 실제 API 엔드포인트 연결 필요
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // 회원가입 성공 시 로그인 페이지로 이동 또는 자동 로그인
-      // navigate('/login');
+      await signup(email, nickname, password);
+      showToast("회원가입 성공! 로그인되었습니다.", "success");
+      navigate("/dashboard");
     } catch (error) {
-      // 회원가입 실패 처리 (이메일 중복 등)
-      setErrors({ email: "이미 사용 중인 이메일입니다" });
+      const errorMessage =
+        error instanceof Error ? error.message : "회원가입에 실패했습니다";
+
+      // 에러 메시지에 따라 적절한 필드에 에러 표시
+      if (errorMessage.includes("이메일")) {
+        setErrors({ email: errorMessage });
+      } else if (errorMessage.includes("닉네임")) {
+        setErrors({ nickname: errorMessage });
+      } else {
+        setErrors({ email: errorMessage });
+      }
+
+      showToast(errorMessage, "error");
     } finally {
       setIsLoading(false);
     }
