@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "../components/AppLayout";
 import { ChatMessage } from "../components/chat/ChatMessage";
 import { ActionSuggestionCard } from "../components/chat/ActionSuggestionCard";
@@ -6,9 +6,13 @@ import { ConversationListItem } from "../components/chat/ConversationListItem";
 import { ChatInput } from "../components/chat/ChatInput";
 import { TypingIndicator } from "../components/chat/TypingIndicator";
 import { EmotionQuickSelect } from "../components/chat/EmotionQuickSelect";
+import { AICharacterCreateModal } from "../components/chat/AICharacterCreateModal";
+import { AvatarPreview } from "../components/chat/AvatarPreview";
 import { Button } from "../components/Button";
 import { useToast } from "../components/ToastProvider";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useAuth } from "../contexts/AuthContext";
+import * as api from "../lib/api";
 
 export function meta() {
   return [
@@ -76,6 +80,7 @@ const mockSuggestion = {
 
 export default function Chat() {
   const toast = useToast();
+  const { user } = useAuth();
   const [activeConversation, setActiveConversation] = useState("1");
   const [isConversationListOpen, setIsConversationListOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -83,6 +88,43 @@ export default function Chat() {
   const [showEmotionSelect, setShowEmotionSelect] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeletingConversation, setIsDeletingConversation] = useState(false);
+  const [isCharacterModalOpen, setIsCharacterModalOpen] = useState(false);
+  const [activeCharacter, setActiveCharacter] = useState<api.AICharacter | null>(null);
+  const [isLoadingCharacter, setIsLoadingCharacter] = useState(true);
+
+  // 활성 캐릭터 확인
+  useEffect(() => {
+    const checkCharacter = async () => {
+      if (!user) return;
+
+      try {
+        const character = await api.getActiveAICharacter();
+        setActiveCharacter(character);
+      } catch (error) {
+        if (error instanceof api.UnauthorizedError) {
+          // 인증 오류는 AuthContext에서 처리
+          return;
+        }
+        // 404 에러 (캐릭터 없음)는 정상적인 상황
+        // 캐릭터 생성 모달을 표시
+        setIsCharacterModalOpen(true);
+      } finally {
+        setIsLoadingCharacter(false);
+      }
+    };
+
+    checkCharacter();
+  }, [user]);
+
+  const handleCharacterCreated = async () => {
+    // 캐릭터 생성 후 활성 캐릭터 다시 불러오기
+    try {
+      const character = await api.getActiveAICharacter();
+      setActiveCharacter(character);
+    } catch (error) {
+      toast.error("오류", "캐릭터를 불러오는 중 오류가 발생했습니다");
+    }
+  };
 
   const handleSendMessage = (message: string) => {
     console.log("Sending message:", message);
@@ -127,6 +169,20 @@ export default function Chat() {
     }
   };
 
+  // 캐릭터 로딩 중이면 로딩 표시
+  if (isLoadingCharacter) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+            <p className="text-body text-neutral-600">AI 친구를 불러오는 중...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex h-full -mx-4 sm:-mx-6 lg:-mx-8 -my-6 relative">
@@ -144,8 +200,17 @@ export default function Chat() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <h1 className="text-h4 text-neutral-900 flex items-center gap-2">
-                🤖 AI 코치와의 대화
+              <h1 className="text-h4 text-neutral-900 flex items-center gap-3">
+                {activeCharacter ? (
+                  <>
+                    {activeCharacter.avatar_options && (
+                      <AvatarPreview options={activeCharacter.avatar_options} size={40} />
+                    )}
+                    <span>{activeCharacter.name}와의 대화</span>
+                  </>
+                ) : (
+                  <>🤖 AI 코치와의 대화</>
+                )}
               </h1>
             </div>
 
@@ -324,6 +389,13 @@ export default function Chat() {
           </>
         )}
       </div>
+
+      {/* AI Character Create Modal */}
+      <AICharacterCreateModal
+        isOpen={isCharacterModalOpen}
+        onClose={() => setIsCharacterModalOpen(false)}
+        onSuccess={handleCharacterCreated}
+      />
     </AppLayout>
   );
 }

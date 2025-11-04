@@ -155,3 +155,115 @@ export function isTokenExpired(): boolean {
 export function isTokenValid(): boolean {
   return hasToken() && !isTokenExpired();
 }
+
+/**
+ * AI 캐릭터 관련 인터페이스
+ */
+export interface AvatarOptions {
+  sex?: string;
+  faceColor?: string;
+  earSize?: string;
+  hairStyle?: string;
+  hairColor?: string;
+  hatStyle?: string;
+  hatColor?: string;
+  eyeStyle?: string;
+  glassesStyle?: string;
+  noseStyle?: string;
+  mouthStyle?: string;
+  shirtStyle?: string;
+  shirtColor?: string;
+  bgColor?: string;
+}
+
+export interface AICharacter {
+  id: string;
+  user_id: string;
+  name: string;
+  personality: string;
+  description?: string;
+  avatar_options?: AvatarOptions;
+  system_prompt?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AICharacterCreate {
+  name: string;
+  personality: string;
+  description?: string;
+  avatar_options?: AvatarOptions;
+  system_prompt?: string;
+}
+
+export interface AICharacterUpdate {
+  name?: string;
+  personality?: string;
+  description?: string;
+  avatar_options?: AvatarOptions;
+  system_prompt?: string;
+  is_active?: boolean;
+}
+
+/**
+ * AI 캐릭터 생성
+ */
+export async function createAICharacter(data: AICharacterCreate): Promise<AICharacter> {
+  return apiRequest<AICharacter>("/ai-characters", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * AI 캐릭터 목록 조회
+ */
+export async function getAICharacters(): Promise<AICharacter[]> {
+  return apiRequest<AICharacter[]>("/ai-characters", {
+    method: "GET",
+  });
+}
+
+/**
+ * 활성 AI 캐릭터 조회
+ */
+export async function getActiveAICharacter(): Promise<AICharacter> {
+  return apiRequest<AICharacter>("/ai-characters/active", {
+    method: "GET",
+  });
+}
+
+/**
+ * AI 캐릭터 상세 조회
+ */
+export async function getAICharacter(characterId: string): Promise<AICharacter> {
+  return apiRequest<AICharacter>(`/ai-characters/${characterId}`, {
+    method: "GET",
+  });
+}
+
+/**
+ * AI 캐릭터 수정
+ */
+export async function updateAICharacter(
+  characterId: string,
+  data: AICharacterUpdate
+): Promise<AICharacter> {
+  return apiRequest<AICharacter>(`/ai-characters/${characterId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * AI 캐릭터 삭제
+ */
+export async function deleteAICharacter(characterId: string): Promise<void> {
+  await fetch(`${API_BASE_URL}/ai-characters/${characterId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    },
+  });
+}
