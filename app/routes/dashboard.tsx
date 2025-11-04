@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AppLayout } from "../components/AppLayout";
+import { useAuth } from "../contexts/AuthContext";
 import { StatCard } from "../components/dashboard/StatCard";
 import { EmotionChart } from "../components/dashboard/EmotionChart";
 import { AIInsightCard } from "../components/dashboard/AIInsightCard";
@@ -121,6 +122,7 @@ const mockTodayTasks = [
 ];
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState<
     "7d" | "30d" | "90d" | "all"
   >("30d");
@@ -159,7 +161,9 @@ export default function Dashboard() {
           <div className="flex items-center gap-3 mb-3">
             <span className="text-4xl">📊</span>
             <div>
-              <h1 className="text-h2 text-neutral-900">마음 대시보드</h1>
+              <h1 className="text-h2 text-neutral-900">
+                {user?.nickname ? `안녕하세요, ${user.nickname}님!` : '마음 대시보드'}
+              </h1>
               <p className="text-body text-neutral-600 mt-1">
                 나의 감정 변화와 성장을 한눈에 확인해보세요
               </p>

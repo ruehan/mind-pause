@@ -9,6 +9,13 @@ export interface ApiError {
   detail: string;
 }
 
+export class UnauthorizedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UnauthorizedError";
+  }
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -64,6 +71,12 @@ async function apiRequest<T>(
 
   if (!response.ok) {
     const error: ApiError = await response.json();
+
+    // 401 에러는 UnauthorizedError로 throw
+    if (response.status === 401) {
+      throw new UnauthorizedError(error.detail || "인증이 만료되었습니다");
+    }
+
     throw new Error(error.detail || "API 요청 실패");
   }
 
@@ -104,13 +117,19 @@ export async function getCurrentUser(): Promise<User> {
  */
 export function logout(): void {
   localStorage.removeItem("access_token");
+  localStorage.removeItem("token_expires_at");
 }
 
 /**
- * 토큰 저장
+ * 토큰 저장 (만료 시간도 함께 저장)
  */
 export function saveToken(token: string): void {
   localStorage.setItem("access_token", token);
+
+  // 토큰 만료 시간 계산 (30분 후)
+  const expiresAt = new Date();
+  expiresAt.setMinutes(expiresAt.getMinutes() + 30);
+  localStorage.setItem("token_expires_at", expiresAt.toISOString());
 }
 
 /**
@@ -118,4 +137,21 @@ export function saveToken(token: string): void {
  */
 export function hasToken(): boolean {
   return !!localStorage.getItem("access_token");
+}
+
+/**
+ * 토큰 만료 여부 확인
+ */
+export function isTokenExpired(): boolean {
+  const expiresAt = localStorage.getItem("token_expires_at");
+  if (!expiresAt) return true;
+
+  return new Date() > new Date(expiresAt);
+}
+
+/**
+ * 토큰 유효성 확인 (존재 + 만료되지 않음)
+ */
+export function isTokenValid(): boolean {
+  return hasToken() && !isTokenExpired();
 }
