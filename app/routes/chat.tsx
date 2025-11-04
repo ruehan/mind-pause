@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AppLayout } from "../components/AppLayout";
 import { ChatMessage } from "../components/chat/ChatMessage";
 import { ActionSuggestionCard } from "../components/chat/ActionSuggestionCard";
@@ -24,73 +24,57 @@ export function meta() {
   ];
 }
 
-// Mock data
-const mockConversations = [
-  {
-    id: "1",
-    title: "오늘의 감정 상담",
-    timestamp: "15분 전",
-    isOngoing: true,
-  },
-  {
-    id: "2",
-    title: "어제의 고민",
-    timestamp: "1일 전",
-    isOngoing: false,
-  },
-  {
-    id: "3",
-    title: "불안감 대화",
-    timestamp: "3일 전",
-    isOngoing: false,
-  },
-  {
-    id: "4",
-    title: "스트레스 관리",
-    timestamp: "1주 전",
-    isOngoing: false,
-  },
-];
+// 시간 포맷 헬퍼 함수
+function formatTimestamp(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
 
-const mockMessages = [
-  {
-    id: "1",
-    role: "ai" as const,
-    content: "안녕하세요! 오늘 하루는 어떠셨나요?\n편하게 이야기해주세요 😊",
-    timestamp: "14:32",
-  },
-  {
-    id: "2",
-    role: "user" as const,
-    content: "오늘은 회사에서 실수를 했어요. 계속 마음에 걸려요 😢",
-    timestamp: "14:33",
-  },
-  {
-    id: "3",
-    role: "ai" as const,
-    content:
-      "실수는 누구나 하는 것이에요. 자책하기보다는 그 경험에서 배울 점을 찾아보는 건 어떨까요? 실수를 통해 성장할 수 있답니다.",
-    timestamp: "14:33",
-  },
-];
+  if (minutes < 1) return "방금 전";
+  if (minutes < 60) return `${minutes}분 전`;
+  if (hours < 24) return `${hours}시간 전`;
+  if (days < 7) return `${days}일 전`;
+  if (days < 30) return `${Math.floor(days / 7)}주 전`;
+  return `${Math.floor(days / 30)}개월 전`;
+}
 
-const mockSuggestion = {
-  title: "호흡 명상 5분",
-};
+function formatMessageTime(dateString: string): string {
+  const date = new Date(dateString);
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+}
 
 export default function Chat() {
   const toast = useToast();
   const { user } = useAuth();
-  const [activeConversation, setActiveConversation] = useState("1");
+
+  // 대화 및 메시지 상태
+  const [conversations, setConversations] = useState<api.Conversation[]>([]);
+  const [messages, setMessages] = useState<api.Message[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
+  // UI 상태
   const [isConversationListOpen, setIsConversationListOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [showEmotionSelect, setShowEmotionSelect] = useState(true);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeletingConversation, setIsDeletingConversation] = useState(false);
+
+  // AI 캐릭터 상태
   const [isCharacterModalOpen, setIsCharacterModalOpen] = useState(false);
   const [activeCharacter, setActiveCharacter] = useState<api.AICharacter | null>(null);
   const [isLoadingCharacter, setIsLoadingCharacter] = useState(true);
+
+  // 스트리밍 메시지 상태
+  const [streamingMessage, setStreamingMessage] = useState<string>("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 활성 캐릭터 확인
   useEffect(() => {
@@ -126,14 +110,156 @@ export default function Chat() {
     }
   };
 
-  const handleSendMessage = (message: string) => {
-    console.log("Sending message:", message);
+  // 대화 목록 로드
+  useEffect(() => {
+    const loadConversations = async () => {
+      if (!user || !activeCharacter) return;
+
+      try {
+        setIsLoadingConversations(true);
+        const convs = await api.getConversations();
+        setConversations(convs);
+
+        // 첫 번째 대화 자동 선택
+        if (convs.length > 0 && !activeConversationId) {
+          setActiveConversationId(convs[0].id);
+        }
+      } catch (error) {
+        if (error instanceof api.UnauthorizedError) return;
+        console.error("대화 목록 로드 오류:", error);
+      } finally {
+        setIsLoadingConversations(false);
+      }
+    };
+
+    loadConversations();
+  }, [user, activeCharacter]);
+
+  // 메시지 로드
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!activeConversationId) {
+        setMessages([]);
+        return;
+      }
+
+      try {
+        setIsLoadingMessages(true);
+        const msgs = await api.getMessages(activeConversationId);
+        setMessages(msgs);
+      } catch (error) {
+        if (error instanceof api.UnauthorizedError) return;
+        console.error("메시지 로드 오류:", error);
+        toast.error("오류", "메시지를 불러오는 중 오류가 발생했습니다");
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    };
+
+    loadMessages();
+  }, [activeConversationId]);
+
+  // 메시지 자동 스크롤
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, streamingMessage]);
+
+  // 새 대화 생성
+  const handleNewConversation = async () => {
+    if (!activeCharacter) {
+      toast.error("오류", "AI 캐릭터가 없습니다");
+      return;
+    }
+
+    try {
+      const newConv = await api.createConversation({
+        character_id: activeCharacter.id,
+      });
+
+      setConversations((prev) => [newConv, ...prev]);
+      setActiveConversationId(newConv.id);
+      setMessages([]);
+      setIsConversationListOpen(false);
+      toast.success("새 대화", "새 대화가 시작되었습니다");
+    } catch (error) {
+      if (error instanceof api.UnauthorizedError) return;
+      toast.error("오류", "새 대화를 만드는 중 오류가 발생했습니다");
+    }
+  };
+
+  // 메시지 전송 (스트리밍)
+  const handleSendMessage = async (content: string) => {
+    if (!activeConversationId) {
+      toast.error("오류", "대화를 선택해주세요");
+      return;
+    }
+
+    // 사용자 메시지 즉시 표시
+    const userMessage: api.Message = {
+      id: `temp-${Date.now()}`,
+      conversation_id: activeConversationId,
+      role: "user",
+      content,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
     setIsTyping(true);
-    // Simulate AI typing
-    setTimeout(() => {
+    setStreamingMessage("");
+
+    // 스트리밍 메시지를 누적할 로컬 변수
+    let accumulatedResponse = "";
+
+    try {
+      api.streamChatMessage(
+        activeConversationId,
+        content,
+        // onChunk: 청크 도착할 때마다
+        (chunk) => {
+          accumulatedResponse += chunk;
+          setStreamingMessage(accumulatedResponse);
+        },
+        // onDone: 완료되면
+        (messageId) => {
+          // 스트리밍 메시지를 실제 메시지로 변환
+          const aiMessage: api.Message = {
+            id: messageId,
+            conversation_id: activeConversationId,
+            role: "assistant",
+            content: accumulatedResponse,
+            created_at: new Date().toISOString(),
+          };
+
+          setMessages((prev) => {
+            // 임시 사용자 메시지 제거하고 실제 메시지들 추가
+            const filtered = prev.filter((m) => !m.id.startsWith("temp-"));
+            return [...filtered, userMessage, aiMessage];
+          });
+
+          setStreamingMessage("");
+          setIsTyping(false);
+
+          // 대화 목록 새로고침 (제목이 업데이트되었을 수 있음)
+          api.getConversations().then((convs) => {
+            setConversations(convs);
+          });
+        },
+        // onError: 오류 발생 시
+        (error) => {
+          console.error("스트리밍 오류:", error);
+          toast.error("오류", "메시지 전송 중 오류가 발생했습니다");
+          setIsTyping(false);
+          setStreamingMessage("");
+
+          // 임시 메시지 제거
+          setMessages((prev) => prev.filter((m) => !m.id.startsWith("temp-")));
+        }
+      );
+    } catch (error) {
+      console.error("메시지 전송 오류:", error);
+      toast.error("오류", "메시지 전송 중 오류가 발생했습니다");
       setIsTyping(false);
-    }, 2000);
-    // TODO: API call to send message
+      setMessages((prev) => prev.filter((m) => !m.id.startsWith("temp-")));
+    }
   };
 
   const handleActionSuggestion = () => {
@@ -153,17 +279,30 @@ export default function Chat() {
   };
 
   const handleDeleteConversation = async () => {
+    if (!activeConversationId) return;
+
     setIsDeletingConversation(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log("Deleting conversation:", activeConversation);
-      toast.success("대화가 삭제되었습니다", "대화 내역이 영구적으로 삭제되었습니다");
+      await api.deleteConversation(activeConversationId);
+
+      // 대화 목록에서 제거
+      setConversations((prev) => prev.filter((c) => c.id !== activeConversationId));
+
+      // 다른 대화 선택
+      const remaining = conversations.filter((c) => c.id !== activeConversationId);
+      if (remaining.length > 0) {
+        setActiveConversationId(remaining[0].id);
+      } else {
+        setActiveConversationId(null);
+        setMessages([]);
+      }
+
+      toast.success("대화 삭제", "대화가 성공적으로 삭제되었습니다");
       setIsDeleteDialogOpen(false);
       setIsMenuOpen(false);
-      // TODO: Update conversation list and navigate
     } catch (error) {
-      toast.error("삭제 실패", "대화 삭제 중 오류가 발생했습니다");
+      if (error instanceof api.UnauthorizedError) return;
+      toast.error("오류", "대화 삭제 중 오류가 발생했습니다");
     } finally {
       setIsDeletingConversation(false);
     }
@@ -270,28 +409,62 @@ export default function Chat() {
 
           {/* Messages Container */}
           <div className="flex-1 overflow-y-auto p-6">
-            {/* Emotion Quick Select */}
-            {showEmotionSelect && (
-              <EmotionQuickSelect onSelect={handleEmotionSelect} />
+            {/* 로딩 상태 */}
+            {isLoadingMessages && (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-body text-neutral-600">메시지를 불러오는 중...</div>
+              </div>
             )}
 
-            {mockMessages.map((msg) => (
+            {/* 메시지가 없을 때 */}
+            {!isLoadingMessages && messages.length === 0 && (
+              <>
+                {/* Emotion Quick Select */}
+                {showEmotionSelect && (
+                  <EmotionQuickSelect onSelect={handleEmotionSelect} />
+                )}
+
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <p className="text-h4 text-neutral-900 mb-2">✨ 새로운 대화를 시작하세요</p>
+                  <p className="text-body text-neutral-600">
+                    {activeCharacter?.name}와 편하게 대화를 나눠보세요
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* 메시지 목록 */}
+            {messages.map((msg) => (
               <ChatMessage
                 key={msg.id}
-                role={msg.role}
+                role={msg.role === "assistant" ? "ai" : "user"}
                 content={msg.content}
-                timestamp={msg.timestamp}
+                timestamp={formatMessageTime(msg.created_at)}
               />
             ))}
 
+            {/* 스트리밍 메시지 */}
+            {streamingMessage && (
+              <ChatMessage
+                role="ai"
+                content={streamingMessage}
+                timestamp="지금"
+              />
+            )}
+
             {/* Typing Indicator */}
-            {isTyping && <TypingIndicator />}
+            {isTyping && !streamingMessage && <TypingIndicator />}
+
+            {/* 메시지 자동 스크롤 위치 */}
+            <div ref={messagesEndRef} />
 
             {/* Action Suggestion */}
-            <ActionSuggestionCard
-              title={mockSuggestion.title}
-              onClick={handleActionSuggestion}
-            />
+            {messages.length > 0 && (
+              <ActionSuggestionCard
+                title="호흡 명상 5분"
+                onClick={handleActionSuggestion}
+              />
+            )}
 
             {/* Suggested Questions */}
             <div className="mt-8 p-4 glass rounded-xl border border-primary-100">
@@ -363,22 +536,36 @@ export default function Chat() {
                   variant="primary"
                   size="md"
                   className="w-full mb-4"
-                  onClick={() => console.log("New conversation")}
+                  onClick={handleNewConversation}
                 >
                   + 새 대화
                 </Button>
 
+                {/* 로딩 상태 */}
+                {isLoadingConversations && (
+                  <div className="text-center py-4 text-body text-neutral-600">
+                    대화 목록을 불러오는 중...
+                  </div>
+                )}
+
+                {/* 대화 목록 */}
+                {!isLoadingConversations && conversations.length === 0 && (
+                  <div className="text-center py-4 text-body text-neutral-600">
+                    아직 대화가 없습니다
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  {mockConversations.map((conv) => (
+                  {conversations.map((conv) => (
                     <ConversationListItem
                       key={conv.id}
                       id={conv.id}
-                      title={conv.title}
-                      timestamp={conv.timestamp}
-                      isOngoing={conv.isOngoing}
-                      isActive={activeConversation === conv.id}
+                      title={conv.title || "새 대화"}
+                      timestamp={formatTimestamp(conv.updated_at)}
+                      isOngoing={conv.id === activeConversationId}
+                      isActive={conv.id === activeConversationId}
                       onClick={() => {
-                        setActiveConversation(conv.id);
+                        setActiveConversationId(conv.id);
                         setIsConversationListOpen(false);
                       }}
                     />

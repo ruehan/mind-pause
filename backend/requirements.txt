@@ -21,3 +21,6 @@ email-validator==2.2.0
 
 # CORS
 python-cors==1.0.0
+
+# AI/LLM
+google-generativeai==0.8.3
