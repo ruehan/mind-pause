@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { AppLayout } from "../components/AppLayout";
 import { SettingsNav } from "../components/profile/SettingsNav";
 import { ProfileHeader } from "../components/profile/ProfileHeader";
@@ -10,6 +11,7 @@ import { NotificationCheckbox } from "../components/profile/NotificationCheckbox
 import { Button } from "../components/Button";
 import { useToast } from "../components/ToastProvider";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useAuth } from "../contexts/AuthContext";
 
 export function meta() {
   return [
@@ -22,6 +24,8 @@ export function meta() {
 }
 
 export default function Profile() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const toast = useToast();
   const [activeSection, setActiveSection] = useState<
     "profile" | "stats" | "notification" | "security" | "account" | "data" | "info"
@@ -31,9 +35,18 @@ export default function Profile() {
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
-  // Mock user data
-  const [nickname, setNickname] = useState("마음쉼표");
-  const [profileImage, setProfileImage] = useState<string>();
+  // User data from auth context
+  const [nickname, setNickname] = useState(user?.nickname || "");
+  const [profileImage, setProfileImage] = useState<string | undefined>(user?.profile_image_url || undefined);
+
+  // Update nickname and profile image when user data changes
+  useEffect(() => {
+    if (user) {
+      setNickname(user.nickname);
+      setProfileImage(user.profile_image_url || undefined);
+    }
+  }, [user]);
+
   const [emailNotifications, setEmailNotifications] = useState({
     dailyReminder: false,
     weeklySummary: true,
@@ -95,6 +108,12 @@ export default function Profile() {
     // TODO: Implement disconnect
   };
 
+  const handleLogout = () => {
+    logout();
+    toast.showToast("로그아웃되었습니다", "success");
+    navigate("/");
+  };
+
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true);
     try {
@@ -130,8 +149,8 @@ export default function Profile() {
               {/* Profile Header */}
               <ProfileHeader
                 nickname={nickname}
-                email="hangyu@example.com"
-                joinDate="2024년 1월 1일"
+                email={user?.email || "이메일 없음"}
+                joinDate={user?.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : ""}
                 profileImage={profileImage}
                 completionPercentage={75}
               />
@@ -260,11 +279,30 @@ export default function Profile() {
 
           {/* Account Section */}
           {activeSection === "account" && (
-            <div>
+            <div className="space-y-6">
               <h1 className="text-h2 text-neutral-900 mb-6 flex items-center gap-2">
                 🌐 계정 관리
               </h1>
 
+              {/* Logout Section */}
+              <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
+                <h3 className="text-h4 text-neutral-900 mb-4 flex items-center gap-2">
+                  🚪 로그아웃
+                </h3>
+                <p className="text-body text-neutral-600 mb-4">
+                  현재 계정에서 로그아웃합니다. 로그인 세션은 30분 후 자동으로 만료됩니다.
+                </p>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={handleLogout}
+                  className="w-full"
+                >
+                  로그아웃
+                </Button>
+              </div>
+
+              {/* Delete Account Section */}
               <div className="bg-red-50 rounded-xl border-2 border-red-200 p-6">
                 <h3 className="text-h4 text-red-700 font-bold mb-4 flex items-center gap-2">
                   ⚠️ 계정 탈퇴

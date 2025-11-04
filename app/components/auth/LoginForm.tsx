@@ -1,10 +1,16 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Input } from "../Input";
 import { Button } from "../Button";
 import { SocialLoginButtons } from "./SocialLoginButtons";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../ToastProvider";
 
 export function LoginForm() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const { showToast } = useToast();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
@@ -35,19 +41,17 @@ export function LoginForm() {
 
     setIsLoading(true);
 
-    // API 호출: 로그인
-    // POST /api/auth/login
-    // Body: { email, password }
     try {
-      // TODO: 실제 API 엔드포인트 연결 필요
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // 로그인 성공 시 토큰 저장 및 리다이렉트
-      // localStorage.setItem('token', response.token);
-      // navigate('/dashboard');
+      await login(email, password);
+      showToast("로그인 성공!", "success");
+      navigate("/dashboard");
     } catch (error) {
-      // 로그인 실패 처리
-      setErrors({ email: "이메일 또는 비밀번호가 올바르지 않습니다" });
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "이메일 또는 비밀번호가 올바르지 않습니다";
+      setErrors({ email: errorMessage });
+      showToast(errorMessage, "error");
     } finally {
       setIsLoading(false);
     }
