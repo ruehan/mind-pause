@@ -47,7 +47,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         title,
         description: options?.description,
         type: options?.type || "info",
-        duration: options?.duration || 5000,
+        duration: options?.duration || 3000,
       };
 
       setToasts((prev) => [...prev, newToast]);

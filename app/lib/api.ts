@@ -55,9 +55,9 @@ async function apiRequest<T>(
   const url = `${API_BASE_URL}${endpoint}`;
   const token = localStorage.getItem("access_token");
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
 
   if (token) {
@@ -275,6 +275,11 @@ export interface Conversation {
   id: string;
   user_id: string;
   character_id: string;
+  character?: {
+    id: string;
+    name: string;
+    avatar_options?: Record<string, string>;
+  };
   title?: string;
   created_at: string;
   updated_at: string;
@@ -326,6 +331,19 @@ export async function createConversation(data: ConversationCreate): Promise<Conv
 }
 
 /**
+ * 대화 정보 업데이트
+ */
+export async function updateConversation(
+  conversationId: string,
+  data: { title?: string }
+): Promise<Conversation> {
+  return apiRequest<Conversation>(`/chat/conversations/${conversationId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
  * 대화 삭제
  */
 export async function deleteConversation(conversationId: string): Promise<void> {
@@ -339,6 +357,23 @@ export async function deleteConversation(conversationId: string): Promise<void> 
  */
 export async function getMessages(conversationId: string, skip = 0, limit = 50): Promise<Message[]> {
   return apiRequest<Message[]>(`/chat/conversations/${conversationId}/messages?skip=${skip}&limit=${limit}`, {
+    method: "GET",
+  });
+}
+
+/**
+ * 대화 요약 목록 조회
+ */
+export async function getConversationSummaries(conversationId: string): Promise<{
+  summaries: Array<{
+    id: string;
+    summary: string;
+    message_count: number;
+    created_at: string;
+  }>;
+  total_count: number;
+}> {
+  return apiRequest(`/chat/conversations/${conversationId}/summaries`, {
     method: "GET",
   });
 }

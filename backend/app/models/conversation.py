@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 from app.db.database import Base
@@ -30,6 +31,9 @@ class Conversation(Base):
         onupdate=func.now(),
         nullable=False
     )
+
+    # Relationships
+    character = relationship("AICharacter", lazy="joined")
 
     def __repr__(self):
         return f"<Conversation {self.id}: {self.title}>"

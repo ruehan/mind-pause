@@ -13,6 +13,7 @@ from app.models.user import User
 from app.models.conversation import Conversation
 from app.models.ai_character import AICharacter
 from app.models.message import Message
+from app.models.conversation_summary import ConversationSummary
 from app.schemas.conversation import (
     ConversationCreate,
     ConversationUpdate,
@@ -85,6 +86,7 @@ async def list_conversations(
         desc(Conversation.updated_at)
     ).offset(skip).limit(limit).all()
 
+    # character는 relationship의 lazy="joined"로 자동 로드됨
     return conversations
 
 
@@ -126,12 +128,15 @@ async def update_conversation(
     - **conversation_id**: 업데이트할 대화 ID
     - **title**: 새로운 대화 제목
     """
+    print(f"📝 제목 수정 요청: conversation_id={conversation_id}, new_title={conversation_data.title}, user_id={current_user.id}")
+
     conversation = db.query(Conversation).filter(
         Conversation.id == conversation_id,
         Conversation.user_id == current_user.id
     ).first()
 
     if not conversation:
+        print(f"❌ 대화를 찾을 수 없음: conversation_id={conversation_id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="대화를 찾을 수 없습니다"
@@ -139,7 +144,9 @@ async def update_conversation(
 
     # 업데이트
     if conversation_data.title is not None:
+        old_title = conversation.title
         conversation.title = conversation_data.title
+        print(f"✅ 제목 수정 완료: {old_title} → {conversation_data.title}")
 
     db.commit()
     db.refresh(conversation)
@@ -351,3 +358,48 @@ async def stream_chat_message(
             "X-Accel-Buffering": "no"  # nginx 버퍼링 비활성화
         }
     )
+
+
+@router.get("/{conversation_id}/summaries")
+async def get_conversation_summaries(
+    conversation_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    대화 요약 목록 조회
+
+    - **conversation_id**: 대화 ID
+    - 해당 대화의 모든 요약을 시간순으로 반환합니다
+    """
+    # 대화 소유권 확인
+    conversation = db.query(Conversation).filter(
+        Conversation.id == conversation_id,
+        Conversation.user_id == current_user.id
+    ).first()
+
+    if not conversation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="대화를 찾을 수 없습니다"
+        )
+
+    # 요약 조회
+    summaries = db.query(ConversationSummary).filter(
+        ConversationSummary.conversation_id == conversation_id
+    ).order_by(
+        ConversationSummary.created_at
+    ).all()
+
+    return {
+        "summaries": [
+            {
+                "id": str(summary.id),
+                "summary": summary.summary,
+                "message_count": summary.message_count,
+                "created_at": summary.created_at.isoformat()
+            }
+            for summary in summaries
+        ],
+        "total_count": len(summaries)
+    }

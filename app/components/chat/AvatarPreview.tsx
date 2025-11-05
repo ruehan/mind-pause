@@ -1,8 +1,9 @@
 import ReactNiceAvatar from "react-nice-avatar";
 import { ClientOnly } from "../ClientOnly";
+import type { AvatarOptions } from "../../lib/api";
 
 interface AvatarPreviewProps {
-  options: Record<string, string>;
+  options: AvatarOptions;
   size?: number;
   className?: string;
 }
@@ -27,7 +28,7 @@ export function AvatarPreview({
         >
           <ReactNiceAvatar
             style={{ width: `${size}px`, height: `${size}px` }}
-            {...options}
+            {...(options as any)}
           />
         </ClientOnly>
       </div>

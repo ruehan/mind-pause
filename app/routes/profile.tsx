@@ -110,7 +110,7 @@ export default function Profile() {
 
   const handleLogout = () => {
     logout();
-    toast.showToast("로그아웃되었습니다", "success");
+    toast.showToast("로그아웃되었습니다", { type: "success" });
     navigate("/");
   };
 

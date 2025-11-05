@@ -1,5 +1,6 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export type ToastType = "success" | "error" | "warning" | "info";
 
@@ -14,32 +15,40 @@ export interface ToastProps {
 
 const toastStyles = {
   success: {
-    container: "bg-gradient-to-r from-mint-50 to-mint-100 border-mint-500",
+    container: "bg-white border-mint-200",
     icon: CheckCircle,
+    iconBg: "bg-mint-100",
     iconColor: "text-mint-600",
-    title: "text-mint-900",
-    description: "text-mint-700",
+    title: "text-neutral-900",
+    description: "text-neutral-600",
+    progress: "bg-mint-500",
   },
   error: {
-    container: "bg-gradient-to-r from-error-50 to-error-100 border-error-500",
+    container: "bg-white border-error-200",
     icon: AlertCircle,
+    iconBg: "bg-error-100",
     iconColor: "text-error-600",
-    title: "text-error-900",
-    description: "text-error-700",
+    title: "text-neutral-900",
+    description: "text-neutral-600",
+    progress: "bg-error-500",
   },
   warning: {
-    container: "bg-gradient-to-r from-orange-50 to-orange-100 border-orange-500",
+    container: "bg-white border-orange-200",
     icon: AlertTriangle,
+    iconBg: "bg-orange-100",
     iconColor: "text-orange-600",
-    title: "text-orange-900",
-    description: "text-orange-700",
+    title: "text-neutral-900",
+    description: "text-neutral-600",
+    progress: "bg-orange-500",
   },
   info: {
-    container: "bg-gradient-to-r from-primary-50 to-primary-100 border-primary-500",
+    container: "bg-white border-primary-200",
     icon: Info,
+    iconBg: "bg-primary-100",
     iconColor: "text-primary-600",
-    title: "text-primary-900",
-    description: "text-primary-700",
+    title: "text-neutral-900",
+    description: "text-neutral-600",
+    progress: "bg-primary-500",
   },
 };
 
@@ -49,10 +58,28 @@ export function Toast({
   title,
   description,
   type = "info",
-  duration = 5000,
+  duration = 3000,
 }: ToastProps) {
   const styles = toastStyles[type];
   const Icon = styles.icon;
+  const [progress, setProgress] = useState(100);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 100 - (elapsed / duration) * 100);
+      setProgress(remaining);
+
+      if (remaining === 0) {
+        clearInterval(interval);
+      }
+    }, 16); // ~60fps
+
+    return () => clearInterval(interval);
+  }, [open, duration]);
 
   return (
     <ToastPrimitive.Root
@@ -61,46 +88,61 @@ export function Toast({
       duration={duration}
       className={`
         ${styles.container}
-        rounded-xl shadow-elevation-2 border-l-4
-        p-4 pr-10
-        data-[state=open]:animate-in data-[state=open]:slide-in-from-right
-        data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right
+        relative overflow-hidden
+        rounded-2xl shadow-lg border-2
+        backdrop-blur-sm
+        data-[state=open]:animate-in data-[state=open]:slide-in-from-right-full
+        data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right-full
+        data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]
+        data-[swipe=cancel]:translate-x-0 data-[swipe=cancel]:transition-transform
         data-[swipe=end]:animate-out data-[swipe=end]:slide-out-to-right-full
         transition-all duration-300
       `}
     >
-      <div className="flex items-start gap-3">
-        {/* Icon */}
-        <Icon className={`w-5 h-5 ${styles.iconColor} flex-shrink-0 mt-0.5`} />
+      {/* Progress Bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-neutral-100">
+        <div
+          className={`h-full ${styles.progress} transition-all duration-100 ease-linear`}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
 
-        {/* Content */}
-        <div className="flex-1 space-y-1">
-          <ToastPrimitive.Title
-            className={`text-body-sm font-semibold ${styles.title}`}
-          >
-            {title}
-          </ToastPrimitive.Title>
-          {description && (
-            <ToastPrimitive.Description
-              className={`text-body-sm ${styles.description}`}
+      <div className="p-4 pr-12">
+        <div className="flex items-start gap-3">
+          {/* Icon with background */}
+          <div className={`${styles.iconBg} p-2 rounded-xl flex-shrink-0`}>
+            <Icon className={`w-5 h-5 ${styles.iconColor}`} />
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 space-y-1 pt-0.5">
+            <ToastPrimitive.Title
+              className={`text-body font-semibold ${styles.title} leading-snug`}
             >
-              {description}
-            </ToastPrimitive.Description>
-          )}
-        </div>
+              {title}
+            </ToastPrimitive.Title>
+            {description && (
+              <ToastPrimitive.Description
+                className={`text-body-sm ${styles.description} leading-relaxed`}
+              >
+                {description}
+              </ToastPrimitive.Description>
+            )}
+          </div>
 
-        {/* Close Button */}
-        <ToastPrimitive.Close
-          className={`
-            absolute top-2 right-2
-            p-1.5 rounded-lg
-            ${styles.iconColor} hover:bg-black/5
-            transition-colors
-          `}
-        >
-          <X className="w-4 h-4" />
-          <span className="sr-only">닫기</span>
-        </ToastPrimitive.Close>
+          {/* Close Button */}
+          <ToastPrimitive.Close
+            className={`
+              absolute top-3 right-3
+              p-1 rounded-lg
+              text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100
+              transition-all duration-200
+            `}
+          >
+            <X className="w-4 h-4" />
+            <span className="sr-only">닫기</span>
+          </ToastPrimitive.Close>
+        </div>
       </div>
     </ToastPrimitive.Root>
   );
@@ -108,6 +150,6 @@ export function Toast({
 
 export function ToastViewport() {
   return (
-    <ToastPrimitive.Viewport className="fixed top-0 right-0 flex flex-col gap-2 p-6 w-full max-w-md z-[100] outline-none" />
+    <ToastPrimitive.Viewport className="fixed top-0 right-0 flex flex-col gap-3 p-6 w-full max-w-sm z-[100] outline-none" />
   );
 }

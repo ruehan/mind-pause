@@ -1,12 +1,17 @@
 import ReactNiceAvatar from "react-nice-avatar";
 import { ClientOnly } from "../ClientOnly";
 import { useState, useEffect } from "react";
+import type { AvatarOptions } from "../../lib/api";
 
 interface ChatMessageProps {
   role: "user" | "ai";
   content: string;
   timestamp: string;
-  avatarOptions?: Record<string, string>;
+  avatarOptions?: AvatarOptions;
+  aiName?: string;
+  isStreaming?: boolean;
+  shouldTypeEffect?: boolean;
+  onTypingComplete?: () => void;
 }
 
 export function ChatMessage({
@@ -14,19 +19,33 @@ export function ChatMessage({
   content,
   timestamp,
   avatarOptions,
+  aiName,
+  isStreaming = false,
+  shouldTypeEffect = false,
+  onTypingComplete,
 }: ChatMessageProps) {
   const isAI = role === "ai";
   const [isVisible, setIsVisible] = useState(false);
   const [displayedContent, setDisplayedContent] = useState("");
-  const [isTyping, setIsTyping] = useState(isAI);
+  const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
 
-    // Typing effect for AI messages
-    if (isAI) {
+    // 스트리밍 중이면 바로 표시
+    if (isStreaming) {
+      setDisplayedContent(content);
+      setIsTyping(false);
+      return;
+    }
+
+    // 타이핑 효과가 필요한 경우 (청크를 모두 받은 후)
+    if (shouldTypeEffect && isAI) {
       let currentIndex = 0;
-      const typingSpeed = 20; // ms per character
+      const typingSpeed = 15; // ms per character
+
+      setIsTyping(true);
+      setDisplayedContent("");
 
       const typingInterval = setInterval(() => {
         if (currentIndex < content.length) {
@@ -35,15 +54,20 @@ export function ChatMessage({
         } else {
           setIsTyping(false);
           clearInterval(typingInterval);
+          // 타이핑 완료 콜백 호출
+          if (onTypingComplete) {
+            onTypingComplete();
+          }
         }
       }, typingSpeed);
 
       return () => clearInterval(typingInterval);
     } else {
+      // 일반 메시지는 바로 표시
       setDisplayedContent(content);
       setIsTyping(false);
     }
-  }, [content, isAI]);
+  }, [content, isAI, shouldTypeEffect, onTypingComplete, isStreaming]);
 
   // Default AI avatar config
   const defaultAIAvatar = {
@@ -90,7 +114,7 @@ export function ChatMessage({
               <div className="transform group-hover:scale-110 transition-transform duration-300">
                 <ReactNiceAvatar
                   style={{ width: "40px", height: "40px" }}
-                  {...(avatarOptions || defaultAIAvatar)}
+                  {...((avatarOptions || defaultAIAvatar) as any)}
                 />
               </div>
             </ClientOnly>
@@ -98,6 +122,13 @@ export function ChatMessage({
         )}
 
         <div className="flex flex-col">
+          {/* AI 이름 표시 */}
+          {isAI && aiName && (
+            <span className="text-caption text-neutral-600 mb-1 font-medium">
+              {aiName}
+            </span>
+          )}
+
           {/* Message Bubble */}
           <div
             className={`
@@ -110,7 +141,7 @@ export function ChatMessage({
           >
             <p className="text-body leading-relaxed whitespace-pre-wrap">
               {displayedContent}
-              {isTyping && (
+              {(isTyping || isStreaming) && (
                 <span className="inline-block w-1 h-4 bg-primary-500 ml-1 animate-pulse">|</span>
               )}
             </p>
@@ -121,7 +152,7 @@ export function ChatMessage({
             className={`
               text-caption mt-1 transition-opacity duration-300
               ${isAI ? "text-neutral-500" : "text-primary-200 text-right"}
-              ${isTyping ? "opacity-0" : "opacity-100"}
+              ${(isTyping || isStreaming) ? "opacity-0" : "opacity-100"}
             `}
           >
             {timestamp}

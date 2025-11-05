@@ -7,6 +7,7 @@ import { ChatInput } from "../components/chat/ChatInput";
 import { TypingIndicator } from "../components/chat/TypingIndicator";
 import { EmotionQuickSelect } from "../components/chat/EmotionQuickSelect";
 import { AICharacterCreateModal } from "../components/chat/AICharacterCreateModal";
+import { AICharacterSelector } from "../components/chat/AICharacterSelector";
 import { AvatarPreview } from "../components/chat/AvatarPreview";
 import { Button } from "../components/Button";
 import { useToast } from "../components/ToastProvider";
@@ -67,13 +68,26 @@ export default function Chat() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeletingConversation, setIsDeletingConversation] = useState(false);
 
+  // 제목 수정 상태
+  const [isEditTitleDialogOpen, setIsEditTitleDialogOpen] = useState(false);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [isSavingTitle, setIsSavingTitle] = useState(false);
+
+  // 요약 보기 상태
+  const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
+  const [summaries, setSummaries] = useState<any[]>([]);
+  const [isLoadingSummaries, setIsLoadingSummaries] = useState(false);
+
   // AI 캐릭터 상태
   const [isCharacterModalOpen, setIsCharacterModalOpen] = useState(false);
+  const [isCharacterSelectorOpen, setIsCharacterSelectorOpen] = useState(false);
+  const [isCreatingNewConversation, setIsCreatingNewConversation] = useState(false);
   const [activeCharacter, setActiveCharacter] = useState<api.AICharacter | null>(null);
   const [isLoadingCharacter, setIsLoadingCharacter] = useState(true);
 
   // 스트리밍 메시지 상태
   const [streamingMessage, setStreamingMessage] = useState<string>("");
+  const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 활성 캐릭터 확인
@@ -105,8 +119,59 @@ export default function Chat() {
     try {
       const character = await api.getActiveAICharacter();
       setActiveCharacter(character);
+
+      // 새 대화 생성 모드인 경우 새 대화 생성
+      if (isCreatingNewConversation) {
+        setIsCreatingNewConversation(false);
+        const newConv = await api.createConversation({
+          character_id: character.id,
+        });
+        const convs = await api.getConversations();
+        setConversations(convs);
+        setActiveConversationId(newConv.id);
+        setMessages([]);
+        toast.success("새 대화", `${character.name}와의 새 대화가 시작되었습니다`);
+      }
     } catch (error) {
+      if (error instanceof api.UnauthorizedError) return;
       toast.error("오류", "캐릭터를 불러오는 중 오류가 발생했습니다");
+      setIsCreatingNewConversation(false);
+    }
+  };
+
+  const handleCharacterSelected = async () => {
+    try {
+      const character = await api.getActiveAICharacter();
+      setActiveCharacter(character);
+
+      // 새 대화 생성 모드인 경우
+      if (isCreatingNewConversation) {
+        setIsCreatingNewConversation(false);
+        // 선택된 캐릭터로 새 대화 생성
+        const newConv = await api.createConversation({
+          character_id: character.id,
+        });
+        const convs = await api.getConversations();
+        setConversations(convs);
+        setActiveConversationId(newConv.id);
+        setMessages([]);
+        toast.success("새 대화", `${character.name}와의 새 대화가 시작되었습니다`);
+      } else {
+        // 기존 방식: 캐릭터만 전환
+        const convs = await api.getConversations();
+        setConversations(convs);
+        // 첫 번째 대화로 자동 이동
+        if (convs.length > 0) {
+          setActiveConversationId(convs[0].id);
+        } else {
+          setActiveConversationId(null);
+          setMessages([]);
+        }
+      }
+    } catch (error) {
+      if (error instanceof api.UnauthorizedError) return;
+      toast.error("오류", "캐릭터를 불러오는 중 오류가 발생했습니다");
+      setIsCreatingNewConversation(false);
     }
   };
 
@@ -135,7 +200,7 @@ export default function Chat() {
     loadConversations();
   }, [user, activeCharacter]);
 
-  // 메시지 로드
+  // 메시지 로드 및 캐릭터 자동 전환
   useEffect(() => {
     const loadMessages = async () => {
       if (!activeConversationId) {
@@ -147,6 +212,20 @@ export default function Chat() {
         setIsLoadingMessages(true);
         const msgs = await api.getMessages(activeConversationId);
         setMessages(msgs);
+
+        // 대화의 캐릭터와 현재 활성 캐릭터가 다르면 자동 전환
+        const currentConversation = conversations.find((c) => c.id === activeConversationId);
+        if (currentConversation && activeCharacter && currentConversation.character_id !== activeCharacter.id) {
+          console.log(`캐릭터 자동 전환: ${activeCharacter.name} → ${currentConversation.character?.name}`);
+          try {
+            await api.updateAICharacter(currentConversation.character_id, { is_active: true });
+            const newCharacter = await api.getActiveAICharacter();
+            setActiveCharacter(newCharacter);
+            toast.success("캐릭터 전환", `${newCharacter.name}와의 대화로 전환되었습니다`);
+          } catch (error) {
+            console.error("캐릭터 전환 오류:", error);
+          }
+        }
       } catch (error) {
         if (error instanceof api.UnauthorizedError) return;
         console.error("메시지 로드 오류:", error);
@@ -157,34 +236,27 @@ export default function Chat() {
     };
 
     loadMessages();
-  }, [activeConversationId]);
+  }, [activeConversationId, conversations]);
 
-  // 메시지 자동 스크롤
+  // 메시지 자동 스크롤 (throttle 적용)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!messagesEndRef.current) return;
+
+    const scrollToBottom = () => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    // requestAnimationFrame으로 스크롤 최적화
+    const rafId = requestAnimationFrame(scrollToBottom);
+
+    return () => cancelAnimationFrame(rafId);
   }, [messages, streamingMessage]);
 
-  // 새 대화 생성
-  const handleNewConversation = async () => {
-    if (!activeCharacter) {
-      toast.error("오류", "AI 캐릭터가 없습니다");
-      return;
-    }
-
-    try {
-      const newConv = await api.createConversation({
-        character_id: activeCharacter.id,
-      });
-
-      setConversations((prev) => [newConv, ...prev]);
-      setActiveConversationId(newConv.id);
-      setMessages([]);
-      setIsConversationListOpen(false);
-      toast.success("새 대화", "새 대화가 시작되었습니다");
-    } catch (error) {
-      if (error instanceof api.UnauthorizedError) return;
-      toast.error("오류", "새 대화를 만드는 중 오류가 발생했습니다");
-    }
+  // 새 대화 생성 - 캐릭터 선택 모달 표시
+  const handleNewConversation = () => {
+    setIsConversationListOpen(false);
+    setIsCreatingNewConversation(true);
+    setIsCharacterSelectorOpen(true);
   };
 
   // 메시지 전송 (스트리밍)
@@ -237,6 +309,9 @@ export default function Chat() {
 
           setStreamingMessage("");
           setIsTyping(false);
+
+          // 타이핑 효과를 위해 메시지 ID 설정
+          setTypingMessageId(messageId);
 
           // 대화 목록 새로고침 (제목이 업데이트되었을 수 있음)
           api.getConversations().then((convs) => {
@@ -308,6 +383,102 @@ export default function Chat() {
     }
   };
 
+  // 제목 수정
+  const handleEditTitle = () => {
+    const currentConversation = conversations.find((c) => c.id === activeConversationId);
+    if (currentConversation) {
+      setEditingTitle(currentConversation.title || "");
+      setIsEditTitleDialogOpen(true);
+      setIsMenuOpen(false);
+    }
+  };
+
+  const handleSaveTitle = async () => {
+    if (!activeConversationId || !editingTitle.trim()) return;
+    setIsSavingTitle(true);
+    try {
+      console.log("제목 수정 시도:", activeConversationId, editingTitle.trim());
+      await api.updateConversation(activeConversationId, { title: editingTitle.trim() });
+
+      // 대화 목록 업데이트
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === activeConversationId ? { ...c, title: editingTitle.trim() } : c
+        )
+      );
+
+      toast.success("제목 수정", "대화 제목이 수정되었습니다");
+      setIsEditTitleDialogOpen(false);
+    } catch (error) {
+      console.error("제목 수정 오류:", error);
+      if (error instanceof api.UnauthorizedError) return;
+
+      // 에러 상세 정보 표시
+      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+      toast.error("오류", `제목 수정 중 오류가 발생했습니다: ${errorMessage}`);
+    } finally {
+      setIsSavingTitle(false);
+    }
+  };
+
+  // 요약 보기
+  const handleViewSummary = async () => {
+    if (!activeConversationId) return;
+    setIsMenuOpen(false);
+    setIsSummaryDialogOpen(true);
+    setIsLoadingSummaries(true);
+
+    try {
+      console.log("요약 조회 시도:", activeConversationId);
+      const data = await api.getConversationSummaries(activeConversationId);
+      console.log("요약 조회 결과:", data);
+      setSummaries(data.summaries || []);
+    } catch (error) {
+      console.error("요약 조회 오류:", error);
+      if (error instanceof api.UnauthorizedError) return;
+
+      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+      toast.error("오류", `요약을 불러오는 중 오류가 발생했습니다: ${errorMessage}`);
+      setIsSummaryDialogOpen(false);
+    } finally {
+      setIsLoadingSummaries(false);
+    }
+  };
+
+  // 대화 기록 저장
+  const handleSaveHistory = () => {
+    if (!activeConversationId || messages.length === 0) return;
+    setIsMenuOpen(false);
+
+    const currentConversation = conversations.find((c) => c.id === activeConversationId);
+    const title = currentConversation?.title || "대화 기록";
+
+    // 텍스트 파일 생성
+    let content = `${title}\n`;
+    content += `저장 날짜: ${new Date().toLocaleString("ko-KR")}\n`;
+    content += `총 메시지 수: ${messages.length}\n`;
+    content += "=".repeat(50) + "\n\n";
+
+    messages.forEach((msg) => {
+      const role = msg.role === "user" ? "사용자" : activeCharacter?.name || "AI";
+      const timestamp = new Date(msg.created_at).toLocaleString("ko-KR");
+      content += `[${timestamp}] ${role}:\n${msg.content}\n\n`;
+    });
+
+    // 다운로드
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title.replace(/[^a-zA-Z0-9가-힣 ]/g, "_")}_${new Date().toISOString().split("T")[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success("저장 완료", "대화 기록이 저장되었습니다");
+  };
+
   // 캐릭터 로딩 중이면 로딩 표시
   if (isLoadingCharacter) {
     return (
@@ -326,9 +497,9 @@ export default function Chat() {
     <AppLayout>
       <div className="flex h-full -mx-4 sm:-mx-6 lg:-mx-8 -my-6 relative">
         {/* Chat Area - Full Width */}
-        <div className="flex-1 flex flex-col min-h-screen bg-neutral-50">
-          {/* Chat Header */}
-          <div className="bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+        <div className="flex-1 flex flex-col h-screen bg-neutral-50">
+          {/* Chat Header - Fixed at top */}
+          <div className="bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsConversationListOpen(true)}
@@ -339,18 +510,27 @@ export default function Chat() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <h1 className="text-h4 text-neutral-900 flex items-center gap-3">
-                {activeCharacter ? (
-                  <>
-                    {activeCharacter.avatar_options && (
-                      <AvatarPreview options={activeCharacter.avatar_options} size={40} />
-                    )}
-                    <span>{activeCharacter.name}와의 대화</span>
-                  </>
-                ) : (
-                  <>🤖 AI 코치와의 대화</>
-                )}
-              </h1>
+              <button
+                onClick={() => setIsCharacterSelectorOpen(true)}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                aria-label="캐릭터 변경"
+              >
+                <h1 className="text-h4 text-neutral-900 flex items-center gap-3">
+                  {activeCharacter ? (
+                    <>
+                      {activeCharacter.avatar_options && (
+                        <AvatarPreview options={activeCharacter.avatar_options} size={40} />
+                      )}
+                      <span>{activeCharacter.name}와의 대화</span>
+                    </>
+                  ) : (
+                    <>🤖 AI 코치와의 대화</>
+                  )}
+                </h1>
+                <svg className="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             </div>
 
             {/* Menu Button */}
@@ -370,13 +550,22 @@ export default function Chat() {
                     onClick={() => setIsMenuOpen(false)}
                   />
                   <div className="absolute right-0 top-12 w-56 bg-white shadow-lg rounded-lg border border-neutral-200 z-20">
-                    <button className="w-full text-left px-4 py-3 hover:bg-neutral-50 text-body text-neutral-700 transition-colors">
+                    <button
+                      className="w-full text-left px-4 py-3 hover:bg-neutral-50 text-body text-neutral-700 transition-colors"
+                      onClick={handleEditTitle}
+                    >
                       세션 제목 수정
                     </button>
-                    <button className="w-full text-left px-4 py-3 hover:bg-neutral-50 text-body text-neutral-700 transition-colors">
+                    <button
+                      className="w-full text-left px-4 py-3 hover:bg-neutral-50 text-body text-neutral-700 transition-colors"
+                      onClick={handleViewSummary}
+                    >
                       대화 요약 보기
                     </button>
-                    <button className="w-full text-left px-4 py-3 hover:bg-neutral-50 text-body text-neutral-700 transition-colors">
+                    <button
+                      className="w-full text-left px-4 py-3 hover:bg-neutral-50 text-body text-neutral-700 transition-colors"
+                      onClick={handleSaveHistory}
+                    >
                       대화 기록 저장
                     </button>
                     <div className="border-t border-neutral-200" />
@@ -407,8 +596,105 @@ export default function Chat() {
             loading={isDeletingConversation}
           />
 
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-6">
+          {/* 제목 수정 다이얼로그 */}
+          {isEditTitleDialogOpen && (
+            <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
+              <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+                <h3 className="text-h4 text-neutral-900 mb-4">대화 제목 수정</h3>
+                <input
+                  type="text"
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  className="w-full px-4 py-3 border border-neutral-300 rounded-lg text-body focus:outline-none focus:border-primary-500 mb-4"
+                  placeholder="대화 제목을 입력하세요"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !isSavingTitle) {
+                      handleSaveTitle();
+                    }
+                  }}
+                />
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setIsEditTitleDialogOpen(false)}
+                    disabled={isSavingTitle}
+                    className="px-4 py-2 text-body text-neutral-700 hover:text-neutral-900 transition-colors disabled:opacity-50"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleSaveTitle}
+                    disabled={isSavingTitle || !editingTitle.trim()}
+                    className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSavingTitle ? "저장 중..." : "저장"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 요약 보기 다이얼로그 */}
+          {isSummaryDialogOpen && (
+            <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.1)' }}>
+              <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+                <div className="p-6 border-b border-neutral-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-h4 text-neutral-900">대화 요약</h3>
+                    <button
+                      onClick={() => setIsSummaryDialogOpen(false)}
+                      className="text-neutral-600 hover:text-neutral-900 text-2xl"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6">
+                  {isLoadingSummaries ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="text-body text-neutral-600">요약을 불러오는 중...</div>
+                    </div>
+                  ) : summaries.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-body text-neutral-600">
+                        아직 생성된 요약이 없습니다.
+                      </p>
+                      <p className="text-body-sm text-neutral-500 mt-2">
+                        요약은 20개 메시지마다 자동으로 생성됩니다.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {summaries.map((summary, index) => (
+                        <div
+                          key={summary.id}
+                          className="p-4 bg-neutral-50 rounded-lg border border-neutral-200"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-body-sm font-medium text-primary-600">
+                              요약 {index + 1}
+                            </span>
+                            <span className="text-caption text-neutral-500">
+                              {summary.message_count}개 메시지
+                            </span>
+                          </div>
+                          <p className="text-body text-neutral-800 whitespace-pre-wrap">
+                            {summary.summary}
+                          </p>
+                          <div className="mt-2 text-caption text-neutral-500">
+                            {new Date(summary.created_at).toLocaleString("ko-KR")}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Messages Container - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-6 min-h-0">
             {/* 로딩 상태 */}
             {isLoadingMessages && (
               <div className="flex items-center justify-center py-8">
@@ -440,71 +726,47 @@ export default function Chat() {
                 role={msg.role === "assistant" ? "ai" : "user"}
                 content={msg.content}
                 timestamp={formatMessageTime(msg.created_at)}
+                avatarOptions={msg.role === "assistant" ? activeCharacter?.avatar_options : undefined}
+                aiName={msg.role === "assistant" ? activeCharacter?.name : undefined}
+                isStreaming={false}
+                shouldTypeEffect={msg.id === typingMessageId}
+                onTypingComplete={() => setTypingMessageId(null)}
               />
             ))}
 
-            {/* 스트리밍 메시지 */}
-            {streamingMessage && (
+            {/* 스트리밍 중인 메시지 표시 */}
+            {isTyping && streamingMessage && (
               <ChatMessage
+                key="streaming"
                 role="ai"
                 content={streamingMessage}
                 timestamp="지금"
+                avatarOptions={activeCharacter?.avatar_options}
+                aiName={activeCharacter?.name}
+                isStreaming={true}
+                shouldTypeEffect={false}
               />
             )}
 
-            {/* Typing Indicator */}
-            {isTyping && !streamingMessage && <TypingIndicator />}
+            {/* Typing Indicator - 스트리밍 시작 직후에만 표시 */}
+            {isTyping && !streamingMessage && (
+              <TypingIndicator
+                avatarOptions={activeCharacter?.avatar_options}
+                aiName={activeCharacter?.name}
+              />
+            )}
 
             {/* 메시지 자동 스크롤 위치 */}
             <div ref={messagesEndRef} />
-
-            {/* Action Suggestion */}
-            {messages.length > 0 && (
-              <ActionSuggestionCard
-                title="호흡 명상 5분"
-                onClick={handleActionSuggestion}
-              />
-            )}
-
-            {/* Suggested Questions */}
-            <div className="mt-8 p-4 glass rounded-xl border border-primary-100">
-              <p className="text-body font-medium text-neutral-800 mb-3 flex items-center gap-2">
-                💡 이런 이야기를 해보시겠어요?
-              </p>
-              <div className="space-y-2">
-                <button
-                  onClick={() =>
-                    handleSendMessage("오늘 스트레스 관리 방법 알려줘")
-                  }
-                  className="w-full text-left px-4 py-2 rounded-lg bg-white/50 hover:bg-white transition-all text-body-sm text-neutral-700"
-                >
-                  • "오늘 스트레스 관리 방법 알려줘"
-                </button>
-                <button
-                  onClick={() =>
-                    handleSendMessage("불안할 때 어떻게 해야 할까?")
-                  }
-                  className="w-full text-left px-4 py-2 rounded-lg bg-white/50 hover:bg-white transition-all text-body-sm text-neutral-700"
-                >
-                  • "불안할 때 어떻게 해야 할까?"
-                </button>
-                <button
-                  onClick={() =>
-                    handleSendMessage("긍정적인 마음가짐 유지하는 방법")
-                  }
-                  className="w-full text-left px-4 py-2 rounded-lg bg-white/50 hover:bg-white transition-all text-body-sm text-neutral-700"
-                >
-                  • "긍정적인 마음가짐 유지하는 방법"
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* Chat Input */}
-          <ChatInput
-            onSend={handleSendMessage}
-            onVoiceInput={handleVoiceInput}
-          />
+          {/* Chat Input - Fixed at bottom */}
+          <div className="shrink-0">
+            <ChatInput
+              onSend={handleSendMessage}
+              onVoiceInput={handleVoiceInput}
+            />
+          </div>
         </div>
 
         {/* Conversation List Sidebar - Toggle Overlay */}
@@ -564,6 +826,8 @@ export default function Chat() {
                       timestamp={formatTimestamp(conv.updated_at)}
                       isOngoing={conv.id === activeConversationId}
                       isActive={conv.id === activeConversationId}
+                      characterName={conv.character?.name}
+                      characterAvatar={conv.character?.avatar_options}
                       onClick={() => {
                         setActiveConversationId(conv.id);
                         setIsConversationListOpen(false);
@@ -582,6 +846,18 @@ export default function Chat() {
         isOpen={isCharacterModalOpen}
         onClose={() => setIsCharacterModalOpen(false)}
         onSuccess={handleCharacterCreated}
+      />
+
+      {/* AI Character Selector */}
+      <AICharacterSelector
+        isOpen={isCharacterSelectorOpen}
+        onClose={() => {
+          setIsCharacterSelectorOpen(false);
+          setIsCreatingNewConversation(false);
+        }}
+        currentCharacterId={activeCharacter?.id}
+        onCharacterSelected={handleCharacterSelected}
+        onCreateNew={() => setIsCharacterModalOpen(true)}
       />
     </AppLayout>
   );

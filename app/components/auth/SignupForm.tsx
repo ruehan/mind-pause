@@ -69,7 +69,7 @@ export function SignupForm() {
 
     try {
       await signup(email, nickname, password);
-      showToast("회원가입 성공! 로그인되었습니다.", "success");
+      showToast("회원가입 성공! 로그인되었습니다.", { type: "success" });
       navigate("/dashboard");
     } catch (error) {
       const errorMessage =
@@ -84,7 +84,7 @@ export function SignupForm() {
         setErrors({ email: errorMessage });
       }
 
-      showToast(errorMessage, "error");
+      showToast(errorMessage, { type: "error" });
     } finally {
       setIsLoading(false);
     }

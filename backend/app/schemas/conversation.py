@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional
+from typing import Optional, Dict, Any
 from datetime import datetime
 from uuid import UUID
 
@@ -28,11 +28,21 @@ class ConversationUpdate(BaseModel):
     title: Optional[str] = Field(None, max_length=200, description="대화 제목")
 
 
+class AICharacterInfo(BaseModel):
+    """대화 목록에 포함될 캐릭터 정보"""
+    id: UUID
+    name: str
+    avatar_options: Optional[Dict[str, Any]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ConversationResponse(ConversationBase):
     """대화 응답 스키마"""
     id: UUID
     user_id: UUID
     character_id: UUID
+    character: Optional[AICharacterInfo] = None
     created_at: datetime
     updated_at: datetime
 

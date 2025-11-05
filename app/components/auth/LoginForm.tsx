@@ -43,7 +43,7 @@ export function LoginForm() {
 
     try {
       await login(email, password);
-      showToast("로그인 성공!", "success");
+      showToast("로그인 성공!", { type: "success" });
       navigate("/dashboard");
     } catch (error) {
       const errorMessage =
@@ -51,7 +51,7 @@ export function LoginForm() {
           ? error.message
           : "이메일 또는 비밀번호가 올바르지 않습니다";
       setErrors({ email: errorMessage });
-      showToast(errorMessage, "error");
+      showToast(errorMessage, { type: "error" });
     } finally {
       setIsLoading(false);
     }
