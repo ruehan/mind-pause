@@ -9,7 +9,14 @@ backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
 from app.db.database import engine, Base
-from app.models import User, AICharacter
+from app.models import (
+    User,
+    AICharacter,
+    Conversation,
+    Message,
+    ConversationSummary,
+    UserMemory,
+)
 
 
 def create_tables():
