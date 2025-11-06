@@ -8,6 +8,7 @@ from app.models.post import Post
 from app.models.comment import Comment
 from app.models.like import Like
 from app.models.emotion_log import EmotionLog
+from app.models.challenge import Challenge, UserChallenge, ChallengeTemplate
 
 __all__ = [
     "User",
@@ -20,4 +21,7 @@ __all__ = [
     "Comment",
     "Like",
     "EmotionLog",
+    "Challenge",
+    "UserChallenge",
+    "ChallengeTemplate",
 ]

@@ -20,6 +20,9 @@ from app.models import (
     Comment,
     Like,
     EmotionLog,
+    Challenge,
+    UserChallenge,
+    ChallengeTemplate,
 )
 
 

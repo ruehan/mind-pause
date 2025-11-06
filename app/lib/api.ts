@@ -786,3 +786,133 @@ export async function getEmotionStats(days: number = 30): Promise<EmotionStats> 
 export async function getEmotionChart(days: number = 30): Promise<{ data: ChartData[] }> {
   return apiRequest(`/emotion/chart?days=${days}`);
 }
+
+// ============================================
+// Challenge API
+// ============================================
+
+export type ChallengeType = "streak" | "community";
+export type ChallengeStatus = "pending" | "approved" | "rejected";
+
+export interface ChallengeTemplate {
+  id: string;
+  title: string;
+  description: string;
+  challenge_type: ChallengeType;
+  default_duration_days: number;
+  default_target_count: number;
+  icon: string | null;
+  reward_badge: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Challenge {
+  id: string;
+  template_id: string | null;
+  created_by: string;
+  title: string;
+  description: string;
+  challenge_type: ChallengeType;
+  duration_days: number;
+  target_count: number;
+  icon: string | null;
+  reward_badge: string | null;
+  status: ChallengeStatus;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+  updated_at: string;
+  participants_count: number;
+}
+
+export interface UserChallenge {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  challenge: Challenge;
+  joined_at: string;
+  current_streak: number;
+  best_streak: number;
+  completed_count: number;
+  is_completed: boolean;
+  completed_at: string | null;
+  last_activity_date: string | null;
+  progress_percentage: number;
+}
+
+export interface ChallengeListResponse {
+  challenges: Challenge[];
+  total: number;
+}
+
+export interface UserChallengeListResponse {
+  user_challenges: UserChallenge[];
+  total: number;
+}
+
+export interface ChallengeTemplateListResponse {
+  templates: ChallengeTemplate[];
+  total: number;
+}
+
+export interface ChallengeCreateRequest {
+  template_id: string;
+  start_date: string;
+  end_date: string;
+}
+
+/**
+ * 챌린지 템플릿 목록 조회
+ */
+export async function getChallengeTemplates(): Promise<ChallengeTemplateListResponse> {
+  return apiRequest("/challenges/templates");
+}
+
+/**
+ * 챌린지 목록 조회 (승인된 챌린지만)
+ */
+export async function getChallenges(): Promise<ChallengeListResponse> {
+  return apiRequest("/challenges");
+}
+
+/**
+ * 챌린지 생성
+ */
+export async function createChallenge(data: ChallengeCreateRequest): Promise<Challenge> {
+  return apiRequest("/challenges", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 챌린지 상세 조회
+ */
+export async function getChallenge(challengeId: string): Promise<Challenge> {
+  return apiRequest(`/challenges/${challengeId}`);
+}
+
+/**
+ * 챌린지 참여
+ */
+export async function joinChallenge(challengeId: string): Promise<UserChallenge> {
+  return apiRequest(`/challenges/${challengeId}/join`, {
+    method: "POST",
+  });
+}
+
+/**
+ * 내 챌린지 목록 조회 (참여 중인 챌린지)
+ */
+export async function getMyChallenges(): Promise<UserChallengeListResponse> {
+  return apiRequest("/challenges/my/list");
+}
+
+/**
+ * 내가 생성한 챌린지 목록 조회 (승인 대기 포함)
+ */
+export async function getMyCreatedChallenges(): Promise<ChallengeListResponse> {
+  return apiRequest("/challenges/my/created");
+}
