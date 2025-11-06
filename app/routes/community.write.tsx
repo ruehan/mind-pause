@@ -191,8 +191,8 @@ export default function CommunityWrite() {
                   ref={editor}
                   value={content}
                   config={config}
-                  onBlur={(newContent) => setContent(newContent)}
-                  onChange={(newContent) => {}}
+                  onBlur={(newContent: string) => setContent(newContent)}
+                  onChange={(newContent: string) => {}}
                 />
               ) : (
                 <div className="w-full h-[500px] border border-neutral-200 rounded-lg flex items-center justify-center bg-neutral-50">
