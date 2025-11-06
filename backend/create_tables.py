@@ -19,6 +19,7 @@ from app.models import (
     Post,
     Comment,
     Like,
+    EmotionLog,
 )
 
 

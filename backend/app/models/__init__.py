@@ -7,6 +7,7 @@ from app.models.user_memory import UserMemory
 from app.models.post import Post
 from app.models.comment import Comment
 from app.models.like import Like
+from app.models.emotion_log import EmotionLog
 
 __all__ = [
     "User",
@@ -18,4 +19,5 @@ __all__ = [
     "Post",
     "Comment",
     "Like",
+    "EmotionLog",
 ]

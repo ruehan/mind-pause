@@ -660,3 +660,129 @@ export async function deleteLike(postId?: string, commentId?: string): Promise<v
     },
   });
 }
+
+// ========================================
+// Emotion Log API
+// ========================================
+
+export interface EmotionLog {
+  id: string;
+  user_id: string;
+  emotion_value: number;
+  emotion_label: string;
+  emotion_emoji: string;
+  note?: string;
+  ai_feedback?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmotionLogCreateRequest {
+  emotion_value: number;
+  emotion_label: string;
+  emotion_emoji: string;
+  note?: string;
+  ai_feedback?: string;
+}
+
+export interface EmotionLogUpdateRequest {
+  emotion_value?: number;
+  emotion_label?: string;
+  emotion_emoji?: string;
+  note?: string;
+}
+
+export interface EmotionLogListResponse {
+  emotion_logs: EmotionLog[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface EmotionStats {
+  average_emotion: number;
+  total_records: number;
+  streak_days: number;
+  emotion_distribution: Record<string, number>;
+}
+
+export interface ChartData {
+  date: string;
+  value: number;
+}
+
+/**
+ * 감정 기록 생성
+ */
+export async function createEmotionLog(data: EmotionLogCreateRequest): Promise<EmotionLog> {
+  return apiRequest("/emotion/logs", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 감정 기록 목록 조회
+ */
+export async function getEmotionLogs(
+  page: number = 1,
+  pageSize: number = 20,
+  startDate?: string,
+  endDate?: string
+): Promise<EmotionLogListResponse> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    page_size: pageSize.toString(),
+  });
+
+  if (startDate) params.append("start_date", startDate);
+  if (endDate) params.append("end_date", endDate);
+
+  return apiRequest(`/emotion/logs?${params.toString()}`);
+}
+
+/**
+ * 감정 기록 상세 조회
+ */
+export async function getEmotionLog(logId: string): Promise<EmotionLog> {
+  return apiRequest(`/emotion/logs/${logId}`);
+}
+
+/**
+ * 감정 기록 수정
+ */
+export async function updateEmotionLog(
+  logId: string,
+  data: EmotionLogUpdateRequest
+): Promise<EmotionLog> {
+  return apiRequest(`/emotion/logs/${logId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 감정 기록 삭제
+ */
+export async function deleteEmotionLog(logId: string): Promise<void> {
+  await fetch(`${API_BASE_URL}/emotion/logs/${logId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    },
+  });
+}
+
+/**
+ * 감정 통계 조회
+ */
+export async function getEmotionStats(days: number = 30): Promise<EmotionStats> {
+  return apiRequest(`/emotion/stats?days=${days}`);
+}
+
+/**
+ * 감정 차트 데이터 조회
+ */
+export async function getEmotionChart(days: number = 30): Promise<{ data: ChartData[] }> {
+  return apiRequest(`/emotion/chart?days=${days}`);
+}

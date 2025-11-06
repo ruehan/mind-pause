@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Edit, Lightbulb } from "lucide-react";
-import { EmotionSlider } from "./EmotionSlider";
+import { EmotionSlider, emotionData } from "./EmotionSlider";
 import { ImmediateFeedbackModal } from "./ImmediateFeedbackModal";
 import { Button } from "../Button";
 import { Checkbox } from "../Checkbox";
+import { useToast } from "../ToastProvider";
+import * as api from "../../lib/api";
 
 const aiPrompts = [
   "오늘 하루 어떤 일이 있었나요?",
@@ -27,7 +29,12 @@ const generateAIFeedback = (emotionValue: number): string => {
   }
 };
 
-export function EmotionLogForm() {
+interface EmotionLogFormProps {
+  onSuccess?: () => void;
+}
+
+export function EmotionLogForm({ onSuccess }: EmotionLogFormProps = {}) {
+  const toast = useToast();
   const [emotionValue, setEmotionValue] = useState(0);
   const [note, setNote] = useState("");
   const [selectedPrompts, setSelectedPrompts] = useState<string[]>([]);
@@ -49,15 +56,22 @@ export function EmotionLogForm() {
 
     setIsSubmitting(true);
 
-    // API 호출: 감정 기록 저장
-    // POST /api/emotions
-    // Body: { emotionValue, note, selectedPrompts }
     try {
-      // TODO: 실제 API 엔드포인트 연결 필요
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // 감정 데이터 가져오기
+      const emotion = emotionData[emotionValue.toString() as keyof typeof emotionData];
 
       // Generate AI feedback based on emotion value
       const feedback = generateAIFeedback(emotionValue);
+
+      // API 호출: 감정 기록 저장 (AI 피드백 포함)
+      await api.createEmotionLog({
+        emotion_value: emotionValue,
+        emotion_label: emotion.label,
+        emotion_emoji: emotion.emoji,
+        note: note.trim() || undefined,
+        ai_feedback: feedback,
+      });
+
       setAiFeedback(feedback);
       setSubmittedValue(emotionValue);
 
@@ -68,9 +82,15 @@ export function EmotionLogForm() {
       setEmotionValue(0);
       setNote("");
       setSelectedPrompts([]);
+
+      toast.success("성공", "감정 기록이 저장되었습니다");
+
+      // 부모 컴포넌트에 데이터 새로고침 요청
+      onSuccess?.();
     } catch (error) {
       // 에러 처리
       console.error("Failed to save emotion:", error);
+      toast.error("오류", "감정 기록 저장 중 오류가 발생했습니다");
     } finally {
       setIsSubmitting(false);
     }
@@ -87,13 +107,13 @@ export function EmotionLogForm() {
 
   return (
     <>
-      <div className="glass-strong rounded-2xl shadow-soft hover:shadow-elevation-3 transition-all duration-300 p-6 sm:p-8">
-        <div className="flex items-center gap-2 mb-6">
-          <Edit className="w-6 h-6 text-primary-600 animate-float" />
-          <h2 className="text-h3 text-gradient-primary font-bold">오늘의 감정 기록하기</h2>
+      <div className="glass-strong rounded-3xl shadow-elevation-2 hover:shadow-elevation-3 transition-all duration-300 p-8 sm:p-10 border border-white/40">
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <Edit className="w-7 h-7 text-primary-600 animate-float" />
+          <h2 className="text-h2 text-gradient-primary font-bold">오늘의 감정 기록하기</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-10">
         {/* Emotion Slider */}
         <EmotionSlider value={emotionValue} onChange={setEmotionValue} />
 
@@ -101,11 +121,11 @@ export function EmotionLogForm() {
 
         {/* Note Input with Prominent Prompt */}
         <div>
-          <div className="bg-gradient-to-r from-primary-50 to-lavender-50 rounded-xl p-4 mb-4 border-l-4 border-primary-500">
-            <label className="block text-body font-medium text-primary-700 mb-1">
+          <div className="bg-gradient-to-r from-primary-50 via-lavender-50 to-mint-50 rounded-2xl p-6 mb-5 border-l-4 border-primary-500 shadow-sm">
+            <label className="block text-h4 font-semibold text-primary-700 mb-2">
               💭 오늘 어떤 일이 있었나요?
             </label>
-            <p className="text-body-sm text-neutral-600">
+            <p className="text-body text-neutral-600">
               오늘 하루의 경험과 감정을 자유롭게 기록해보세요.
             </p>
           </div>
@@ -114,18 +134,21 @@ export function EmotionLogForm() {
             onChange={(e) => setNote(e.target.value)}
             placeholder="예: 오늘은 회의에서 좋은 아이디어를 제안했고, 팀원들이 긍정적으로 반응해줘서 기분이 좋았어요..."
             maxLength={maxChars}
-            rows={4}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 text-body text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none transition-all duration-200"
+            rows={5}
+            className="w-full px-5 py-4 rounded-xl border-2 border-neutral-300 text-body text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none transition-all duration-200 shadow-sm hover:border-neutral-400"
           />
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-between items-center mt-3">
+            <span className="text-body-sm text-neutral-500">
+              {charCount === 0 ? "마음 편히 작성해주세요" : `${charCount}자 작성 중`}
+            </span>
             <span
-              className={`text-caption ${
+              className={`text-body-sm font-medium ${
                 charCount > maxChars * 0.9
                   ? "text-warning"
                   : "text-neutral-500"
               }`}
             >
-              {charCount}/{maxChars}자
+              {charCount}/{maxChars}
             </span>
           </div>
         </div>
@@ -134,11 +157,14 @@ export function EmotionLogForm() {
 
         {/* AI Prompts */}
         <div>
-          <label className="block text-body font-medium text-neutral-700 mb-4">
-            AI 프롬프트 선택{" "}
-            <span className="text-neutral-500 font-normal">(선택)</span>
+          <label className="block text-h4 font-semibold text-neutral-700 mb-5">
+            <span className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-primary-600" />
+              AI 프롬프트 선택
+              <span className="text-body-sm text-neutral-500 font-normal">(선택사항)</span>
+            </span>
           </label>
-          <div className="space-y-3">
+          <div className="space-y-3 bg-neutral-50 rounded-xl p-5">
             {aiPrompts.map((prompt) => (
               <Checkbox
                 key={prompt}
@@ -148,22 +174,22 @@ export function EmotionLogForm() {
               />
             ))}
           </div>
-          <div className="flex items-center gap-2 mt-3">
-            <Lightbulb className="w-4 h-4 text-neutral-500" />
-            <p className="text-body-sm text-neutral-500">
-              선택한 프롬프트로 AI가 맞춤형 피드백을 제공합니다
+          <div className="flex items-start gap-2 mt-4 p-4 bg-primary-50/50 rounded-lg border border-primary-100">
+            <Lightbulb className="w-5 h-5 text-primary-600 mt-0.5 flex-shrink-0" />
+            <p className="text-body-sm text-primary-700">
+              선택한 프롬프트를 바탕으로 AI가 맞춤형 피드백을 제공합니다
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 pt-4">
+        <div className="flex gap-4 pt-6">
           <Button
             type="button"
             variant="ghost"
             size="lg"
             onClick={handleCancel}
-            className="flex-1"
+            className="flex-1 h-14 text-base"
             disabled={isSubmitting}
           >
             취소
@@ -172,7 +198,7 @@ export function EmotionLogForm() {
             type="submit"
             variant="primary"
             size="lg"
-            className="flex-1"
+            className="flex-1 h-14 text-base shadow-lg hover:shadow-xl"
             disabled={isSubmitting}
           >
             {isSubmitting ? "기록 중..." : "기록하기 →"}
