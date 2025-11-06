@@ -236,7 +236,8 @@ export default function Chat() {
     };
 
     loadMessages();
-  }, [activeConversationId, conversations]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConversationId]);
 
   // 메시지 자동 스크롤 (throttle 적용)
   useEffect(() => {
