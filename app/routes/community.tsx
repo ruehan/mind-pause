@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { Search, TrendingUp, Clock, Heart, MessageCircle } from "lucide-react";
 import { AppLayout } from "../components/AppLayout";
 import { PostCard } from "../components/community/PostCard";
-import { FilterTabs } from "../components/community/FilterTabs";
-import { SafetyGuidelineBanner } from "../components/community/SafetyGuidelineBanner";
 import { Button } from "../components/Button";
+import { useToast } from "../components/ToastProvider";
+import { useAuth } from "../contexts/AuthContext";
+import * as api from "../lib/api";
 
 export function meta() {
   return [
@@ -15,105 +18,141 @@ export function meta() {
   ];
 }
 
-// Mock data
-const mockPosts = [
-  {
-    id: "1",
-    author: "익명123",
-    isAnonymous: true,
-    timestamp: "3시간 전",
-    content:
-      "오늘 회사에서 실수를 해서 너무 자책하고 있어요.\n\n팀 프로젝트에서 중요한 데이터를 잘못 보내서 팀장님께 지적을 받았어요. 다들 바쁜데 제 실수 때문에 일이 늦어졌고... 너무 미안하고 스스로가 한심하게 느껴져요. 이런 실수를 계속 반복하는 제가 싫어요 😢",
-    tags: ["직장스트레스", "자책", "실수"],
-    likeCount: 125,
-    commentCount: 18,
-    isLiked: false,
-    isAuthor: false,
-    recentComments: [
-      {
-        author: "격려왕",
-        content: "실수는 누구나 합니다. 중요한 건 거기서 배우는 거예요. 너무 자책하지 마세요!",
-        timestamp: "2시간 전",
-      },
-      {
-        author: "익명456",
-        content: "저도 비슷한 경험이 있어요. 시간이 지나면 괜찮아질 거예요. 힘내세요!",
-        timestamp: "1시간 전",
-      },
-    ],
-  },
-  {
-    id: "2",
-    author: "마음쉼",
-    isAnonymous: false,
-    timestamp: "1일 전",
-    content:
-      "불안감이 심할 때 도움이 된 방법들 공유해요 💙\n\n1. 깊게 숨쉬기 (4-7-8 호흡법)\n2. 발바닥에 집중하며 천천히 걷기\n3. 좋아하는 음악 듣기\n4. 따뜻한 차 마시며 5분 멍때리기\n\n다들 어떤 방법 쓰시나요?",
-    tags: ["불안", "대처방법", "공유"],
-    likeCount: 342,
-    commentCount: 67,
-    isLiked: true,
-    isAuthor: false,
-    recentComments: [
-      {
-        author: "평온함",
-        content: "저는 명상 앱을 사용해요. 하루 10분만 해도 많이 달라지더라고요!",
-        timestamp: "20시간 전",
-      },
-      {
-        author: "산책러버",
-        content: "공원 산책이 최고예요. 자연 소리 들으면서 걷다 보면 마음이 편안해져요.",
-        timestamp: "18시간 전",
-      },
-    ],
-  },
-  {
-    id: "3",
-    author: "희망이",
-    isAnonymous: false,
-    timestamp: "2일 전",
-    content:
-      "요즘 아무것도 하기 싫고 무기력해요.\n\n일어나는 것부터 힘들고, 밥도 제대로 못 먹고 있어요. 친구들 만나는 것도 귀찮고... 이렇게 사는 게 맞나 싶어요. 혹시 비슷한 경험 있으신 분 계신가요?",
-    tags: ["무기력", "우울", "조언구함"],
-    likeCount: 89,
-    commentCount: 23,
-    isLiked: false,
-    isAuthor: false,
-    recentComments: [
-      {
-        author: "공감100",
-        content: "저도 그런 시기가 있었어요. 작은 것부터 시작해보세요. 창문 열고 햇빛 보기, 물 한 잔 마시기... 작은 성공이 모여요.",
-        timestamp: "1일 전",
-      },
-    ],
-  },
-];
+// HTML에서 첫 번째 이미지 URL 추출
+const extractFirstImage = (htmlContent: string): string | null => {
+  const imgRegex = /<img[^>]+src="([^">]+)"/i;
+  const match = htmlContent.match(imgRegex);
+  return match ? match[1] : null;
+};
+
 
 export default function Community() {
-  const [activeFilter, setActiveFilter] = useState<
-    "popular" | "latest" | "most-liked" | "most-commented"
-  >("popular");
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { user } = useAuth();
 
-  const handleSearch = () => {
-    console.log("Open search");
-    // TODO: Implement search functionality
+  const [posts, setPosts] = useState<api.Post[]>([]);
+  const [popularPosts, setPopularPosts] = useState<api.Post[]>([]);
+  const [postComments, setPostComments] = useState<Record<string, api.Comment[]>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"latest" | "popular">("popular");
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
+
+  // 게시글 목록 로드
+  useEffect(() => {
+    loadPosts();
+  }, [sortBy, page]);
+
+  // 인기글 로드
+  useEffect(() => {
+    loadPopularPosts();
+  }, []);
+
+  const loadPosts = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.getPosts(page, pageSize, sortBy);
+      setPosts(response.posts);
+
+      // 각 포스트의 최근 댓글 2개씩 가져오기
+      const commentsMap: Record<string, api.Comment[]> = {};
+      await Promise.all(
+        response.posts.map(async (post) => {
+          try {
+            const commentResponse = await api.getComments(post.id);
+            // 좋아요가 많은 순으로 정렬 후 최근 2개만 저장
+            const sortedComments = commentResponse.comments
+              .sort((a, b) => (b.num_likes || 0) - (a.num_likes || 0))
+              .slice(0, 2);
+            commentsMap[post.id] = sortedComments;
+          } catch (error) {
+            // 댓글 로드 실패는 무시 (빈 배열로 처리)
+            commentsMap[post.id] = [];
+          }
+        })
+      );
+      setPostComments(commentsMap);
+    } catch (error) {
+      if (error instanceof api.UnauthorizedError) return;
+      console.error("게시글 로드 오류:", error);
+      toast.error("오류", "게시글을 불러오는 중 오류가 발생했습니다");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadPopularPosts = async () => {
+    try {
+      const response = await api.getPosts(1, 5, "popular");
+      setPopularPosts(response.posts);
+    } catch (error) {
+      console.error("인기글 로드 오류:", error);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "방금 전";
+    if (diffMins < 60) return `${diffMins}분 전`;
+    if (diffHours < 24) return `${diffHours}시간 전`;
+    if (diffDays < 7) return `${diffDays}일 전`;
+
+    return date.toLocaleDateString("ko-KR", { month: "long", day: "numeric" });
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    // TODO: 검색 API 연동
+    toast.info("알림", "검색 기능은 곧 추가됩니다");
   };
 
   const handleWritePost = () => {
-    console.log("Navigate to write post");
-    // TODO: Navigate to write post page
+    if (!user) {
+      toast.error("로그인 필요", "글을 작성하려면 로그인이 필요합니다");
+      navigate("/login");
+      return;
+    }
+    navigate("/community/write");
   };
 
   const handlePostClick = (postId: string) => {
-    console.log("Open post detail:", postId);
-    // TODO: Navigate to post detail page
+    navigate(`/community/${postId}`);
+  };
+
+  const handleLike = async (postId: string, currentlyLiked: boolean) => {
+    if (!user) {
+      toast.error("로그인 필요", "좋아요를 누르려면 로그인이 필요합니다");
+      return;
+    }
+
+    try {
+      if (currentlyLiked) {
+        await api.deleteLike(postId);
+      } else {
+        await api.createLike({ post_id: postId, comment_id: undefined });
+      }
+    } catch (error) {
+      console.error("좋아요 오류:", error);
+      toast.error("오류", "좋아요 처리 중 오류가 발생했습니다");
+      throw error; // PostCard에서 이전 상태로 복구하도록
+    }
   };
 
   return (
     <AppLayout>
-        {/* Page Header */}
+      <div className="max-w-7xl mx-auto">
+        {/* Header with Search */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
               <span className="text-4xl">💬</span>
               <div>
@@ -124,8 +163,22 @@ export default function Community() {
               </div>
             </div>
 
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="게시글 검색..."
+                  className="w-full pl-10 pr-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            </form>
+
             {/* Write Button (Desktop) */}
-            <div className="hidden sm:block">
+            <div className="hidden md:block">
               <Button
                 variant="primary"
                 size="lg"
@@ -138,48 +191,174 @@ export default function Community() {
           </div>
         </div>
 
-        {/* Safety Guidelines Banner */}
-        <SafetyGuidelineBanner />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            {/* Sort Tabs */}
+            <div className="flex items-center gap-2 mb-6">
+              <button
+                onClick={() => setSortBy("popular")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  sortBy === "popular"
+                    ? "bg-primary-100 text-primary-700"
+                    : "text-neutral-600 hover:bg-neutral-100"
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                인기순
+              </button>
+              <button
+                onClick={() => setSortBy("latest")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  sortBy === "latest"
+                    ? "bg-primary-100 text-primary-700"
+                    : "text-neutral-600 hover:bg-neutral-100"
+                }`}
+              >
+                <Clock className="w-4 h-4" />
+                최신순
+              </button>
+            </div>
 
-        {/* Filter Tabs */}
-        <FilterTabs
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-          onSearch={handleSearch}
-        />
+            {/* Posts Grid */}
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-xl border border-neutral-200">
+                <p className="text-body text-neutral-600">
+                  아직 게시글이 없습니다. 첫 번째 글을 작성해보세요!
+                </p>
+                <Button
+                  variant="primary"
+                  onClick={handleWritePost}
+                  className="mt-4"
+                >
+                  글쓰기
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {posts.map((post) => {
+                    const imageUrl = extractFirstImage(post.content);
+                    // 해당 포스트의 댓글 데이터 가져오기
+                    const comments = postComments[post.id] || [];
+                    const recentComments = comments.map(comment => ({
+                      author: comment.user?.nickname || "익명",
+                      content: comment.content,
+                      timestamp: formatDate(comment.created_at)
+                    }));
 
-        {/* Posts List */}
-        <div className="max-w-4xl mx-auto">
-          {mockPosts.map((post) => (
-            <PostCard
-              key={post.id}
-              id={post.id}
-              author={post.author}
-              isAnonymous={post.isAnonymous}
-              timestamp={post.timestamp}
-              content={post.content}
-              tags={post.tags}
-              likeCount={post.likeCount}
-              commentCount={post.commentCount}
-              isLiked={post.isLiked}
-              isAuthor={post.isAuthor}
-              recentComments={post.recentComments}
-              onClick={() => handlePostClick(post.id)}
-            />
-          ))}
+                    return (
+                      <PostCard
+                        key={post.id}
+                        id={post.id}
+                        author={post.user?.nickname || "익명"}
+                        isAnonymous={post.is_anonymous}
+                        timestamp={formatDate(post.created_at)}
+                        title={post.title}
+                        content={post.content}
+                        imageUrl={imageUrl}
+                        tags={[]}
+                        likeCount={post.num_likes}
+                        commentCount={post.num_comments}
+                        isLiked={post.is_liked || false}
+                        isAuthor={user?.id === post.user_id}
+                        recentComments={recentComments}
+                        onClick={() => handlePostClick(post.id)}
+                        onLike={handleLike}
+                      />
+                    );
+                  })}
+                </div>
 
-          {/* Load More Button */}
-          <div className="text-center mt-8 mb-8">
-            <button className="text-body text-primary-600 hover:text-primary-700 font-medium transition-colors">
-              더보기 →
-            </button>
+                {/* Load More Button */}
+                <div className="text-center mt-8">
+                  <button
+                    onClick={() => setPage((p) => p + 1)}
+                    className="px-6 py-3 bg-white border border-neutral-200 rounded-lg text-neutral-700 hover:bg-neutral-50 hover:border-primary-300 font-medium transition-colors"
+                  >
+                    더보기 →
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Sidebar - Popular Posts */}
+          <div className="hidden lg:block">
+            <div className="sticky top-4 space-y-4">
+              {/* Popular Posts Widget */}
+              <div className="bg-white rounded-xl border border-neutral-200 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-5 h-5 text-primary-600" />
+                  <h3 className="text-h4 text-neutral-900 font-semibold">
+                    인기 게시글
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  {popularPosts.map((post, index) => (
+                    <button
+                      key={post.id}
+                      onClick={() => handlePostClick(post.id)}
+                      className="w-full text-left p-3 rounded-lg hover:bg-neutral-50 transition-colors group"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-h4 font-bold text-primary-500 min-w-[24px]">
+                          {index + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-body-sm font-medium text-neutral-900 line-clamp-2 group-hover:text-primary-600 transition-colors">
+                            {post.title}
+                          </p>
+                          <div className="flex items-center gap-3 mt-2 text-caption text-neutral-500">
+                            <span className="flex items-center gap-1">
+                              <Heart className="w-3 h-3" />
+                              {post.num_likes}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MessageCircle className="w-3 h-3" />
+                              {post.num_comments}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Community Guidelines */}
+              <div className="bg-gradient-to-br from-primary-50 to-lavender-50 rounded-xl p-5 border border-primary-100">
+                <h3 className="text-body-sm font-semibold text-neutral-900 mb-3">
+                  📝 커뮤니티 가이드
+                </h3>
+                <ul className="space-y-2 text-caption text-neutral-600">
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary-600">•</span>
+                    <span>서로 존중하고 배려해주세요</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary-600">•</span>
+                    <span>개인정보 공유는 주의해주세요</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-primary-600">•</span>
+                    <span>긍정적인 대화를 나눠요</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
       {/* Floating Write Button (Mobile) */}
       <button
         onClick={handleWritePost}
-        className="sm:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-primary-600 transition-colors z-10"
+        className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-primary-600 transition-colors z-10"
         aria-label="글쓰기"
       >
         ✏️

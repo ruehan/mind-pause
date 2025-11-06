@@ -16,6 +16,9 @@ from app.models import (
     Message,
     ConversationSummary,
     UserMemory,
+    Post,
+    Comment,
+    Like,
 )
 
 

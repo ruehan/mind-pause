@@ -457,3 +457,206 @@ export function streamChatMessage(
   // EventSource 객체 반환 (호환성을 위해)
   return {} as EventSource;
 }
+
+// ========================================
+// Community Types
+// ========================================
+
+export interface Post {
+  id: string;
+  user_id: string | null;
+  title: string;
+  content: string;
+  is_anonymous: boolean;
+  num_likes: number;
+  num_comments: number;
+  created_at: string;
+  updated_at: string;
+  user: {
+    id: string | null;
+    nickname: string;
+    profile_image_url: string | null;
+  } | null;
+  is_liked?: boolean;
+}
+
+export interface PostListResponse {
+  posts: Post[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface PostCreateRequest {
+  title: string;
+  content: string;
+  is_anonymous?: boolean;
+}
+
+export interface PostUpdateRequest {
+  title?: string;
+  content?: string;
+}
+
+export interface Comment {
+  id: string;
+  post_id: string;
+  user_id: string | null;
+  content: string;
+  is_anonymous: boolean;
+  created_at: string;
+  user: {
+    id: string | null;
+    nickname: string;
+    profile_image_url: string | null;
+  } | null;
+  num_likes?: number;
+  is_liked?: boolean;
+}
+
+export interface CommentListResponse {
+  comments: Comment[];
+  total: number;
+}
+
+export interface CommentCreateRequest {
+  post_id: string;
+  content: string;
+  is_anonymous?: boolean;
+}
+
+export interface CommentUpdateRequest {
+  content: string;
+}
+
+export interface LikeCreateRequest {
+  post_id?: string;
+  comment_id?: string;
+}
+
+// ========================================
+// Community API Functions
+// ========================================
+
+/**
+ * 게시글 목록 조회
+ */
+export async function getPosts(
+  page: number = 1,
+  pageSize: number = 20,
+  sort: "latest" | "popular" = "latest"
+): Promise<PostListResponse> {
+  return apiRequest<PostListResponse>(
+    `/community/posts?page=${page}&page_size=${pageSize}&sort=${sort}`
+  );
+}
+
+/**
+ * 게시글 상세 조회
+ */
+export async function getPost(postId: string): Promise<Post> {
+  return apiRequest<Post>(`/community/posts/${postId}`);
+}
+
+/**
+ * 게시글 작성
+ */
+export async function createPost(data: PostCreateRequest): Promise<Post> {
+  return apiRequest<Post>("/community/posts", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 게시글 수정
+ */
+export async function updatePost(
+  postId: string,
+  data: PostUpdateRequest
+): Promise<Post> {
+  return apiRequest<Post>(`/community/posts/${postId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 게시글 삭제
+ */
+export async function deletePost(postId: string): Promise<void> {
+  await fetch(`${API_BASE_URL}/community/posts/${postId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    },
+  });
+}
+
+/**
+ * 댓글 목록 조회
+ */
+export async function getComments(postId: string): Promise<CommentListResponse> {
+  return apiRequest<CommentListResponse>(`/community/posts/${postId}/comments`);
+}
+
+/**
+ * 댓글 작성
+ */
+export async function createComment(data: CommentCreateRequest): Promise<Comment> {
+  return apiRequest<Comment>("/community/comments", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 댓글 수정
+ */
+export async function updateComment(
+  commentId: string,
+  data: CommentUpdateRequest
+): Promise<Comment> {
+  return apiRequest<Comment>(`/community/comments/${commentId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 댓글 삭제
+ */
+export async function deleteComment(commentId: string): Promise<void> {
+  await fetch(`${API_BASE_URL}/community/comments/${commentId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    },
+  });
+}
+
+/**
+ * 좋아요 추가
+ */
+export async function createLike(data: LikeCreateRequest): Promise<void> {
+  await apiRequest("/community/likes", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 좋아요 취소
+ */
+export async function deleteLike(postId?: string, commentId?: string): Promise<void> {
+  const params = new URLSearchParams();
+  if (postId) params.append("post_id", postId);
+  if (commentId) params.append("comment_id", commentId);
+
+  await fetch(`${API_BASE_URL}/community/likes?${params.toString()}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    },
+  });
+}

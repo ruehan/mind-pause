@@ -12,7 +12,9 @@ interface PostCardProps {
   author: string;
   isAnonymous: boolean;
   timestamp: string;
+  title: string;
   content: string;
+  imageUrl?: string | null;
   tags: string[];
   likeCount: number;
   commentCount: number;
@@ -20,6 +22,7 @@ interface PostCardProps {
   isAuthor?: boolean;
   recentComments?: RecentComment[];
   onClick?: () => void;
+  onLike?: (postId: string, currentlyLiked: boolean) => Promise<void>;
 }
 
 // Emotion tag color mapping
@@ -47,10 +50,13 @@ const getTagColor = (tag: string): string => {
 };
 
 export function PostCard({
+  id,
   author,
   isAnonymous,
   timestamp,
+  title,
   content,
+  imageUrl,
   tags,
   likeCount,
   commentCount,
@@ -58,23 +64,44 @@ export function PostCard({
   isAuthor = false,
   recentComments = [],
   onClick,
+  onLike,
 }: PostCardProps) {
   const [liked, setLiked] = useState(isLiked);
   const [likes, setLikes] = useState(likeCount);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showLikeAnimation, setShowLikeAnimation] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
+
+    if (isLiking || !onLike) return;
+
+    const previousLiked = liked;
+    const previousLikes = likes;
+
+    // 낙관적 업데이트
     if (liked) {
       setLikes(likes - 1);
+      setLiked(false);
     } else {
       setLikes(likes + 1);
+      setLiked(true);
       setShowLikeAnimation(true);
       setTimeout(() => setShowLikeAnimation(false), 600);
     }
-    setLiked(!liked);
+
+    try {
+      setIsLiking(true);
+      await onLike(id, previousLiked);
+    } catch (error) {
+      // 에러 시 이전 상태로 복구
+      setLiked(previousLiked);
+      setLikes(previousLikes);
+    } finally {
+      setIsLiking(false);
+    }
   };
 
   const handleMenuClick = (e: React.MouseEvent) => {
@@ -82,234 +109,134 @@ export function PostCard({
     setIsMenuOpen(!isMenuOpen);
   };
 
+  // HTML 태그 제거하여 순수 텍스트만 추출
+  const getPlainText = (html: string) => {
+    return html.replace(/<[^>]*>/g, '').trim();
+  };
+
   return (
     <article
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`glass rounded-xl shadow-soft p-6 mb-4 transition-all duration-300 transform cursor-pointer border border-white/20 relative overflow-hidden ${
-        isHovered ? "shadow-primary -translate-y-2 scale-102" : "translate-y-0 scale-100"
+      className={`bg-white rounded-lg border border-neutral-200 transition-all duration-300 cursor-pointer p-4 hover:shadow-md hover:border-primary-300 ${
+        isHovered ? "bg-neutral-50" : ""
       }`}
     >
-      {/* Hover gradient background */}
-      <div className={`absolute inset-0 bg-gradient-to-br from-primary-50/0 via-lavender-50/0 to-mint-50/0 transition-all duration-500 ${
-        isHovered ? "from-primary-50/30 via-lavender-50/20 to-mint-50/30" : ""
-      }`}></div>
+      <div className="flex items-start gap-3">
+        {/* Avatar */}
+        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
+          <span className="text-sm font-medium text-primary-600">
+            {author[0]}
+          </span>
+        </div>
 
-      {/* Content wrapper with relative positioning */}
-      <div className="relative z-10">
-      {/* Post Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          {/* Avatar */}
-          <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center">
-            <User className="w-5 h-5 text-neutral-600" />
-          </div>
-
-          {/* Author Info */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-neutral-800">
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-medium text-neutral-900">
               {author}
             </span>
-            {isAnonymous ? (
-              <Lock className="w-4 h-4 text-neutral-600" />
-            ) : (
-              <Globe className="w-4 h-4 text-neutral-600" />
+            {isAnonymous && (
+              <Lock className="w-3 h-3 text-neutral-500" />
             )}
-            <span className="text-xs text-neutral-500">{timestamp}</span>
+            <span className="text-xs text-neutral-500">· {timestamp}</span>
           </div>
-        </div>
 
-        {/* Menu Button */}
-        <div className="relative">
-          <button
-            onClick={handleMenuClick}
-            className="w-8 h-8 rounded hover:bg-neutral-100 flex items-center justify-center text-neutral-600 transition-colors"
-            aria-label="게시글 메뉴 열기"
-          >
-            <MoreVertical className="w-5 h-5" />
-          </button>
+          {/* Title */}
+          <h3 className="text-base font-semibold text-neutral-900 mb-1 line-clamp-1">
+            {title}
+          </h3>
 
-          {isMenuOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMenuOpen(false);
-                }}
-              />
-              <div className="absolute right-0 top-10 w-40 bg-white shadow-lg rounded-lg border border-neutral-200 z-20">
-                {isAuthor ? (
-                  <>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // 게시글 수정 모달 열기
-                      }}
-                      className="w-full text-left px-4 py-3 hover:bg-neutral-50 text-sm text-neutral-700 transition-colors"
-                    >
-                      수정
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // 삭제 확인 모달 열기
-                      }}
-                      className="w-full text-left px-4 py-3 hover:bg-error-50 text-sm text-error-500 transition-colors"
-                    >
-                      삭제
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // 신고 모달 열기
-                    }}
-                    className="w-full text-left px-4 py-3 hover:bg-orange-50 text-sm text-orange-600 transition-colors"
-                  >
-                    신고
-                  </button>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // 게시글 숨기기 처리
-                  }}
-                  className="w-full text-left px-4 py-3 hover:bg-neutral-50 text-sm text-neutral-700 transition-colors"
-                >
-                  숨기기
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+          {/* Content Preview */}
+          <div className="overflow-hidden transition-all duration-300">
+            <p
+              className={`text-sm text-neutral-600 transition-all duration-300 ${
+                isHovered ? "line-clamp-4" : "line-clamp-1"
+              }`}
+            >
+              {getPlainText(content)}
+            </p>
+          </div>
 
-      {/* Post Content */}
-      <p className="text-body text-neutral-700 leading-relaxed mb-3 line-clamp-4 whitespace-pre-wrap">
-        {content}
-      </p>
-
-      {/* Tags */}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {tags.slice(0, 5).map((tag, index) => (
+          {/* Post Actions */}
+          <div className="flex items-center gap-6 pt-4 mt-4 border-t border-neutral-100">
+            {/* Like Button */}
             <button
-              key={index}
+              onClick={handleLike}
+              disabled={isLiking}
+              className={`
+                flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 transform relative
+                ${liked
+                  ? "bg-error-50 text-error-500 font-semibold scale-105"
+                  : "text-neutral-600 hover:bg-neutral-50 hover:scale-110"
+                }
+                ${isLiking ? "opacity-50 cursor-not-allowed" : ""}
+              `}
+              aria-label={liked ? "좋아요 취소" : "좋아요"}
+            >
+              <div className="relative">
+                <Heart className={`w-5 h-5 transition-all duration-300 ${
+                  liked ? "fill-current animate-bounce-subtle" : ""
+                }`} />
+                {showLikeAnimation && (
+                  <>
+                    <Heart className="absolute top-0 left-0 w-5 h-5 fill-current text-error-500 animate-ping" />
+                    <div className="absolute -top-2 -right-2 text-lg animate-bounce">💕</div>
+                  </>
+                )}
+              </div>
+              <span className={`text-sm transition-all duration-300 ${
+                liked ? "font-semibold" : ""
+              }`}>{likes}</span>
+            </button>
+
+            {/* Comment Button */}
+            <button
               onClick={(e) => {
                 e.stopPropagation();
-                // 태그로 필터링된 게시글 목록으로 이동
               }}
-              className={`px-3 py-1 rounded-full text-sm transition-colors ${getTagColor(tag)}`}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-50 hover:text-primary-600 transition-colors"
+              aria-label="댓글 보기"
             >
-              #{tag}
+              <MessageCircle className="w-5 h-5" />
+              <span className="text-sm">{commentCount}</span>
             </button>
-          ))}
-          {tags.length > 5 && (
-            <span className="px-3 py-1 text-sm text-neutral-500">
-              +{tags.length - 5}개
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Post Actions */}
-      <div className="flex items-center gap-6 pt-4 border-t border-neutral-100">
-        {/* Like Button */}
-        <button
-          onClick={handleLike}
-          className={`
-            flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 transform relative
-            ${liked
-              ? "bg-error-50 text-error-500 font-semibold scale-105"
-              : "text-neutral-600 hover:bg-neutral-50 hover:scale-110"
-            }
-          `}
-          aria-label={liked ? "좋아요 취소" : "좋아요"}
-        >
-          <div className="relative">
-            <Heart className={`w-5 h-5 transition-all duration-300 ${
-              liked ? "fill-current animate-bounce-subtle" : ""
-            }`} />
-            {showLikeAnimation && (
-              <>
-                <Heart className="absolute top-0 left-0 w-5 h-5 fill-current text-error-500 animate-ping" />
-                <div className="absolute -top-2 -right-2 text-lg animate-bounce">💕</div>
-              </>
-            )}
           </div>
-          <span className={`text-sm transition-all duration-300 ${
-            liked ? "font-semibold" : ""
-          }`}>{likes}</span>
-        </button>
 
-        {/* Comment Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            // 댓글 목록 열기 또는 상세 페이지로 이동
-          }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-50 hover:text-primary-600 transition-colors"
-          aria-label="댓글 보기"
-        >
-          <MessageCircle className="w-5 h-5" />
-          <span className="text-sm">{commentCount}</span>
-        </button>
-
-        {/* Share Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            // 공유 모달 열기 (SNS, 링크 복사 등)
-          }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-neutral-600 hover:bg-neutral-50 hover:text-primary-600 transition-colors"
-        >
-          <Link2 className="w-5 h-5" />
-          <span className="text-sm">공유</span>
-        </button>
-      </div>
-
-      {/* Recent Comments Inline Preview */}
-      {recentComments.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-neutral-100">
-          <div className="space-y-3">
-            {recentComments.slice(0, 2).map((comment, index) => (
-              <div
-                key={index}
-                className="bg-neutral-50 rounded-lg p-3 hover:bg-neutral-100 transition-colors"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-6 h-6 rounded-full bg-neutral-200 flex items-center justify-center">
-                    <User className="w-3 h-3 text-neutral-600" />
+          {/* 확장 시 추가 정보 */}
+          <div
+            className={`overflow-hidden transition-all duration-500 ease-in-out ${
+              isHovered && recentComments && recentComments.length > 0
+                ? "max-h-96 opacity-100 mt-4"
+                : "max-h-0 opacity-0 mt-0"
+            }`}
+          >
+            <div className="pt-4 border-t border-neutral-100">
+              <div className="space-y-3">
+                {recentComments.slice(0, 2).map((comment, index) => (
+                  <div
+                    key={index}
+                    className="bg-neutral-50 rounded-lg p-3 hover:bg-neutral-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium text-neutral-900">
+                        {comment.author}
+                      </span>
+                      <span className="text-xs text-neutral-500">
+                        {comment.timestamp}
+                      </span>
+                    </div>
+                    <p className="text-xs text-neutral-700 line-clamp-2">
+                      {comment.content}
+                    </p>
                   </div>
-                  <span className="text-body-sm font-medium text-neutral-700">
-                    {comment.author}
-                  </span>
-                  <span className="text-caption text-neutral-500">
-                    {comment.timestamp}
-                  </span>
-                </div>
-                <p className="text-body-sm text-neutral-700 leading-relaxed ml-8 line-clamp-2">
-                  {comment.content}
-                </p>
+                ))}
               </div>
-            ))}
-            {commentCount > 2 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClick?.();
-                }}
-                className="text-body-sm text-primary-600 hover:text-primary-700 font-medium ml-8"
-              >
-                댓글 {commentCount - 2}개 더 보기 →
-              </button>
-            )}
+            </div>
           </div>
         </div>
-      )}
       </div>
     </article>
   );

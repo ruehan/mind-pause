@@ -13,6 +13,26 @@ from app.schemas.ai_character import (
     AICharacterUpdate,
     AICharacterResponse
 )
+from app.schemas.post import (
+    PostBase,
+    PostCreate,
+    PostUpdate,
+    PostResponse,
+    PostListResponse,
+    PostAuthor
+)
+from app.schemas.comment import (
+    CommentBase,
+    CommentCreate,
+    CommentUpdate,
+    CommentResponse,
+    CommentListResponse,
+    CommentAuthor
+)
+from app.schemas.like import (
+    LikeCreate,
+    LikeResponse
+)
 
 __all__ = [
     "UserBase",
@@ -25,5 +45,19 @@ __all__ = [
     "AICharacterBase",
     "AICharacterCreate",
     "AICharacterUpdate",
-    "AICharacterResponse"
+    "AICharacterResponse",
+    "PostBase",
+    "PostCreate",
+    "PostUpdate",
+    "PostResponse",
+    "PostListResponse",
+    "PostAuthor",
+    "CommentBase",
+    "CommentCreate",
+    "CommentUpdate",
+    "CommentResponse",
+    "CommentListResponse",
+    "CommentAuthor",
+    "LikeCreate",
+    "LikeResponse"
 ]

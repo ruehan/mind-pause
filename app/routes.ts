@@ -6,6 +6,8 @@ export default [
 	route("emotion", "routes/emotion.tsx"),
 	route("chat", "routes/chat.tsx"),
 	route("community", "routes/community.tsx"),
+	route("community/write", "routes/community.write.tsx"),
+	route("community/:postId", "routes/community.$postId.tsx"),
 	route("dashboard", "routes/dashboard.tsx"),
 	route("profile", "routes/profile.tsx"),
 	route("challenge", "routes/challenge.tsx"),
