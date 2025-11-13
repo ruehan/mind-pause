@@ -275,13 +275,14 @@ async def stream_chat_message(
         emotion_summary = format_emotion_summary(emotion_data)
         print(f"🎭 감정 감지: {emotion_summary}")
 
-    # 컨텍스트 구축 (메모리 + 요약 + 최근 메시지 + 감정)
+    # 컨텍스트 구축 (메모리 + 요약 + 최근 메시지 + 감정 + Advanced Prompting)
     context = build_conversation_context(
         db=db,
         conversation_id=conversation_id,
         user_id=current_user.id,
         character=character,
-        emotion_data=emotion_data
+        emotion_data=emotion_data,
+        use_advanced_prompting=True  # Advanced Prompt Engineering 활성화
     )
 
     # 토큰 제한에 맞춰 최적화
@@ -295,25 +296,8 @@ async def stream_chat_message(
         full_response = ""
 
         try:
-            # 감정 카테고리 추출 (Advanced Prompt Engineering에 사용)
-            detected_emotion = emotion_data.get("category", None)
-
-            # 사용자 컨텍스트 구성
-            user_context = {
-                "nickname": current_user.nickname if hasattr(current_user, 'nickname') else None,
-                "conversation_count": db.query(Conversation).filter(
-                    Conversation.user_id == current_user.id
-                ).count()
-            }
-
-            # AI 응답 스트리밍 (Advanced Prompt Engineering 적용)
-            async for chunk in stream_gemini_response(
-                messages=messages,
-                emotion=detected_emotion,
-                use_few_shot=True,  # Few-shot Learning 활성화
-                use_cot=True,  # Chain-of-Thought 활성화
-                user_context=user_context
-            ):
+            # AI 응답 스트리밍 (이미 context_service에서 프롬프트 구성 완료)
+            async for chunk in stream_gemini_response(messages):
                 full_response += chunk
                 # SSE 형식으로 전송
                 yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
