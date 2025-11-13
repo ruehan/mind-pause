@@ -295,8 +295,25 @@ async def stream_chat_message(
         full_response = ""
 
         try:
-            # AI 응답 스트리밍
-            async for chunk in stream_gemini_response(messages):
+            # 감정 카테고리 추출 (Advanced Prompt Engineering에 사용)
+            detected_emotion = emotion_data.get("category", None)
+
+            # 사용자 컨텍스트 구성
+            user_context = {
+                "nickname": current_user.nickname if hasattr(current_user, 'nickname') else None,
+                "conversation_count": db.query(Conversation).filter(
+                    Conversation.user_id == current_user.id
+                ).count()
+            }
+
+            # AI 응답 스트리밍 (Advanced Prompt Engineering 적용)
+            async for chunk in stream_gemini_response(
+                messages=messages,
+                emotion=detected_emotion,
+                use_few_shot=True,  # Few-shot Learning 활성화
+                use_cot=True,  # Chain-of-Thought 활성화
+                user_context=user_context
+            ):
                 full_response += chunk
                 # SSE 형식으로 전송
                 yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"

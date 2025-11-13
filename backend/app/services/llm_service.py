@@ -1,9 +1,10 @@
 """
-LLM 서비스 - Gemini API 통합
+LLM 서비스 - Gemini API 통합 (Advanced Prompt Engineering)
 """
 import google.generativeai as genai
-from typing import AsyncGenerator, Dict, List
+from typing import AsyncGenerator, Dict, List, Optional
 from app.core.config import settings
+from app.prompts.prompt_builder import build_counseling_prompt
 
 # Gemini API 설정
 genai.configure(api_key=settings.GOOGLE_API_KEY)
@@ -21,29 +22,66 @@ def get_gemini_model():
 
 
 async def stream_gemini_response(
-    messages: List[Dict[str, str]]
+    messages: List[Dict[str, str]],
+    emotion: Optional[str] = None,
+    use_few_shot: bool = True,
+    use_cot: bool = True,
+    user_context: Optional[Dict] = None
 ) -> AsyncGenerator[str, None]:
     """
-    Gemini API로부터 스트리밍 응답 받기
+    Gemini API로부터 스트리밍 응답 받기 (Advanced Prompt Engineering 적용)
 
     Args:
-        messages: 대화 히스토리 [{"role": "user"/"model", "parts": "content"}]
+        messages: 대화 히스토리 [{"role": "user"/"assistant", "content": "..."}]
+        emotion: 감지된 감정 (불안, 우울, 분노, 기쁨, 중립)
+        use_few_shot: Few-shot Learning 사용 여부 (기본: True)
+        use_cot: Chain-of-Thought 추론 사용 여부 (기본: True)
+        user_context: 사용자 프로필 정보
 
     Yields:
         str: 생성된 텍스트 청크
     """
     model = get_gemini_model()
 
+    # 고급 프롬프트 빌딩
+    system_prompt = build_counseling_prompt(
+        emotion=emotion,
+        use_few_shot=use_few_shot,
+        few_shot_count=3,  # 성능과 토큰 효율의 균형
+        use_cot=use_cot,
+        conversation_history=messages[:-1] if len(messages) > 1 else None,  # 마지막 메시지 제외
+        user_context=user_context
+    )
+
     # Gemini API 형식으로 변환
-    # messages 형식: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
-    # Gemini 형식: [{"role": "user"/"model", "parts": "..."}]
+    # 시스템 프롬프트를 첫 번째 사용자 메시지에 포함
     gemini_messages = []
-    for msg in messages:
-        role = "model" if msg["role"] == "assistant" else "user"
-        gemini_messages.append({
-            "role": role,
-            "parts": msg["content"]
-        })
+
+    # 첫 번째 메시지에 시스템 프롬프트 추가
+    if messages:
+        first_msg = messages[0]
+        role = "model" if first_msg["role"] == "assistant" else "user"
+
+        # 첫 사용자 메시지에 시스템 프롬프트 결합
+        if first_msg["role"] == "user":
+            combined_content = f"{system_prompt}\n\n---\n\n사용자 메시지:\n{first_msg['content']}"
+            gemini_messages.append({
+                "role": "user",
+                "parts": combined_content
+            })
+        else:
+            gemini_messages.append({
+                "role": role,
+                "parts": first_msg["content"]
+            })
+
+        # 나머지 메시지 추가
+        for msg in messages[1:]:
+            role = "model" if msg["role"] == "assistant" else "user"
+            gemini_messages.append({
+                "role": role,
+                "parts": msg["content"]
+            })
 
     try:
         # 스트리밍 응답 생성
