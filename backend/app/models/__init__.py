@@ -10,6 +10,9 @@ from app.models.like import Like
 from app.models.emotion_log import EmotionLog
 from app.models.challenge import Challenge, UserChallenge, ChallengeTemplate
 from app.models.report import Report
+from app.models.message_feedback import MessageFeedback
+from app.models.conversation_rating import ConversationRating
+from app.models.conversation_metrics import ConversationMetrics
 
 __all__ = [
     "User",
@@ -26,4 +29,7 @@ __all__ = [
     "UserChallenge",
     "ChallengeTemplate",
     "Report",
+    "MessageFeedback",
+    "ConversationRating",
+    "ConversationMetrics",
 ]

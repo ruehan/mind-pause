@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, ai_character, conversation, community, emotion, challenge, admin, dashboard
+from app.api.v1.endpoints import auth, ai_character, conversation, community, emotion, challenge, admin, dashboard, feedback
 
 api_router = APIRouter()
 
@@ -11,3 +11,4 @@ api_router.include_router(emotion.router, prefix="/emotion", tags=["감정 기�
 api_router.include_router(challenge.router, prefix="/challenges", tags=["챌린지"])
 api_router.include_router(admin.router, prefix="/admin", tags=["관리자"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["대시보드"])
+api_router.include_router(feedback.router, prefix="/feedback", tags=["피드백"])

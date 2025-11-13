@@ -1152,3 +1152,78 @@ export interface UserDashboard {
 export async function getUserDashboard(): Promise<UserDashboard> {
   return apiRequest("/dashboard");
 }
+
+// ============================================
+// Feedback API
+// ============================================
+
+export interface MessageFeedback {
+  id: string;
+  message_id: string;
+  is_helpful: boolean;
+  feedback_text: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationRating {
+  id: string;
+  conversation_id: string;
+  rating: number;
+  feedback_text: string | null;
+  created_at: string;
+}
+
+export interface MessageFeedbackRequest {
+  message_id: string;
+  is_helpful: boolean;
+  feedback_text?: string;
+}
+
+export interface ConversationRatingRequest {
+  conversation_id: string;
+  rating: number;
+  feedback_text?: string;
+}
+
+/**
+ * 메시지 피드백 등록/수정
+ */
+export async function submitMessageFeedback(data: MessageFeedbackRequest): Promise<MessageFeedback> {
+  return apiRequest("/feedback/message", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 메시지 피드백 조회
+ */
+export async function getMessageFeedback(messageId: string): Promise<MessageFeedback | null> {
+  try {
+    return await apiRequest(`/feedback/message/${messageId}`);
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * 대화 만족도 평가 등록/수정
+ */
+export async function submitConversationRating(data: ConversationRatingRequest): Promise<ConversationRating> {
+  return apiRequest("/feedback/conversation", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 대화 만족도 평가 조회
+ */
+export async function getConversationRating(conversationId: string): Promise<ConversationRating | null> {
+  try {
+    return await apiRequest(`/feedback/conversation/${conversationId}`);
+  } catch (error) {
+    return null;
+  }
+}

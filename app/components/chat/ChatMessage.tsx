@@ -3,6 +3,7 @@ import { ClientOnly } from "../ClientOnly";
 import { useState, useEffect } from "react";
 import type { AvatarOptions } from "../../lib/api";
 import { renderMarkdown } from "~/utils/markdown";
+import { submitMessageFeedback } from "~/lib/api";
 
 interface ChatMessageProps {
   role: "user" | "ai";
@@ -13,6 +14,7 @@ interface ChatMessageProps {
   isStreaming?: boolean;
   shouldTypeEffect?: boolean;
   onTypingComplete?: () => void;
+  messageId?: string; // AI 메시지 ID (피드백용)
 }
 
 export function ChatMessage({
@@ -24,11 +26,34 @@ export function ChatMessage({
   isStreaming = false,
   shouldTypeEffect = false,
   onTypingComplete,
+  messageId,
 }: ChatMessageProps) {
   const isAI = role === "ai";
   const [isVisible, setIsVisible] = useState(false);
   const [displayedContent, setDisplayedContent] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+
+  // 피드백 상태
+  const [feedback, setFeedback] = useState<boolean | null>(null); // true: 좋아요, false: 싫어요, null: 없음
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+
+  // 피드백 핸들러
+  const handleFeedback = async (isHelpful: boolean) => {
+    if (!messageId || isSubmittingFeedback) return;
+
+    setIsSubmittingFeedback(true);
+    try {
+      await submitMessageFeedback({
+        message_id: messageId,
+        is_helpful: isHelpful,
+      });
+      setFeedback(isHelpful);
+    } catch (error) {
+      console.error("피드백 제출 실패:", error);
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
+  };
 
   useEffect(() => {
     setIsVisible(true);
@@ -122,7 +147,7 @@ export function ChatMessage({
           </div>
         )}
 
-        <div className="flex flex-col">
+        <div className="flex flex-col group">
           {/* AI 이름 표시 */}
           {isAI && aiName && (
             <span className="text-caption text-neutral-600 mb-1 font-medium">
@@ -159,6 +184,42 @@ export function ChatMessage({
           >
             {timestamp}
           </span>
+
+          {/* AI 메시지 피드백 버튼 */}
+          {isAI && messageId && !isTyping && !isStreaming && (
+            <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button
+                onClick={() => handleFeedback(true)}
+                disabled={isSubmittingFeedback}
+                className={`
+                  px-3 py-1 rounded-full text-xs transition-all duration-200
+                  ${feedback === true
+                    ? "bg-primary-100 text-primary-600 border border-primary-300"
+                    : "bg-neutral-50 text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
+                  }
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                `}
+                title="도움이 되었어요"
+              >
+                👍 도움됨
+              </button>
+              <button
+                onClick={() => handleFeedback(false)}
+                disabled={isSubmittingFeedback}
+                className={`
+                  px-3 py-1 rounded-full text-xs transition-all duration-200
+                  ${feedback === false
+                    ? "bg-red-50 text-red-600 border border-red-300"
+                    : "bg-neutral-50 text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
+                  }
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                `}
+                title="도움이 안 되었어요"
+              >
+                👎 아쉬워요
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

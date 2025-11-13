@@ -732,6 +732,7 @@ export default function Chat() {
                 isStreaming={false}
                 shouldTypeEffect={msg.id === typingMessageId}
                 onTypingComplete={() => setTypingMessageId(null)}
+                messageId={msg.role === "assistant" ? msg.id : undefined}
               />
             ))}
 

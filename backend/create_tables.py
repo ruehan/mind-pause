@@ -24,6 +24,9 @@ from app.models import (
     UserChallenge,
     ChallengeTemplate,
     Report,
+    MessageFeedback,
+    ConversationRating,
+    ConversationMetrics,
 )
 
 

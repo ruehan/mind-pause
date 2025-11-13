@@ -15,6 +15,7 @@ from app.models.conversation import Conversation
 from app.models.ai_character import AICharacter
 from app.models.message import Message
 from app.models.conversation_summary import ConversationSummary
+from app.models.conversation_metrics import ConversationMetrics
 from app.schemas.conversation import (
     ConversationCreate,
     ConversationUpdate,
@@ -100,6 +101,70 @@ def filter_internal_process(text: str) -> str:
 
     # 앞뒤 공백 제거
     return text.strip()
+
+
+# ============================================
+# 메트릭 자동 수집
+# ============================================
+
+def update_conversation_metrics(
+    db: Session,
+    conversation_id: UUID,
+    user_content: str,
+    ai_content: str,
+    response_time_ms: float
+):
+    """
+    대화 메트릭 업데이트
+
+    Args:
+        db: 데이터베이스 세션
+        conversation_id: 대화 ID
+        user_content: 사용자 메시지 내용
+        ai_content: AI 응답 내용
+        response_time_ms: 응답 시간 (밀리초)
+    """
+    # 기존 메트릭 가져오기 또는 새로 생성
+    metrics = db.query(ConversationMetrics).filter(
+        ConversationMetrics.conversation_id == conversation_id
+    ).first()
+
+    if not metrics:
+        metrics = ConversationMetrics(conversation_id=conversation_id)
+        db.add(metrics)
+
+    # 토큰 수 추정 (대략 4자 = 1토큰)
+    input_tokens = len(user_content) // 4
+    output_tokens = len(ai_content) // 4
+
+    # 메시지 수 증가
+    metrics.total_messages += 2  # 사용자 + AI
+    metrics.user_messages += 1
+    metrics.ai_messages += 1
+
+    # 토큰 누적
+    metrics.total_input_tokens += input_tokens
+    metrics.total_output_tokens += output_tokens
+
+    # 평균 토큰 계산
+    metrics.avg_input_tokens = metrics.total_input_tokens / metrics.user_messages
+    metrics.avg_output_tokens = metrics.total_output_tokens / metrics.ai_messages
+
+    # 응답 시간 통계 업데이트
+    if metrics.avg_response_time_ms is None:
+        metrics.avg_response_time_ms = response_time_ms
+        metrics.min_response_time_ms = response_time_ms
+        metrics.max_response_time_ms = response_time_ms
+    else:
+        # 평균 업데이트 (누적 평균)
+        total_responses = metrics.ai_messages
+        metrics.avg_response_time_ms = (
+            (metrics.avg_response_time_ms * (total_responses - 1) + response_time_ms) / total_responses
+        )
+        metrics.min_response_time_ms = min(metrics.min_response_time_ms, response_time_ms)
+        metrics.max_response_time_ms = max(metrics.max_response_time_ms, response_time_ms)
+
+    db.commit()
 
 
 @router.post("", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
@@ -367,11 +432,16 @@ async def stream_chat_message(
     # 스트리밍 응답 생성
     async def generate():
         raw_response = ""  # 필터링 전 원본
+        start_time = datetime.utcnow()  # 응답 시작 시간
 
         try:
             # 1단계: 전체 AI 응답 수집
             async for chunk in stream_gemini_response(messages):
                 raw_response += chunk
+
+            # 응답 완료 시간
+            end_time = datetime.utcnow()
+            response_time_ms = (end_time - start_time).total_seconds() * 1000
 
             # 2단계: 내부 프로세스 필터링
             full_response = filter_internal_process(raw_response)
@@ -409,6 +479,15 @@ async def stream_chat_message(
 
             db.commit()
             db.refresh(ai_message)
+
+            # 메트릭 자동 수집 (응답 시간, 토큰 수 등)
+            update_conversation_metrics(
+                db=db,
+                conversation_id=conversation_id,
+                user_content=message_data.content,
+                ai_content=full_response,
+                response_time_ms=response_time_ms
+            )
 
             # 대화 요약 필요 여부 확인 및 자동 생성
             if check_summary_trigger(db, conversation_id):
