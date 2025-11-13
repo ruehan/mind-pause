@@ -1074,3 +1074,78 @@ export async function rejectChallenge(challengeId: string, data: ChallengeReject
     body: JSON.stringify(data),
   });
 }
+
+// ============================================
+// 대시보드 API
+// ============================================
+
+export interface ActivitySummary {
+  total_emotion_logs: number;
+  emotion_logs_this_week: number;
+  emotion_logs_this_month: number;
+  total_posts: number;
+  total_comments: number;
+  total_likes_received: number;
+  posts_this_week: number;
+  comments_this_week: number;
+  active_challenges: number;
+  completed_challenges: number;
+  current_best_streak: number;
+  total_conversations: number;
+  conversations_this_week: number;
+}
+
+export interface RecentEmotionLog {
+  id: string;
+  emotion_type: string;
+  intensity: number;
+  content: string | null;
+  created_at: string;
+}
+
+export interface RecentPost {
+  id: string;
+  title: string;
+  content: string;
+  num_likes: number;
+  num_comments: number;
+  created_at: string;
+}
+
+export interface RecentComment {
+  id: string;
+  post_id: string;
+  post_title: string;
+  content: string;
+  created_at: string;
+}
+
+export interface ChallengeActivity {
+  id: string;
+  challenge_id: string;
+  challenge_title: string;
+  challenge_icon: string | null;
+  current_streak: number;
+  best_streak: number;
+  progress_percentage: number;
+  is_completed: boolean;
+}
+
+export interface RecentActivities {
+  emotion_logs: RecentEmotionLog[];
+  posts: RecentPost[];
+  comments: RecentComment[];
+  challenge_activities: ChallengeActivity[];
+}
+
+export interface UserDashboard {
+  summary: ActivitySummary;
+  recent_activities: RecentActivities;
+}
+
+/**
+ * 사용자 대시보드 조회
+ */
+export async function getUserDashboard(): Promise<UserDashboard> {
+  return apiRequest("/dashboard");
+}

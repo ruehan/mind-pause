@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "../components/AppLayout";
 import { useAuth } from "../contexts/AuthContext";
 import { StatCard } from "../components/dashboard/StatCard";
@@ -8,7 +8,10 @@ import { AchievementBadge } from "../components/dashboard/AchievementBadge";
 import { RecentChatCard } from "../components/dashboard/RecentChatCard";
 import { ChallengeProgressCard } from "../components/dashboard/ChallengeProgressCard";
 import { TodayTasksWidget } from "../components/dashboard/TodayTasksWidget";
+import { ActivityStatsCard } from "../components/dashboard/ActivityStatsCard";
+import { RecentActivityTimeline } from "../components/dashboard/RecentActivityTimeline";
 import { Smile, FileText, Flame, MessageCircle, Trophy, BarChart3, Target, TrendingUp, Heart } from "lucide-react";
+import { getUserDashboard, type UserDashboard as UserDashboardData } from "../lib/api";
 
 export function meta() {
   return [
@@ -126,6 +129,25 @@ export default function Dashboard() {
   const [activeFilter, setActiveFilter] = useState<
     "7d" | "30d" | "90d" | "all"
   >("30d");
+  const [dashboardData, setDashboardData] = useState<UserDashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // 대시보드 데이터 로드
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        setLoading(true);
+        const data = await getUserDashboard();
+        setDashboardData(data);
+      } catch (error) {
+        console.error("Failed to load dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboard();
+  }, []);
 
   const filters = [
     { id: "7d" as const, label: "7일" },
@@ -148,6 +170,19 @@ export default function Dashboard() {
     console.log("Achievement clicked");
     // TODO: Show achievement detail modal
   };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-body text-neutral-600">대시보드 로딩 중...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -196,29 +231,31 @@ export default function Dashboard() {
         </div>
 
         {/* Summary Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <StatCard
-            icon={Smile}
-            title="평균 감정 점수"
-            value="+2.3"
-            subtitle="이번 달: +2.3"
-            trend="지난 달: +1.8"
-          />
-          <StatCard
-            icon={FileText}
-            title="기록 일수"
-            value="23일"
-            subtitle="이번 달: 23/31"
-            trend="목표: 25일"
-          />
-          <StatCard
-            icon={Flame}
-            title="연속 기록"
-            value="7일 연속"
-            subtitle="최고 기록: 14일"
-            trend="현재: 7일 🔥"
-          />
-        </div>
+        {dashboardData && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <StatCard
+              icon={FileText}
+              title="감정 기록"
+              value={`${dashboardData.summary.total_emotion_logs}회`}
+              subtitle={`이번 주: ${dashboardData.summary.emotion_logs_this_week}회`}
+              trend={`이번 달: ${dashboardData.summary.emotion_logs_this_month}회`}
+            />
+            <StatCard
+              icon={MessageCircle}
+              title="커뮤니티 활동"
+              value={`${dashboardData.summary.total_posts + dashboardData.summary.total_comments}개`}
+              subtitle={`게시글: ${dashboardData.summary.total_posts} · 댓글: ${dashboardData.summary.total_comments}`}
+              trend={`❤️ ${dashboardData.summary.total_likes_received}개 받음`}
+            />
+            <StatCard
+              icon={Flame}
+              title="챌린지 연속 기록"
+              value={dashboardData.summary.current_best_streak > 0 ? `${dashboardData.summary.current_best_streak}일 연속` : "기록 없음"}
+              subtitle={`진행 중: ${dashboardData.summary.active_challenges}개`}
+              trend={`완료: ${dashboardData.summary.completed_challenges}개 🏆`}
+            />
+          </div>
+        )}
 
         {/* Emotion Trend Chart */}
         <div className="mb-6">
@@ -330,7 +367,7 @@ export default function Dashboard() {
         </div>
 
         {/* Monthly Achievements Grid */}
-        <div className="glass rounded-xl shadow-soft hover:shadow-elevation-3 transition-all duration-300 p-6 border border-white/20">
+        <div className="glass rounded-xl shadow-soft hover:shadow-elevation-3 transition-all duration-300 p-6 border border-white/20 mb-6">
           <h2 className="text-h4 text-neutral-900 mb-6 flex items-center gap-2">
             🏅 이번 달 성과
           </h2>
@@ -346,6 +383,20 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+
+        {/* Activity Stats Card */}
+        {dashboardData && (
+          <div className="mb-6">
+            <ActivityStatsCard summary={dashboardData.summary} />
+          </div>
+        )}
+
+        {/* Recent Activity Timeline */}
+        {dashboardData && (
+          <div className="mb-6">
+            <RecentActivityTimeline activities={dashboardData.recent_activities} />
+          </div>
+        )}
         </div>
       </div>
     </AppLayout>
