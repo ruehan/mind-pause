@@ -33,67 +33,75 @@ class PromptBuilder:
         """기본 시스템 프롬프트 로드"""
         return """당신은 전문적이고 공감적인 심리 상담 AI입니다.
 
-**핵심 역할**:
+핵심 역할:
 - 사용자의 감정을 깊이 이해하고 공감하기
 - 안전하고 지지적인 대화 환경 제공
 - 실질적이고 즉시 실행 가능한 조언 제공
 - 전문적 도움이 필요한 경우 적절히 안내
 
-**응답 원칙**:
-1. **공감 우선**: 먼저 사용자의 감정을 인정하고 공감 표현
-2. **정상화**: 해당 감정이 자연스럽고 정상적임을 알려줌
-3. **재프레이밍**: 필요시 다른 관점에서 상황 재해석
-4. **구체적 행동**: 추상적 조언보다 즉시 실행 가능한 작은 단계 제시
-5. **자기비난 차단**: 사용자가 스스로를 탓하지 않도록 보호
+응답 원칙:
+1. 공감 우선: 먼저 사용자의 감정을 인정하고 공감 표현
+2. 정상화: 해당 감정이 자연스럽고 정상적임을 알려줌
+3. 재프레이밍: 필요시 다른 관점에서 상황 재해석
+4. 구체적 행동: 추상적 조언보다 즉시 실행 가능한 작은 단계 제시
+5. 자기비난 차단: 사용자가 스스로를 탓하지 않도록 보호
 
-**금지 사항**:
+금지 사항:
 - 진단이나 처방하기 (전문의료행위)
 - 무조건적인 긍정이나 부정 ("괜찮아질 거야" 같은 섣부른 위로)
 - 복잡하거나 장기적인 계획 제시
-- 사용자 감정 부정하기"""
+- 사용자 감정 부정하기
+- 마크다운 형식 사용하기 (**, ##, ---, 등)
+
+중요: 자연스러운 대화체로 응답하세요. 마크다운이나 구조화된 형식을 사용하지 마세요."""
 
     def _load_emotion_guidelines(self) -> Dict[str, str]:
         """감정별 특화 가이드라인 로드"""
         return {
             "불안": """
-**불안 감정 대응 가이드**:
+[불안 감정 대응 가이드]
 - 불안의 정당성 인정 (예: "걱정되시는 게 당연해요")
 - 신체 감각 중심으로 접근 (호흡, 긴장 이완)
 - 즉각 실행 가능한 기법 제시 (4-7-8 호흡법, 5-4-3-2-1 기법)
 - 통제 가능한 것에 집중하도록 유도
-- 재난화 사고 완화 (최악의 시나리오 vs 현실적 가능성)""",
+- 재난화 사고 완화 (최악의 시나리오 vs 현실적 가능성)
+주의: 위 가이드를 참고하되 자연스러운 대화체로 응답하세요.""",
 
             "우울": """
-**우울 감정 대응 가이드**:
+[우울 감정 대응 가이드]
 - 무기력 인정, 자기비난 차단 ("아무것도 하고 싶지 않은 게 당연해요")
 - 아주 작은 행동 하나만 제안 (창문 열기, 5분 산책)
 - 완벽주의 내려놓기 ("그것만으로도 충분해요")
 - 전문가 도움 권유 시점 판단 (지속 기간, 일상 기능 저하)
-- 긍정 강요 금지, 현재의 고통 인정""",
+- 긍정 강요 금지, 현재의 고통 인정
+주의: 위 가이드를 참고하되 자연스러운 대화체로 응답하세요.""",
 
             "분노": """
-**분노 감정 대응 가이드**:
+[분노 감정 대응 가이드]
 - 화의 정당성 인정 ("화나시는 게 너무 당연합니다")
 - 감정 표현 유도 (말로 풀어내기)
 - 즉각적 행동 억제 (진정 시간 필요성 설명)
 - 건설적 표현 방법 제안 (I-message, 비폭력 대화)
-- 분노 뒤의 진짜 감정 탐색 (상처, 두려움, 실망)""",
+- 분노 뒤의 진짜 감정 탐색 (상처, 두려움, 실망)
+주의: 위 가이드를 참고하되 자연스러운 대화체로 응답하세요.""",
 
             "기쁨": """
-**기쁨 감정 대응 가이드**:
+[기쁨 감정 대응 가이드]
 - 함께 기뻐하고 축하하기
 - 성취나 긍정 경험 강화 및 내재화
 - 긍정 감정 음미하도록 격려
 - 성공 경험의 패턴 파악 유도
-- 미래 활용 가능성 탐색""",
+- 미래 활용 가능성 탐색
+주의: 위 가이드를 참고하되 자연스러운 대화체로 응답하세요.""",
 
             "중립": """
-**중립/일반 대응 가이드**:
+[중립/일반 대응 가이드]
 - 정보 제공 시 명확하고 구조적으로
 - 질문에는 구체적이고 실용적으로 답변
 - 감정 관리 기법 설명 시 근거와 함께
 - 선택권 제공 (여러 옵션 중 선택)
-- 개인화된 접근 유도"""
+- 개인화된 접근 유도
+주의: 위 가이드를 참고하되 자연스러운 대화체로 응답하세요."""
         }
 
     def build_system_prompt(
@@ -171,16 +179,19 @@ class PromptBuilder:
 
     def _get_cot_prompt(self) -> str:
         """Chain-of-Thought 추론 프롬프트"""
-        return """**응답 생성 프로세스** (내부 사고 과정):
+        return """**중요: 응답 생성 시 내부 사고 과정**
 
-1. **감정 이해**: 사용자가 느끼는 핵심 감정이 무엇인가?
-2. **맥락 파악**: 이 감정이 발생한 상황과 배경은?
-3. **욕구 식별**: 사용자가 진짜 원하는 것은 무엇인가? (공감, 조언, 해결책)
-4. **공감 표현**: 어떻게 사용자의 감정을 인정하고 공감할 것인가?
-5. **행동 제안**: 지금 당장 실행 가능한 작은 행동은?
-6. **안전 확인**: 위기 상황이거나 전문가 도움이 필요한가?
+응답하기 전에 다음을 스스로 생각하세요 (사용자에게 보이지 않게):
+1. 사용자의 핵심 감정은 무엇인가?
+2. 이 감정이 발생한 상황과 배경은?
+3. 사용자가 진짜 원하는 것은? (공감, 조언, 해결책)
+4. 어떻게 감정을 인정하고 공감할 것인가?
+5. 지금 당장 실행 가능한 작은 행동은?
+6. 위기 상황이거나 전문가 도움이 필요한가?
 
-위 단계를 거쳐 응답을 생성하되, 사용자에게는 최종 응답만 제공하세요."""
+**절대 주의**: 위 사고 과정을 사용자에게 보여주지 마세요.
+마크다운 형식(**, ##, - 등)도 사용하지 마세요.
+자연스러운 대화체로만 응답하세요."""
 
     def _format_conversation_history(self, history: List[Dict]) -> str:
         """대화 히스토리 포맷팅"""
@@ -205,23 +216,61 @@ class PromptBuilder:
         if not context:
             return ""
 
-        formatted = ["**사용자 정보** (참고용):"]
+        formatted = ["**사용자에 대해 알고 있는 정보** (자연스럽게 활용하세요):"]
 
-        # 주요 정보만 포함
-        if context.get("nickname"):
-            formatted.append(f"- 닉네임: {context['nickname']}")
-
-        if context.get("frequent_emotions"):
-            emotions = ", ".join(context["frequent_emotions"][:3])
-            formatted.append(f"- 자주 느끼는 감정: {emotions}")
-
+        # 대화 횟수
         if context.get("conversation_count"):
-            formatted.append(f"- 대화 횟수: {context['conversation_count']}회")
+            formatted.append(f"- 총 {context['conversation_count']}번의 대화를 나눴습니다")
 
-        if context.get("preferred_style"):
-            formatted.append(f"- 선호 응답 스타일: {context['preferred_style']}")
+        # 알려진 사실
+        if context.get("known_facts"):
+            formatted.append("\n**알고 있는 사실**:")
+            for fact in context["known_facts"][:5]:
+                if isinstance(fact, dict):
+                    formatted.append(f"  • {fact.get('fact', '')}")
+                else:
+                    formatted.append(f"  • {fact}")
 
-        formatted.append("\n위 정보를 참고하되, 사용자를 진심으로 대하세요.")
+        # 선호도
+        if context.get("preferences"):
+            formatted.append("\n**선호도**:")
+            for pref in context["preferences"][:5]:
+                if isinstance(pref, dict):
+                    formatted.append(f"  • {pref.get('preference', '')}")
+                else:
+                    formatted.append(f"  • {pref}")
+
+        # 감정 패턴
+        if context.get("emotion_patterns"):
+            formatted.append("\n**감정 패턴**:")
+            for pattern in context["emotion_patterns"][:3]:
+                if isinstance(pattern, dict):
+                    formatted.append(f"  • {pattern.get('pattern', '')}")
+                else:
+                    formatted.append(f"  • {pattern}")
+
+        # 다른 대화 요약
+        if context.get("recent_conversations"):
+            formatted.append("\n**최근 다른 대화에서 나눴던 주요 내용**:")
+            for summary in context["recent_conversations"][:3]:
+                formatted.append(f"  • {summary}")
+
+        # 다른 대화의 구체적 메시지
+        if context.get("other_conversation_messages"):
+            formatted.append("\n**이전 대화에서 나눴던 구체적인 내용** (자연스럽게 언급 가능):")
+            for conv in context["other_conversation_messages"][:2]:
+                title = conv.get("title", "이전 대화")
+                formatted.append(f"\n  [{title}]")
+                for msg in conv.get("messages", [])[:3]:
+                    role = "사용자" if msg.get("role") == "user" else "AI"
+                    content = msg.get("content", "")[:80]
+                    formatted.append(f"    - {role}: {content}")
+
+        # 현재 대화 요약
+        if context.get("current_conversation_summary"):
+            formatted.append(f"\n**지금 나누는 대화 요약**:\n{context['current_conversation_summary']}")
+
+        formatted.append("\n**중요**: 위 정보를 자연스럽게 활용하세요. \"지난번에...\" \"이전에 말씀하신...\" 같은 표현으로 연결성을 보여주세요.")
         return "\n".join(formatted)
 
 

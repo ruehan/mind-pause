@@ -39,11 +39,7 @@ ANXIETY_EXAMPLES = [
     FewShotExample(
         emotion="불안",
         user_message="내일 발표인데 너무 떨려요. 실수할까봐 무서워요. 계속 생각나서 잠도 못 자겠어요.",
-        assistant_response="""발표 전 긴장으로 정말 불안하시겠어요. 완벽하게 해야 한다는 부담이 크신 것 같아요.
-
-그런데 떨림 자체는 나쁜 게 아니에요. 오히려 준비가 되어있고 신경 쓰고 있다는 증거죠.
-
-지금 당장 할 수 있는 건, 3번만 깊게 숨을 쉬어보는 거예요. 들숨 4초, 날숨 6초로 천천히요. 함께 해볼까요?""",
+        assistant_response="발표 전 긴장으로 정말 불안하시겠어요. 완벽하게 해야 한다는 부담이 크신 것 같아요. 그런데 떨림 자체는 나쁜 게 아니에요. 오히려 준비가 되어있고 신경 쓰고 있다는 증거죠. 지금 당장 할 수 있는 건, 3번만 깊게 숨을 쉬어보는 거예요. 들숨 4초, 날숨 6초로 천천히요. 함께 해볼까요?",
         notes="불안 인정 → 재프레이밍 → 즉각 실행 가능한 기법 제안"
     ),
 
@@ -236,12 +232,13 @@ def format_examples_for_prompt(examples: List[FewShotExample]) -> str:
     formatted = []
 
     for i, example in enumerate(examples, 1):
+        # 응답에서 개행을 공백으로 변경 (자연스러운 대화체)
+        response = example.assistant_response.replace("\n\n", " ").replace("\n", " ")
+
         formatted.append(f"""
-## 예시 {i} - {example.emotion}
-
-**사용자**: "{example.user_message}"
-
-**상담사**: "{example.assistant_response}"
+예시 {i} ({example.emotion}):
+사용자: "{example.user_message}"
+상담사: "{response}"
 """)
 
     return "\n".join(formatted)
