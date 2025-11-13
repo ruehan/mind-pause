@@ -916,3 +916,131 @@ export async function getMyChallenges(): Promise<UserChallengeListResponse> {
 export async function getMyCreatedChallenges(): Promise<ChallengeListResponse> {
   return apiRequest("/challenges/my/created");
 }
+
+// ============================================
+// Admin API
+// ============================================
+
+export interface DashboardStats {
+  total_users: number;
+  new_users_today: number;
+  new_users_week: number;
+  total_emotion_logs: number;
+  emotion_logs_today: number;
+  emotion_logs_week: number;
+  total_posts: number;
+  posts_today: number;
+  total_comments: number;
+  total_challenges: number;
+  active_challenges: number;
+  pending_challenges: number;
+  total_conversations: number;
+  conversations_today: number;
+}
+
+export interface UserManagementItem {
+  id: string;
+  email: string | null;
+  nickname: string;
+  role: "USER" | "ADMIN" | "EXPERT";
+  is_deleted: boolean;
+  created_at: string;
+  last_login_at: string | null;
+  emotion_log_count: number;
+  post_count: number;
+  comment_count: number;
+}
+
+export interface UserManagementListResponse {
+  users: UserManagementItem[];
+  total: number;
+}
+
+export interface UserRoleUpdateRequest {
+  role: "USER" | "ADMIN" | "EXPERT";
+}
+
+export interface UserDeleteRequest {
+  permanent: boolean;
+}
+
+export interface ReportItem {
+  id: string;
+  reporter_id: string;
+  reporter_nickname: string;
+  report_type: "post" | "comment";
+  report_reason: string;
+  description: string | null;
+  post_id: string | null;
+  comment_id: string | null;
+  target_content: string | null;
+  status: "pending" | "reviewing" | "resolved" | "rejected";
+  admin_note: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+export interface ReportListResponse {
+  reports: ReportItem[];
+  total: number;
+}
+
+export interface ReportReviewRequest {
+  status: "reviewing" | "resolved" | "rejected";
+  admin_note?: string;
+  delete_content: boolean;
+}
+
+/**
+ * 관리자 대시보드 통계 조회
+ */
+export async function getAdminDashboardStats(): Promise<DashboardStats> {
+  return apiRequest("/admin/dashboard/stats");
+}
+
+/**
+ * 사용자 목록 조회 (관리자)
+ */
+export async function getAdminUsers(skip: number = 0, limit: number = 50): Promise<UserManagementListResponse> {
+  return apiRequest(`/admin/users?skip=${skip}&limit=${limit}`);
+}
+
+/**
+ * 사용자 역할 변경 (관리자)
+ */
+export async function updateUserRole(userId: string, data: UserRoleUpdateRequest): Promise<UserManagementItem> {
+  return apiRequest(`/admin/users/${userId}/role`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 사용자 삭제 (관리자)
+ */
+export async function deleteAdminUser(userId: string, data: UserDeleteRequest): Promise<{ message: string; user_id: string }> {
+  return apiRequest(`/admin/users/${userId}`, {
+    method: "DELETE",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 신고 목록 조회 (관리자)
+ */
+export async function getAdminReports(status?: string, skip: number = 0, limit: number = 50): Promise<ReportListResponse> {
+  const params = new URLSearchParams({ skip: skip.toString(), limit: limit.toString() });
+  if (status) params.append("status", status);
+  return apiRequest(`/admin/reports?${params.toString()}`);
+}
+
+/**
+ * 신고 처리 (관리자)
+ */
+export async function reviewReport(reportId: string, data: ReportReviewRequest): Promise<ReportItem> {
+  return apiRequest(`/admin/reports/${reportId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}

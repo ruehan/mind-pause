@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminHeader } from "../components/admin/AdminHeader";
 import { AdminSidebar } from "../components/admin/AdminSidebar";
 import { AdminStatCard } from "../components/admin/AdminStatCard";
@@ -8,6 +8,14 @@ import { NotificationSender } from "../components/admin/NotificationSender";
 import { ActivityChart } from "../components/admin/ActivityChart";
 import { LogViewer } from "../components/admin/LogViewer";
 import { Users, FileText, MessageSquare, Trophy } from "lucide-react";
+import {
+  getAdminDashboardStats,
+  getAdminUsers,
+  getAdminReports,
+  type DashboardStats,
+  type UserManagementListResponse,
+  type ReportListResponse,
+} from "../lib/api";
 
 export function meta() {
   return [
@@ -196,6 +204,51 @@ const mockLogs = [
 export default function Admin() {
   const [activeSection, setActiveSection] = useState("dashboard");
 
+  // State for dashboard stats
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  // State for users
+  const [users, setUsers] = useState<UserManagementListResponse | null>(null);
+  const [usersLoading, setUsersLoading] = useState(false);
+
+  // State for reports
+  const [reports, setReports] = useState<ReportListResponse | null>(null);
+  const [reportsLoading, setReportsLoading] = useState(false);
+
+  // Fetch dashboard stats
+  useEffect(() => {
+    if (activeSection === "dashboard") {
+      setStatsLoading(true);
+      getAdminDashboardStats()
+        .then(setStats)
+        .catch((error) => console.error("Failed to fetch stats:", error))
+        .finally(() => setStatsLoading(false));
+    }
+  }, [activeSection]);
+
+  // Fetch users
+  useEffect(() => {
+    if (activeSection === "users") {
+      setUsersLoading(true);
+      getAdminUsers()
+        .then(setUsers)
+        .catch((error) => console.error("Failed to fetch users:", error))
+        .finally(() => setUsersLoading(false));
+    }
+  }, [activeSection]);
+
+  // Fetch reports
+  useEffect(() => {
+    if (activeSection === "reports") {
+      setReportsLoading(true);
+      getAdminReports("pending")
+        .then(setReports)
+        .catch((error) => console.error("Failed to fetch reports:", error))
+        .finally(() => setReportsLoading(false));
+    }
+  }, [activeSection]);
+
   return (
     <div className="min-h-screen flex flex-col bg-neutral-50">
       <AdminHeader />
@@ -212,33 +265,45 @@ export default function Admin() {
             <div>
               <h1 className="text-h2 text-neutral-900 mb-6">📊 통계 대시보드</h1>
 
-              {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <AdminStatCard
-                  icon={Users}
-                  title="총 사용자"
-                  value={mockStats.users.total}
-                  change={mockStats.users.change}
-                />
-                <AdminStatCard
-                  icon={FileText}
-                  title="감정 기록수"
-                  value={mockStats.emotions.total}
-                  change={mockStats.emotions.change}
-                />
-                <AdminStatCard
-                  icon={MessageSquare}
-                  title="커뮤니티"
-                  value={mockStats.community.total}
-                  change={mockStats.community.change}
-                />
-                <AdminStatCard
-                  icon={Trophy}
-                  title="챌린지"
-                  value={mockStats.challenges.total}
-                  change={mockStats.challenges.change}
-                />
-              </div>
+              {statsLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-body text-neutral-600">로딩 중...</div>
+                </div>
+              ) : stats ? (
+                <>
+                  {/* Stats Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <AdminStatCard
+                      icon={Users}
+                      title="총 사용자"
+                      value={stats.total_users}
+                      change={stats.new_users_today}
+                    />
+                    <AdminStatCard
+                      icon={FileText}
+                      title="감정 기록수"
+                      value={stats.total_emotion_logs}
+                      change={stats.emotion_logs_today}
+                    />
+                    <AdminStatCard
+                      icon={MessageSquare}
+                      title="커뮤니티"
+                      value={stats.total_posts}
+                      change={stats.posts_today}
+                    />
+                    <AdminStatCard
+                      icon={Trophy}
+                      title="챌린지"
+                      value={stats.total_challenges}
+                      change={stats.pending_challenges}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-body text-neutral-600">데이터를 불러올 수 없습니다</div>
+                </div>
+              )}
 
               {/* DAU Chart */}
               <div className="mb-8">
@@ -268,7 +333,25 @@ export default function Admin() {
           {activeSection === "users" && (
             <div>
               <h1 className="text-h2 text-neutral-900 mb-6">👥 사용자 관리</h1>
-              <UserManagementTable users={mockUsers} />
+              {usersLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-body text-neutral-600">로딩 중...</div>
+                </div>
+              ) : users ? (
+                <UserManagementTable users={users.users.map(u => ({
+                  id: u.id,
+                  name: u.nickname,
+                  email: u.email || "",
+                  joinDate: new Date(u.created_at).toLocaleDateString('ko-KR'),
+                  status: u.is_deleted ? "banned" as const : "active" as const,
+                  emotionLogs: u.emotion_log_count,
+                  lastActive: u.last_login_at ? new Date(u.last_login_at).toLocaleDateString('ko-KR') : "미접속",
+                }))} />
+              ) : (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-body text-neutral-600">데이터를 불러올 수 없습니다</div>
+                </div>
+              )}
             </div>
           )}
 
@@ -276,7 +359,27 @@ export default function Admin() {
           {activeSection === "reports" && (
             <div>
               <h1 className="text-h2 text-neutral-900 mb-6">🚨 신고 관리</h1>
-              <ContentModerationPanel reports={mockReports} />
+              {reportsLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-body text-neutral-600">로딩 중...</div>
+                </div>
+              ) : reports ? (
+                <ContentModerationPanel reports={reports.reports.map(r => ({
+                  id: r.id,
+                  contentType: r.report_type as "post" | "comment",
+                  contentId: r.post_id || r.comment_id || "",
+                  contentPreview: r.target_content || "내용 없음",
+                  reportReason: r.report_reason,
+                  reportCount: 1,
+                  reportedBy: [r.reporter_nickname],
+                  status: r.status as "pending" | "approved" | "rejected",
+                  createdAt: new Date(r.created_at).toLocaleString('ko-KR'),
+                }))} />
+              ) : (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-body text-neutral-600">데이터를 불러올 수 없습니다</div>
+                </div>
+              )}
             </div>
           )}
 
