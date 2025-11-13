@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     # AI/LLM 설정
     GOOGLE_API_KEY: str  # Gemini API 키
-    LLM_MODEL: str = "gemini-2.0-flash-exp"  # 기본 모델
+    LLM_MODEL: str = "gemini-2.5-flash-lite"  # 기본 모델
     LLM_TEMPERATURE: float = 0.7  # 응답의 창의성 (0.0 ~ 1.0)
     LLM_MAX_OUTPUT_TOKENS: int = 2048  # 최대 출력 토큰 수
 

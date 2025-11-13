@@ -47,35 +47,59 @@ def filter_internal_process(text: str) -> str:
     Returns:
         필터링된 텍스트
     """
-    # 필터링할 패턴들
-    patterns = [
-        # 섹션 제목 제거
-        r'##\s*응답 생성 프로세스.*?\n',
-        r'##\s*내부 사고 과정.*?\n',
+    if not text:
+        return text
 
-        # 번호가 붙은 사고 과정 마커 (1. **제목**: 내용)
-        r'\d+\.\s*\*\*[^*]+\*\*:\s*[^\n]+\n',
+    # 전략 1: **상담사**: 이후의 실제 응답만 추출
+    match = re.search(r'\*\*상담사\*\*:\s*(.*)', text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
 
-        # 굵은 글씨 마커만 있는 경우 (**제목**: 내용)
-        r'\*\*감정 이해\*\*:\s*[^\n]*\n?',
-        r'\*\*맥락 파악\*\*:\s*[^\n]*\n?',
-        r'\*\*욕구 식별\*\*:\s*[^\n]*\n?',
-        r'\*\*전략 선택\*\*:\s*[^\n]*\n?',
-        r'\*\*공감 표현\*\*:\s*[^\n]*\n?',
-        r'\*\*실행 가능한 조언\*\*:\s*[^\n]*\n?',
+    # 전략 2: --- 이후의 실제 응답만 추출
+    if '---' in text:
+        parts = text.split('---')
+        # 마지막 부분이 실제 응답
+        return parts[-1].strip()
 
-        # 일반적인 굵은 글씨 라벨 패턴
-        r'\*\*[^*]+\*\*:\s*(?=\*\*|$)',
-    ]
+    # 전략 3: ## 섹션 전체 제거 (섹션이 있지만 구분자가 없는 경우)
+    text = re.sub(
+        r'##\s*응답 생성 프로세스.*?(?=\n\n[^#\d*])',
+        '',
+        text,
+        flags=re.DOTALL | re.IGNORECASE
+    )
 
-    filtered_text = text
-    for pattern in patterns:
-        filtered_text = re.sub(pattern, '', filtered_text, flags=re.IGNORECASE | re.MULTILINE)
+    # 전략 4: 번호 리스트 형태의 내부 프로세스 제거 (문장 시작부분만)
+    # 하지만 일반 대화 내용은 보존
+    lines = text.split('\n')
+    filtered_lines = []
+    in_process_section = False
 
-    # 연속된 빈 줄 제거 (최대 2개까지만 허용)
-    filtered_text = re.sub(r'\n{3,}', '\n\n', filtered_text)
+    for line in lines:
+        # ## 또는 숫자. 로 시작하면 내부 프로세스 섹션 시작
+        if re.match(r'^(##|[0-9]+\.)\s', line):
+            in_process_section = True
+            continue
+        # **키워드**: 패턴이면 내부 프로세스
+        if re.match(r'^\*\*[^*]+\*\*:\s', line):
+            continue
+        # 빈 줄이 2개 연속이면 섹션 종료
+        if line.strip() == '':
+            if in_process_section:
+                in_process_section = False
+            filtered_lines.append(line)
+            continue
+        # 내부 프로세스 섹션이 아니면 보존
+        if not in_process_section:
+            filtered_lines.append(line)
 
-    return filtered_text.strip()
+    text = '\n'.join(filtered_lines)
+
+    # 연속된 빈 줄 정리
+    text = re.sub(r'\n{3,}', '\n\n', text)
+
+    # 앞뒤 공백 제거
+    return text.strip()
 
 
 @router.post("", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
@@ -342,25 +366,22 @@ async def stream_chat_message(
 
     # 스트리밍 응답 생성
     async def generate():
-        full_response = ""
-        raw_response = ""  # 필터링 전 원본 (디버깅용)
+        raw_response = ""  # 필터링 전 원본
 
         try:
-            # AI 응답 스트리밍 (이미 context_service에서 프롬프트 구성 완료)
+            # 1단계: 전체 AI 응답 수집
             async for chunk in stream_gemini_response(messages):
                 raw_response += chunk
 
-                # 실시간 필터링 (chunk 단위)
-                filtered_chunk = filter_internal_process(chunk)
+            # 2단계: 내부 프로세스 필터링
+            full_response = filter_internal_process(raw_response)
 
-                # 필터링된 chunk만 누적 및 전송
-                if filtered_chunk:  # 빈 문자열이 아닐 때만
-                    full_response += filtered_chunk
-                    # SSE 형식으로 전송
-                    yield f"data: {json.dumps({'type': 'chunk', 'content': filtered_chunk})}\n\n"
-
-            # 최종 필터링 (전체 응답 대상, 안전장치)
-            full_response = filter_internal_process(full_response)
+            # 3단계: 필터링된 응답을 빠르게 chunk로 나눠서 스트리밍
+            # (사용자 경험을 위해 즉각적인 표시처럼 보이게)
+            chunk_size = 20  # 20자씩 전송
+            for i in range(0, len(full_response), chunk_size):
+                chunk = full_response[i:i + chunk_size]
+                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
 
             # AI 응답 저장 (필터링된 버전)
             ai_message = Message(
