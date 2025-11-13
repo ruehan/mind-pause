@@ -46,6 +46,7 @@ async def get_posts(
     page: int = Query(1, ge=1, description="페이지 번호"),
     page_size: int = Query(20, ge=1, le=100, description="페이지 크기"),
     sort: str = Query("latest", regex="^(latest|popular)$", description="정렬 방식 (latest: 최신순, popular: 인기순)"),
+    search: Optional[str] = Query(None, description="검색어 (제목 또는 내용)"),
     current_user: Optional[User] = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -54,6 +55,16 @@ async def get_posts(
 
     # 기본 쿼리
     query = db.query(Post)
+
+    # 검색 필터
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            or_(
+                Post.title.ilike(search_pattern),
+                Post.content.ilike(search_pattern)
+            )
+        )
 
     # 정렬
     if sort == "popular":

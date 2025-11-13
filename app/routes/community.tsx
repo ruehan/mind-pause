@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Search, TrendingUp, Clock, Heart, MessageCircle } from "lucide-react";
+import { Search, TrendingUp, Clock, Heart, MessageCircle, X } from "lucide-react";
 import { AppLayout } from "../components/AppLayout";
 import { PostCard } from "../components/community/PostCard";
 import { Button } from "../components/Button";
@@ -36,6 +36,7 @@ export default function Community() {
   const [postComments, setPostComments] = useState<Record<string, api.Comment[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   const [sortBy, setSortBy] = useState<"latest" | "popular">("popular");
   const [page, setPage] = useState(1);
   const pageSize = 12;
@@ -43,7 +44,7 @@ export default function Community() {
   // 게시글 목록 로드
   useEffect(() => {
     loadPosts();
-  }, [sortBy, page]);
+  }, [sortBy, page, activeSearch]);
 
   // 인기글 로드
   useEffect(() => {
@@ -53,7 +54,12 @@ export default function Community() {
   const loadPosts = async () => {
     try {
       setIsLoading(true);
-      const response = await api.getPosts(page, pageSize, sortBy);
+      const response = await api.getPosts(
+        page,
+        pageSize,
+        sortBy,
+        activeSearch || undefined
+      );
       setPosts(response.posts);
 
       // 각 포스트의 최근 댓글 2개씩 가져오기
@@ -110,9 +116,20 @@ export default function Community() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
-    // TODO: 검색 API 연동
-    toast.info("알림", "검색 기능은 곧 추가됩니다");
+    const trimmedQuery = searchQuery.trim();
+
+    // 검색어가 변경되면 첫 페이지로 리셋
+    if (trimmedQuery !== activeSearch) {
+      setPage(1);
+    }
+
+    setActiveSearch(trimmedQuery);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setActiveSearch("");
+    setPage(1);
   };
 
   const handleWritePost = () => {
@@ -172,8 +189,18 @@ export default function Community() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="게시글 검색..."
-                  className="w-full pl-10 pr-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-10 pr-10 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
+                {(searchQuery || activeSearch) && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                    aria-label="검색 초기화"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
               </div>
             </form>
 
@@ -194,6 +221,21 @@ export default function Community() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-3">
+            {/* Search Result Header */}
+            {activeSearch && (
+              <div className="mb-4 p-4 bg-primary-50 border border-primary-200 rounded-lg">
+                <p className="text-body text-neutral-700">
+                  <span className="font-semibold text-primary-700">"{activeSearch}"</span> 검색 결과
+                  <button
+                    onClick={handleClearSearch}
+                    className="ml-3 text-body-sm text-primary-600 hover:text-primary-700 underline"
+                  >
+                    전체 글 보기
+                  </button>
+                </p>
+              </div>
+            )}
+
             {/* Sort Tabs */}
             <div className="flex items-center gap-2 mb-6">
               <button
@@ -227,16 +269,36 @@ export default function Community() {
               </div>
             ) : posts.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl border border-neutral-200">
-                <p className="text-body text-neutral-600">
-                  아직 게시글이 없습니다. 첫 번째 글을 작성해보세요!
-                </p>
-                <Button
-                  variant="primary"
-                  onClick={handleWritePost}
-                  className="mt-4"
-                >
-                  글쓰기
-                </Button>
+                {activeSearch ? (
+                  <>
+                    <p className="text-body text-neutral-600 mb-2">
+                      <span className="font-semibold">"{activeSearch}"</span>에 대한 검색 결과가 없습니다.
+                    </p>
+                    <p className="text-body-sm text-neutral-500">
+                      다른 검색어로 시도해보세요.
+                    </p>
+                    <Button
+                      variant="secondary"
+                      onClick={handleClearSearch}
+                      className="mt-4"
+                    >
+                      전체 글 보기
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-body text-neutral-600">
+                      아직 게시글이 없습니다. 첫 번째 글을 작성해보세요!
+                    </p>
+                    <Button
+                      variant="primary"
+                      onClick={handleWritePost}
+                      className="mt-4"
+                    >
+                      글쓰기
+                    </Button>
+                  </>
+                )}
               </div>
             ) : (
               <>
