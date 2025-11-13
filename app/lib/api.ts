@@ -1227,3 +1227,49 @@ export async function getConversationRating(conversationId: string): Promise<Con
     return null;
   }
 }
+
+// ============================================
+// Metrics API
+// ============================================
+
+export interface MetricsOverview {
+  total_conversations: number;
+  total_messages: number;
+  avg_messages_per_conversation: number;
+  avg_response_time_ms: number | null;
+  min_response_time_ms: number | null;
+  max_response_time_ms: number | null;
+  avg_input_tokens: number | null;
+  avg_output_tokens: number | null;
+  total_tokens_used: number;
+  total_feedbacks: number;
+  positive_feedbacks: number;
+  negative_feedbacks: number;
+  feedback_ratio: number;
+  total_ratings: number;
+  average_rating: number | null;
+}
+
+export interface DailyMetric {
+  date: string;
+  conversations: number;
+  messages: number;
+  avg_response_time_ms: number | null;
+  positive_feedbacks: number;
+  negative_feedbacks: number;
+  avg_rating: number | null;
+}
+
+/**
+ * 전체 메트릭 개요 조회
+ */
+export async function getMetricsOverview(): Promise<MetricsOverview> {
+  return apiRequest("/metrics/overview");
+}
+
+/**
+ * 일일 메트릭 조회
+ */
+export async function getDailyMetrics(days: number = 7): Promise<DailyMetric[]> {
+  return apiRequest(`/metrics/daily?days=${days}`);
+}

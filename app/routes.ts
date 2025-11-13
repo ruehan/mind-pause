@@ -9,6 +9,7 @@ export default [
 	route("community/write", "routes/community.write.tsx"),
 	route("community/:postId", "routes/community.$postId.tsx"),
 	route("dashboard", "routes/dashboard.tsx"),
+	route("metrics", "routes/metrics.tsx"),
 	route("profile", "routes/profile.tsx"),
 	route("challenge", "routes/challenge.tsx"),
 	route("help", "routes/help.tsx"),
