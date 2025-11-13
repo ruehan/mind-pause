@@ -150,9 +150,9 @@ async def get_user_dashboard(
     emotion_log_list = [
         RecentEmotionLog(
             id=log.id,
-            emotion_type=log.emotion_type.value,
-            intensity=log.intensity,
-            content=log.content,
+            emotion_type=log.emotion_label,
+            intensity=log.emotion_value,
+            content=log.note,
             created_at=log.created_at
         )
         for log in recent_emotion_logs
