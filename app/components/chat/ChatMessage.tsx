@@ -2,6 +2,7 @@ import ReactNiceAvatar from "react-nice-avatar";
 import { ClientOnly } from "../ClientOnly";
 import { useState, useEffect } from "react";
 import type { AvatarOptions } from "../../lib/api";
+import { renderMarkdown } from "~/utils/markdown";
 
 interface ChatMessageProps {
   role: "user" | "ai";
@@ -139,12 +140,13 @@ export function ChatMessage({
               }
             `}
           >
-            <p className="text-body leading-relaxed whitespace-pre-wrap">
-              {displayedContent}
-              {(isTyping || isStreaming) && (
-                <span className="inline-block w-1 h-4 bg-primary-500 ml-1 animate-pulse">|</span>
-              )}
-            </p>
+            <div
+              className="text-body leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(displayedContent) }}
+            />
+            {(isTyping || isStreaming) && (
+              <span className="inline-block w-1 h-4 bg-primary-500 ml-1 animate-pulse">|</span>
+            )}
           </div>
 
           {/* Timestamp */}

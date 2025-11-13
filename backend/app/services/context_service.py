@@ -384,7 +384,7 @@ def build_conversation_context(
             emotion=detected_emotion,
             use_few_shot=True,
             few_shot_count=3,
-            use_cot=True,
+            use_cot=True,  # CoT 활성화: 메타-인지 형태 + Post-processing 필터로 안전하게 사용
             conversation_history=conversation_history[:-1] if len(conversation_history) > 1 else None,
             user_context=enhanced_user_context
         )
