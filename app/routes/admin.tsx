@@ -4,6 +4,7 @@ import { AdminSidebar } from "../components/admin/AdminSidebar";
 import { AdminStatCard } from "../components/admin/AdminStatCard";
 import { UserManagementTable } from "../components/admin/UserManagementTable";
 import { ContentModerationPanel } from "../components/admin/ContentModerationPanel";
+import { ChallengeManagementPanel } from "../components/admin/ChallengeManagementPanel";
 import { NotificationSender } from "../components/admin/NotificationSender";
 import { ActivityChart } from "../components/admin/ActivityChart";
 import { LogViewer } from "../components/admin/LogViewer";
@@ -12,9 +13,11 @@ import {
   getAdminDashboardStats,
   getAdminUsers,
   getAdminReports,
+  getPendingChallenges,
   type DashboardStats,
   type UserManagementListResponse,
   type ReportListResponse,
+  type ChallengeListResponse,
 } from "../lib/api";
 
 export function meta() {
@@ -216,6 +219,10 @@ export default function Admin() {
   const [reports, setReports] = useState<ReportListResponse | null>(null);
   const [reportsLoading, setReportsLoading] = useState(false);
 
+  // State for challenges
+  const [challenges, setChallenges] = useState<ChallengeListResponse | null>(null);
+  const [challengesLoading, setChallengesLoading] = useState(false);
+
   // Fetch dashboard stats
   useEffect(() => {
     if (activeSection === "dashboard") {
@@ -246,6 +253,21 @@ export default function Admin() {
         .then(setReports)
         .catch((error) => console.error("Failed to fetch reports:", error))
         .finally(() => setReportsLoading(false));
+    }
+  }, [activeSection]);
+
+  // Fetch challenges
+  const fetchChallenges = () => {
+    setChallengesLoading(true);
+    getPendingChallenges()
+      .then(setChallenges)
+      .catch((error) => console.error("Failed to fetch challenges:", error))
+      .finally(() => setChallengesLoading(false));
+  };
+
+  useEffect(() => {
+    if (activeSection === "challenges") {
+      fetchChallenges();
     }
   }, [activeSection]);
 
@@ -405,6 +427,27 @@ export default function Admin() {
             </div>
           )}
 
+          {/* Challenges Section */}
+          {activeSection === "challenges" && (
+            <div>
+              <h1 className="text-h2 text-neutral-900 mb-6">🏆 챌린지 관리</h1>
+              {challengesLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-body text-neutral-600">로딩 중...</div>
+                </div>
+              ) : challenges ? (
+                <ChallengeManagementPanel
+                  challenges={challenges.challenges}
+                  onChallengeUpdate={fetchChallenges}
+                />
+              ) : (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-body text-neutral-600">데이터를 불러올 수 없습니다</div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Settings Section */}
           {activeSection === "settings" && (
             <div>
@@ -422,14 +465,13 @@ export default function Admin() {
           )}
 
           {/* Other Sections - Coming Soon */}
-          {!["dashboard", "users", "reports", "analytics", "logs", "settings"].includes(activeSection) && (
+          {!["dashboard", "users", "reports", "analytics", "logs", "settings", "challenges"].includes(activeSection) && (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <div className="text-6xl mb-4">🚧</div>
                 <h2 className="text-h3 text-neutral-700 mb-2">준비 중입니다</h2>
                 <p className="text-body text-neutral-600">
                   {activeSection === "content" && "컨텐츠 관리 기능은 곧 제공될 예정입니다."}
-                  {activeSection === "challenges" && "챌린지 관리 기능은 곧 제공될 예정입니다."}
                 </p>
               </div>
             </div>

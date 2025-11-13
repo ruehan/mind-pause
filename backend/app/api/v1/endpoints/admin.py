@@ -68,12 +68,11 @@ async def get_dashboard_stats(
     ).count()
 
     # 커뮤니티 통계
-    total_posts = db.query(Post).filter(Post.is_deleted == False).count()
+    total_posts = db.query(Post).count()
     posts_today = db.query(Post).filter(
-        Post.is_deleted == False,
         func.date(Post.created_at) == today
     ).count()
-    total_comments = db.query(Comment).filter(Comment.is_deleted == False).count()
+    total_comments = db.query(Comment).count()
 
     # 챌린지 통계
     total_challenges = db.query(Challenge).count()
@@ -137,12 +136,10 @@ async def get_users(
             EmotionLog.user_id == user.id
         ).count()
         post_count = db.query(Post).filter(
-            Post.author_id == user.id,
-            Post.is_deleted == False
+            Post.user_id == user.id
         ).count()
         comment_count = db.query(Comment).filter(
-            Comment.author_id == user.id,
-            Comment.is_deleted == False
+            Comment.user_id == user.id
         ).count()
 
         user_item = UserManagementItem(
@@ -211,12 +208,10 @@ async def update_user_role(
         EmotionLog.user_id == user.id
     ).count()
     post_count = db.query(Post).filter(
-        Post.author_id == user.id,
-        Post.is_deleted == False
+        Post.user_id == user.id
     ).count()
     comment_count = db.query(Comment).filter(
-        Comment.author_id == user.id,
-        Comment.is_deleted == False
+        Comment.user_id == user.id
     ).count()
 
     return UserManagementItem(
@@ -382,11 +377,11 @@ async def review_report(
         if report.post_id:
             post = db.query(Post).filter(Post.id == report.post_id).first()
             if post:
-                post.is_deleted = True
+                db.delete(post)
         elif report.comment_id:
             comment = db.query(Comment).filter(Comment.id == report.comment_id).first()
             if comment:
-                comment.is_deleted = True
+                db.delete(comment)
 
     # 신고 상태 업데이트
     report.status = new_status

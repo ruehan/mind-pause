@@ -863,6 +863,10 @@ export interface ChallengeCreateRequest {
   end_date: string;
 }
 
+export interface ChallengeRejectRequest {
+  reason: string;
+}
+
 /**
  * 챌린지 템플릿 목록 조회
  */
@@ -1041,6 +1045,32 @@ export async function getAdminReports(status?: string, skip: number = 0, limit: 
 export async function reviewReport(reportId: string, data: ReportReviewRequest): Promise<ReportItem> {
   return apiRequest(`/admin/reports/${reportId}`, {
     method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 승인 대기 챌린지 목록 조회 (관리자)
+ */
+export async function getPendingChallenges(): Promise<ChallengeListResponse> {
+  return apiRequest("/challenges/admin/pending");
+}
+
+/**
+ * 챌린지 승인 (관리자)
+ */
+export async function approveChallenge(challengeId: string): Promise<Challenge> {
+  return apiRequest(`/challenges/${challengeId}/approve`, {
+    method: "POST",
+  });
+}
+
+/**
+ * 챌린지 거부 (관리자)
+ */
+export async function rejectChallenge(challengeId: string, data: ChallengeRejectRequest): Promise<Challenge> {
+  return apiRequest(`/challenges/${challengeId}/reject`, {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
