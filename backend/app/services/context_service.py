@@ -290,12 +290,13 @@ def build_conversation_context(
     summaries = get_conversation_summaries(db, conversation_id)
 
     # 3. 최근 다른 대화 요약 가져오기 (크로스-대화 컨텍스트)
+    # 심리 상담에서는 장기 메모리가 중요하므로 30일로 확장
     recent_summaries = get_recent_conversation_summaries(
         db=db,
         user_id=user_id,
         character_id=character.id,
         current_conversation_id=conversation_id,
-        days=7
+        days=30  # 7일 → 30일로 확장
     )
 
     # 4. 최근 다른 대화의 메시지 가져오기 (구체적 내용 포함)
@@ -304,7 +305,7 @@ def build_conversation_context(
         user_id=user_id,
         character_id=character.id,
         current_conversation_id=conversation_id,
-        days=7,
+        days=30,  # 7일 → 30일로 확장
         messages_per_conversation=10
     )
 
