@@ -14,12 +14,16 @@ from app.models.post import Post
 from app.models.comment import Comment
 from app.models.challenge import Challenge, ChallengeStatus
 from app.models.conversation import Conversation
+from app.models.report import Report, ReportStatus
 from app.schemas.admin import (
     DashboardStats,
     UserManagementItem,
     UserManagementListResponse,
     UserRoleUpdate,
     UserDeleteRequest,
+    ReportItem,
+    ReportListResponse,
+    ReportReviewRequest,
 )
 
 router = APIRouter()
@@ -267,3 +271,159 @@ async def delete_user(
         user.deleted_at = datetime.utcnow()
         db.commit()
         return {"message": "사용자가 삭제되었습니다", "user_id": str(user_id)}
+
+
+# ============================================
+# 신고 관리
+# ============================================
+
+@router.get(
+    "/reports",
+    response_model=ReportListResponse,
+    summary="신고 목록 조회",
+    description="[관리자] 전체 신고 목록을 조회합니다"
+)
+async def get_reports(
+    status: str = None,
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """신고 목록 조회 (관리자)"""
+    query = db.query(Report)
+
+    # 상태 필터
+    if status:
+        try:
+            status_enum = ReportStatus(status)
+            query = query.filter(Report.status == status_enum)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"유효하지 않은 상태입니다. 가능한 상태: {[s.value for s in ReportStatus]}"
+            )
+
+    reports = query.order_by(Report.created_at.desc()).offset(skip).limit(limit).all()
+    total = query.count()
+
+    report_items = []
+    for report in reports:
+        # 신고자 정보
+        reporter = db.query(User).filter(User.id == report.reporter_id).first()
+
+        # 신고 대상 내용 (미리보기)
+        target_content = None
+        if report.post_id:
+            post = db.query(Post).filter(Post.id == report.post_id).first()
+            if post:
+                target_content = post.content[:100] + "..." if len(post.content) > 100 else post.content
+        elif report.comment_id:
+            comment = db.query(Comment).filter(Comment.id == report.comment_id).first()
+            if comment:
+                target_content = comment.content[:100] + "..." if len(comment.content) > 100 else comment.content
+
+        report_item = ReportItem(
+            id=report.id,
+            reporter_id=report.reporter_id,
+            reporter_nickname=reporter.nickname if reporter else "탈퇴한 사용자",
+            report_type=report.report_type.value,
+            report_reason=report.report_reason.value,
+            description=report.description,
+            post_id=report.post_id,
+            comment_id=report.comment_id,
+            target_content=target_content,
+            status=report.status.value,
+            admin_note=report.admin_note,
+            reviewed_by=report.reviewed_by,
+            reviewed_at=report.reviewed_at,
+            created_at=report.created_at,
+        )
+        report_items.append(report_item)
+
+    return ReportListResponse(
+        reports=report_items,
+        total=total
+    )
+
+
+@router.patch(
+    "/reports/{report_id}",
+    response_model=ReportItem,
+    summary="신고 처리",
+    description="[관리자] 신고를 처리합니다"
+)
+async def review_report(
+    report_id: UUID,
+    review_data: ReportReviewRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """신고 처리 (관리자)"""
+    report = db.query(Report).filter(Report.id == report_id).first()
+
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="신고를 찾을 수 없습니다"
+        )
+
+    # 상태 유효성 검사
+    try:
+        new_status = ReportStatus(review_data.status)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"유효하지 않은 상태입니다. 가능한 상태: {[s.value for s in ReportStatus]}"
+        )
+
+    # 신고 대상 삭제 처리
+    if review_data.delete_content:
+        if report.post_id:
+            post = db.query(Post).filter(Post.id == report.post_id).first()
+            if post:
+                post.is_deleted = True
+        elif report.comment_id:
+            comment = db.query(Comment).filter(Comment.id == report.comment_id).first()
+            if comment:
+                comment.is_deleted = True
+
+    # 신고 상태 업데이트
+    report.status = new_status
+    report.admin_note = review_data.admin_note
+    report.reviewed_by = current_user.id
+    report.reviewed_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(report)
+
+    # 신고자 정보
+    reporter = db.query(User).filter(User.id == report.reporter_id).first()
+
+    # 신고 대상 내용
+    target_content = None
+    if report.post_id:
+        post = db.query(Post).filter(Post.id == report.post_id).first()
+        if post:
+            target_content = post.content[:100] + "..." if len(post.content) > 100 else post.content
+    elif report.comment_id:
+        comment = db.query(Comment).filter(Comment.id == report.comment_id).first()
+        if comment:
+            target_content = comment.content[:100] + "..." if len(comment.content) > 100 else comment.content
+
+    return ReportItem(
+        id=report.id,
+        reporter_id=report.reporter_id,
+        reporter_nickname=reporter.nickname if reporter else "탈퇴한 사용자",
+        report_type=report.report_type.value,
+        report_reason=report.report_reason.value,
+        description=report.description,
+        post_id=report.post_id,
+        comment_id=report.comment_id,
+        target_content=target_content,
+        status=report.status.value,
+        admin_note=report.admin_note,
+        reviewed_by=report.reviewed_by,
+        reviewed_at=report.reviewed_at,
+        created_at=report.created_at,
+    )

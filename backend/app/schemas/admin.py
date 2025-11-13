@@ -65,3 +65,46 @@ class UserRoleUpdate(BaseModel):
 class UserDeleteRequest(BaseModel):
     """사용자 삭제 요청 스키마"""
     permanent: bool = Field(False, description="영구 삭제 여부 (False: 소프트 삭제, True: 영구 삭제)")
+
+
+# ============================================
+# 신고 관리
+# ============================================
+
+class ReportItem(BaseModel):
+    """신고 항목 스키마"""
+    id: UUID = Field(..., description="신고 ID")
+    reporter_id: UUID = Field(..., description="신고자 ID")
+    reporter_nickname: str = Field(..., description="신고자 닉네임")
+    report_type: str = Field(..., description="신고 대상 타입 (post/comment)")
+    report_reason: str = Field(..., description="신고 사유")
+    description: Optional[str] = Field(None, description="상세 설명")
+
+    # 신고 대상 정보
+    post_id: Optional[UUID] = Field(None, description="게시글 ID")
+    comment_id: Optional[UUID] = Field(None, description="댓글 ID")
+    target_content: Optional[str] = Field(None, description="신고 대상 내용 (미리보기)")
+
+    # 처리 정보
+    status: str = Field(..., description="처리 상태")
+    admin_note: Optional[str] = Field(None, description="관리자 메모")
+    reviewed_by: Optional[UUID] = Field(None, description="처리한 관리자 ID")
+    reviewed_at: Optional[datetime] = Field(None, description="처리 일시")
+
+    created_at: datetime = Field(..., description="신고 일시")
+
+    class Config:
+        from_attributes = True
+
+
+class ReportListResponse(BaseModel):
+    """신고 목록 응답 스키마"""
+    reports: List[ReportItem] = Field(..., description="신고 목록")
+    total: int = Field(..., description="전체 신고 수")
+
+
+class ReportReviewRequest(BaseModel):
+    """신고 처리 요청 스키마"""
+    status: str = Field(..., description="처리 상태 (reviewing/resolved/rejected)")
+    admin_note: Optional[str] = Field(None, description="관리자 메모")
+    delete_content: bool = Field(False, description="신고된 컨텐츠 삭제 여부")

@@ -23,6 +23,7 @@ from app.models import (
     Challenge,
     UserChallenge,
     ChallengeTemplate,
+    Report,
 )
 
 
