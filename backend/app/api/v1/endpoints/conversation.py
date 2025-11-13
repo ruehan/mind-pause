@@ -6,6 +6,7 @@ from typing import List
 from uuid import UUID
 from datetime import datetime
 import json
+import re
 
 from app.core.security import get_current_user
 from app.db.database import get_db
@@ -27,6 +28,54 @@ from app.services.memory_service import should_update_memory, update_user_memory
 from app.services.emotion_service import detect_emotion, format_emotion_summary
 
 router = APIRouter()
+
+
+# ============================================
+# 내부 프로세스 필터링
+# ============================================
+
+def filter_internal_process(text: str) -> str:
+    """
+    AI 응답에서 내부 사고 과정 마커 제거
+
+    CoT(Chain-of-Thought) 프롬프트로 인해 생성될 수 있는
+    내부 분석 구조를 사용자에게 보이지 않도록 필터링
+
+    Args:
+        text: 필터링할 텍스트
+
+    Returns:
+        필터링된 텍스트
+    """
+    # 필터링할 패턴들
+    patterns = [
+        # 섹션 제목 제거
+        r'##\s*응답 생성 프로세스.*?\n',
+        r'##\s*내부 사고 과정.*?\n',
+
+        # 번호가 붙은 사고 과정 마커 (1. **제목**: 내용)
+        r'\d+\.\s*\*\*[^*]+\*\*:\s*[^\n]+\n',
+
+        # 굵은 글씨 마커만 있는 경우 (**제목**: 내용)
+        r'\*\*감정 이해\*\*:\s*[^\n]*\n?',
+        r'\*\*맥락 파악\*\*:\s*[^\n]*\n?',
+        r'\*\*욕구 식별\*\*:\s*[^\n]*\n?',
+        r'\*\*전략 선택\*\*:\s*[^\n]*\n?',
+        r'\*\*공감 표현\*\*:\s*[^\n]*\n?',
+        r'\*\*실행 가능한 조언\*\*:\s*[^\n]*\n?',
+
+        # 일반적인 굵은 글씨 라벨 패턴
+        r'\*\*[^*]+\*\*:\s*(?=\*\*|$)',
+    ]
+
+    filtered_text = text
+    for pattern in patterns:
+        filtered_text = re.sub(pattern, '', filtered_text, flags=re.IGNORECASE | re.MULTILINE)
+
+    # 연속된 빈 줄 제거 (최대 2개까지만 허용)
+    filtered_text = re.sub(r'\n{3,}', '\n\n', filtered_text)
+
+    return filtered_text.strip()
 
 
 @router.post("", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
@@ -275,13 +324,14 @@ async def stream_chat_message(
         emotion_summary = format_emotion_summary(emotion_data)
         print(f"🎭 감정 감지: {emotion_summary}")
 
-    # 컨텍스트 구축 (메모리 + 요약 + 최근 메시지 + 감정)
+    # 컨텍스트 구축 (메모리 + 요약 + 최근 메시지 + 감정 + Advanced Prompting)
     context = build_conversation_context(
         db=db,
         conversation_id=conversation_id,
         user_id=current_user.id,
         character=character,
-        emotion_data=emotion_data
+        emotion_data=emotion_data,
+        use_advanced_prompting=True  # Advanced Prompt Engineering 활성화
     )
 
     # 토큰 제한에 맞춰 최적화
@@ -293,15 +343,26 @@ async def stream_chat_message(
     # 스트리밍 응답 생성
     async def generate():
         full_response = ""
+        raw_response = ""  # 필터링 전 원본 (디버깅용)
 
         try:
-            # AI 응답 스트리밍
+            # AI 응답 스트리밍 (이미 context_service에서 프롬프트 구성 완료)
             async for chunk in stream_gemini_response(messages):
-                full_response += chunk
-                # SSE 형식으로 전송
-                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+                raw_response += chunk
 
-            # AI 응답 저장
+                # 실시간 필터링 (chunk 단위)
+                filtered_chunk = filter_internal_process(chunk)
+
+                # 필터링된 chunk만 누적 및 전송
+                if filtered_chunk:  # 빈 문자열이 아닐 때만
+                    full_response += filtered_chunk
+                    # SSE 형식으로 전송
+                    yield f"data: {json.dumps({'type': 'chunk', 'content': filtered_chunk})}\n\n"
+
+            # 최종 필터링 (전체 응답 대상, 안전장치)
+            full_response = filter_internal_process(full_response)
+
+            # AI 응답 저장 (필터링된 버전)
             ai_message = Message(
                 conversation_id=conversation_id,
                 role="assistant",

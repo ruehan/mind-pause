@@ -1,9 +1,9 @@
 """
-컨텍스트 관리 서비스 - 대화 컨텍스트 구축 및 메모리 관리
+컨텍스트 관리 서비스 - 대화 컨텍스트 구축 및 메모리 관리 (Advanced Prompt Engineering 통합)
 """
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from uuid import UUID
 
 from app.models.conversation import Conversation
@@ -11,6 +11,7 @@ from app.models.message import Message
 from app.models.conversation_summary import ConversationSummary
 from app.models.user_memory import UserMemory
 from app.models.ai_character import AICharacter
+from app.prompts.prompt_builder import build_counseling_prompt
 
 
 def get_user_memories(
@@ -265,10 +266,11 @@ def build_conversation_context(
     conversation_id: UUID,
     user_id: UUID,
     character: AICharacter,
-    emotion_data: Dict[str, Any] = None
+    emotion_data: Dict[str, Any] = None,
+    use_advanced_prompting: bool = True
 ) -> Dict[str, Any]:
     """
-    완전한 대화 컨텍스트 구축
+    완전한 대화 컨텍스트 구축 (Advanced Prompt Engineering 통합)
 
     Args:
         db: 데이터베이스 세션
@@ -276,16 +278,137 @@ def build_conversation_context(
         user_id: 사용자 ID
         character: AI 캐릭터
         emotion_data: 감정 분석 데이터 (선택적)
+        use_advanced_prompting: Few-shot, CoT 등 고급 프롬프팅 사용 여부
 
     Returns:
         LLM에 전달할 컨텍스트 딕셔너리
     """
     # 1. 사용자 메모리 가져오기
     memories = get_user_memories(db, user_id, character.id)
-    user_context = format_user_context(memories)
 
-    # 2. 시스템 프롬프트 구성
-    base_prompt = f"""당신은 {character.name}이며, {character.personality}입니다.
+    # 2. 현재 대화 요약 가져오기
+    summaries = get_conversation_summaries(db, conversation_id)
+
+    # 3. 최근 다른 대화 요약 가져오기 (크로스-대화 컨텍스트)
+    # 심리 상담에서는 장기 메모리가 중요하므로 30일로 확장
+    recent_summaries = get_recent_conversation_summaries(
+        db=db,
+        user_id=user_id,
+        character_id=character.id,
+        current_conversation_id=conversation_id,
+        days=30  # 7일 → 30일로 확장
+    )
+
+    # 4. 최근 다른 대화의 메시지 가져오기 (구체적 내용 포함)
+    other_conversations_messages = get_recent_messages_from_other_conversations(
+        db=db,
+        user_id=user_id,
+        character_id=character.id,
+        current_conversation_id=conversation_id,
+        days=30,  # 7일 → 30일로 확장
+        messages_per_conversation=10
+    )
+
+    # 5. 현재 대화의 최근 메시지 가져오기
+    recent_messages = get_recent_messages(db, conversation_id, limit=20)
+
+    # 6. 대화 히스토리 구성
+    conversation_history = []
+    for msg in recent_messages:
+        conversation_history.append({
+            "role": msg.role,
+            "content": msg.content
+        })
+
+    # 7. 고급 사용자 컨텍스트 구성 (기존 메모리 + 다른 채팅방 내용)
+    enhanced_user_context = {
+        "nickname": character.name,  # 캐릭터 이름 사용
+        "conversation_count": db.query(Conversation).filter(
+            Conversation.user_id == user_id,
+            Conversation.character_id == character.id
+        ).count()
+    }
+
+    # 메모리 데이터 추가
+    if memories.get("facts"):
+        enhanced_user_context["known_facts"] = [
+            fact for fact in memories["facts"][:5]
+        ]
+
+    if memories.get("preferences"):
+        enhanced_user_context["preferences"] = [
+            pref for pref in memories["preferences"][:5]
+        ]
+
+    if memories.get("emotion_patterns"):
+        enhanced_user_context["emotion_patterns"] = [
+            pattern for pattern in memories["emotion_patterns"][:3]
+        ]
+
+    # 다른 대화 요약 추가
+    if recent_summaries:
+        recent_summaries_sorted = sorted(
+            recent_summaries,
+            key=lambda x: x.created_at,
+            reverse=True
+        )[:3]
+        enhanced_user_context["recent_conversations"] = [
+            s.summary for s in recent_summaries_sorted
+        ]
+
+    # 다른 대화의 구체적 메시지 추가
+    if other_conversations_messages:
+        enhanced_user_context["other_conversation_messages"] = []
+        for conv_data in other_conversations_messages:
+            conv_summary = {
+                "title": conv_data["conversation_title"],
+                "messages": [
+                    {"role": msg.role, "content": msg.content[:100]}  # 100자로 제한
+                    for msg in conv_data["messages"][:5]  # 최근 5개만
+                ]
+            }
+            enhanced_user_context["other_conversation_messages"].append(conv_summary)
+
+    # 현재 대화 요약 추가
+    if summaries:
+        summary_texts = [s.summary for s in summaries[-3:]]
+        enhanced_user_context["current_conversation_summary"] = "\n\n".join(summary_texts)
+
+    # 8. Advanced Prompt Engineering 적용
+    if use_advanced_prompting:
+        # 감정 카테고리 추출
+        detected_emotion = emotion_data.get("category") if emotion_data else None
+
+        # 고급 프롬프트 생성
+        system_prompt = build_counseling_prompt(
+            emotion=detected_emotion,
+            use_few_shot=True,
+            few_shot_count=3,
+            use_cot=True,  # CoT 활성화: 메타-인지 형태 + Post-processing 필터로 안전하게 사용
+            conversation_history=conversation_history[:-1] if len(conversation_history) > 1 else None,
+            user_context=enhanced_user_context
+        )
+
+        # 시스템 프롬프트를 첫 메시지에 포함
+        messages = []
+        if conversation_history:
+            first_msg = conversation_history[0]
+            if first_msg["role"] == "user":
+                messages.append({
+                    "role": "user",
+                    "content": f"{system_prompt}\n\n---\n\n사용자 메시지:\n{first_msg['content']}"
+                })
+                # 나머지 메시지 추가
+                messages.extend(conversation_history[1:])
+            else:
+                messages = conversation_history
+        else:
+            messages = conversation_history
+
+    else:
+        # 기존 방식 (하위 호환성)
+        user_context_text = format_user_context(memories)
+        base_prompt = f"""당신은 {character.name}이며, {character.personality}입니다.
 
 사용자는 정신 건강 관리와 감정 조절을 위해 당신과 대화하고 있습니다.
 
@@ -297,109 +420,27 @@ def build_conversation_context(
 5. 한국어로 자연스럽고 친근하게 대화
 6. 응답은 2-3문장으로 간결하게 유지
 """
+        if character.system_prompt:
+            base_prompt += f"\n{character.system_prompt}"
 
-    if character.system_prompt:
-        base_prompt += f"\n{character.system_prompt}"
+        if user_context_text:
+            base_prompt += f"\n\n**사용자 정보**:\n{user_context_text}"
 
-    if user_context:
-        base_prompt += f"\n\n**사용자 정보**:\n{user_context}"
+        if emotion_data:
+            from app.services.emotion_service import get_adaptive_response_instructions
+            emotion_instructions = get_adaptive_response_instructions(emotion_data)
+            if emotion_instructions:
+                base_prompt += f"\n{emotion_instructions}"
 
-    # 감정 기반 응답 지침 추가
-    if emotion_data:
-        from app.services.emotion_service import get_adaptive_response_instructions
-        emotion_instructions = get_adaptive_response_instructions(emotion_data)
-        if emotion_instructions:
-            base_prompt += f"\n{emotion_instructions}"
-
-    # 3. 현재 대화 요약 가져오기
-    summaries = get_conversation_summaries(db, conversation_id)
-    summary_context = ""
-    if summaries:
-        summary_texts = [s.summary for s in summaries[-3:]]  # 최근 3개 요약
-        summary_context = "\n\n".join(summary_texts)
-
-    # 4. 최근 다른 대화 요약 가져오기 (크로스-대화 컨텍스트)
-    recent_summaries = get_recent_conversation_summaries(
-        db=db,
-        user_id=user_id,
-        character_id=character.id,
-        current_conversation_id=conversation_id,
-        days=7  # 최근 7일
-    )
-    recent_context = ""
-    if recent_summaries:
-        # 최근 요약들을 시간순으로 정렬하고 최대 3개만
-        recent_summaries_sorted = sorted(
-            recent_summaries,
-            key=lambda x: x.created_at,
-            reverse=True
-        )[:3]
-        recent_texts = [s.summary for s in recent_summaries_sorted]
-        recent_context = "\n\n".join(recent_texts)
-
-    # 5. 최근 다른 대화의 메시지 가져오기 (구체적 내용 포함)
-    other_conversations_messages = get_recent_messages_from_other_conversations(
-        db=db,
-        user_id=user_id,
-        character_id=character.id,
-        current_conversation_id=conversation_id,
-        days=7,
-        messages_per_conversation=10  # 각 대화당 최근 10개
-    )
-
-    # 6. 현재 대화의 최근 메시지 가져오기
-    recent_messages = get_recent_messages(db, conversation_id, limit=20)
-
-    # 7. 메시지 히스토리 포맷
-    messages = [{"role": "system", "content": base_prompt}]
-
-    # 최근 다른 대화 요약이 있으면 추가 (크로스-대화 컨텍스트)
-    if recent_context:
-        messages.append({
-            "role": "system",
-            "content": f"**최근 다른 대화 요약**:\n{recent_context}"
-        })
-
-    # 다른 대화의 최근 메시지 추가 (구체적 내용)
-    if other_conversations_messages:
-        other_conv_text_parts = []
-        for conv_data in other_conversations_messages:
-            conv_title = conv_data["conversation_title"]
-            conv_messages = conv_data["messages"]
-
-            # 각 대화별로 메시지 포맷
-            conv_text = f"**{conv_title}**:\n"
-            for msg in conv_messages:
-                role_name = "사용자" if msg.role == "user" else "AI"
-                conv_text += f"- {role_name}: {msg.content}\n"
-
-            other_conv_text_parts.append(conv_text)
-
-        if other_conv_text_parts:
-            messages.append({
-                "role": "system",
-                "content": f"**이전 대화에서 나눴던 구체적인 내용** (참고용):\n\n{chr(10).join(other_conv_text_parts)}"
-            })
-
-    # 현재 대화 요약이 있으면 추가
-    if summary_context:
-        messages.append({
-            "role": "system",
-            "content": f"**이번 대화 요약**:\n{summary_context}"
-        })
-
-    # 최근 메시지 추가
-    for msg in recent_messages:
-        messages.append({
-            "role": msg.role,
-            "content": msg.content
-        })
+        messages = [{"role": "system", "content": base_prompt}]
+        messages.extend(conversation_history)
 
     return {
         "messages": messages,
         "character": character,
         "user_memories": memories,
-        "has_summaries": len(summaries) > 0
+        "has_summaries": len(summaries) > 0,
+        "emotion_data": emotion_data
     }
 
 

@@ -1,9 +1,10 @@
 """
-LLM 서비스 - Gemini API 통합
+LLM 서비스 - Gemini API 통합 (Advanced Prompt Engineering)
 """
 import google.generativeai as genai
-from typing import AsyncGenerator, Dict, List
+from typing import AsyncGenerator, Dict, List, Optional
 from app.core.config import settings
+from app.prompts.prompt_builder import build_counseling_prompt
 
 # Gemini API 설정
 genai.configure(api_key=settings.GOOGLE_API_KEY)
@@ -26,8 +27,11 @@ async def stream_gemini_response(
     """
     Gemini API로부터 스트리밍 응답 받기
 
+    Note: Advanced Prompt Engineering은 context_service에서 처리됨
+
     Args:
-        messages: 대화 히스토리 [{"role": "user"/"model", "parts": "content"}]
+        messages: 대화 히스토리 [{"role": "user"/"assistant", "content": "..."}]
+                  (이미 고급 프롬프팅이 적용된 상태)
 
     Yields:
         str: 생성된 텍스트 청크
@@ -35,8 +39,6 @@ async def stream_gemini_response(
     model = get_gemini_model()
 
     # Gemini API 형식으로 변환
-    # messages 형식: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
-    # Gemini 형식: [{"role": "user"/"model", "parts": "..."}]
     gemini_messages = []
     for msg in messages:
         role = "model" if msg["role"] == "assistant" else "user"
