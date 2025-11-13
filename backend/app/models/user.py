@@ -37,5 +37,10 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     last_login_at = Column(DateTime(timezone=True), nullable=True)
 
+    @property
+    def is_admin(self) -> bool:
+        """Check if user is an admin."""
+        return self.role == UserRole.ADMIN
+
     def __repr__(self):
         return f"<User {self.nickname}>"

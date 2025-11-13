@@ -7,7 +7,7 @@ from typing import List
 from uuid import UUID
 
 from app.db.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_admin
 from app.models.user import User
 from app.models.challenge import Challenge, UserChallenge, ChallengeType, ChallengeStatus, ChallengeTemplate
 from app.models.emotion_log import EmotionLog
@@ -358,15 +358,9 @@ async def get_my_created_challenges(
 )
 async def get_pending_challenges(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_admin)
 ):
     """승인 대기 챌린지 목록 조회 (관리자)"""
-    # TODO: 관리자 권한 확인
-    if not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="관리자만 접근 가능합니다"
-        )
 
     # 승인 대기 중인 챌린지 조회
     challenges = db.query(Challenge).filter(
@@ -396,15 +390,9 @@ async def get_pending_challenges(
 async def approve_challenge(
     challenge_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_admin)
 ):
     """챌린지 승인 (관리자)"""
-    # TODO: 관리자 권한 확인
-    if not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="관리자만 접근 가능합니다"
-        )
 
     challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
 
@@ -443,15 +431,9 @@ async def reject_challenge(
     challenge_id: UUID,
     reject_data: ChallengeReject,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_admin)
 ):
     """챌린지 거부 (관리자)"""
-    # TODO: 관리자 권한 확인
-    if not current_user.is_admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="관리자만 접근 가능합니다"
-        )
 
     challenge = db.query(Challenge).filter(Challenge.id == challenge_id).first()
 
@@ -467,9 +449,9 @@ async def reject_challenge(
             detail="승인 대기 중인 챌린지만 거부할 수 있습니다"
         )
 
-    # 거부 처리
+    # 거부 처리 및 사유 저장
     challenge.status = ChallengeStatus.REJECTED
-    # TODO: 거부 사유 저장 (필요시 별도 필드 추가)
+    challenge.rejected_reason = reject_data.reason
     db.commit()
     db.refresh(challenge)
 

@@ -87,3 +87,21 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+def require_admin(current_user = Depends(get_current_user)):
+    """
+    Require admin role for endpoint access.
+
+    This is a dependency that can be used to protect admin-only endpoints.
+    Usage: current_user: User = Depends(require_admin)
+    """
+    from app.models.user import UserRole
+
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="관리자만 접근 가능합니다"
+        )
+
+    return current_user

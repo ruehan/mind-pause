@@ -61,6 +61,7 @@ class Challenge(Base):
     status = Column(SQLEnum(ChallengeStatus), default=ChallengeStatus.PENDING, nullable=False)
     start_date = Column(Date, nullable=False)  # 시작일
     end_date = Column(Date, nullable=False)  # 종료일
+    rejected_reason = Column(String(500), nullable=True)  # 거부 사유
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

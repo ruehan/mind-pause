@@ -104,6 +104,7 @@ class ChallengeResponse(ChallengeBase):
     status: ChallengeStatus = Field(..., description="승인 상태")
     start_date: date = Field(..., description="시작일")
     end_date: date = Field(..., description="종료일")
+    rejected_reason: Optional[str] = Field(None, description="거부 사유")
     created_at: datetime = Field(..., description="생성 일시")
     updated_at: datetime = Field(..., description="수정 일시")
 
