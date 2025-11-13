@@ -544,11 +544,14 @@ export interface LikeCreateRequest {
 export async function getPosts(
   page: number = 1,
   pageSize: number = 20,
-  sort: "latest" | "popular" = "latest"
+  sort: "latest" | "popular" = "latest",
+  search?: string
 ): Promise<PostListResponse> {
-  return apiRequest<PostListResponse>(
-    `/community/posts?page=${page}&page_size=${pageSize}&sort=${sort}`
-  );
+  let url = `/community/posts?page=${page}&page_size=${pageSize}&sort=${sort}`;
+  if (search) {
+    url += `&search=${encodeURIComponent(search)}`;
+  }
+  return apiRequest<PostListResponse>(url);
 }
 
 /**
