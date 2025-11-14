@@ -131,10 +131,11 @@ class PromptBuilder:
         few_shot_count: int = 3,
         use_cot: bool = False,
         conversation_history: Optional[List[Dict]] = None,
-        user_context: Optional[Dict] = None
+        user_context: Optional[Dict] = None,
+        user_preference: Optional[Dict] = None
     ) -> str:
         """
-        통합 시스템 프롬프트 생성
+        통합 시스템 프롬프트 생성 (개인화 지원)
 
         Args:
             emotion: 감지된 감정 (불안, 우울, 분노, 기쁨, 중립)
@@ -143,11 +144,19 @@ class PromptBuilder:
             use_cot: Chain-of-Thought 추론 활성화 여부
             conversation_history: 이전 대화 내용
             user_context: 사용자 프로필 정보
+            user_preference: 사용자 선호도 설정
 
         Returns:
             최적화된 시스템 프롬프트
         """
         prompt_parts = [self.base_system_prompt]
+
+        # 0. 사용자 선호도 기반 조정 (Phase 2.2)
+        if user_preference:
+            preference_adjustment = self._build_preference_adjustment(user_preference)
+            if preference_adjustment:
+                prompt_parts.append("\n---\n")
+                prompt_parts.append(preference_adjustment)
 
         # 1. 감정별 특화 가이드라인 추가
         if emotion and emotion in self.emotion_guidelines:
@@ -220,6 +229,68 @@ class PromptBuilder:
 최종 응답 작성:
 위 분석을 바탕으로 자연스러운 1-3문단 대화로 작성하세요.
 분석 과정은 절대 보여주지 말고, 결과만 자연스러운 대화로 전달하세요."""
+
+    def _build_preference_adjustment(self, preference: Dict) -> str:
+        """
+        사용자 선호도 기반 프롬프트 조정 (Phase 2.2)
+
+        Args:
+            preference: 사용자 선호도 딕셔너리
+                - preferred_response_length: "short" | "medium" | "long"
+                - preferred_tone: "formal" | "casual" | "mixed"
+                - emoji_preference: "none" | "minimal" | "moderate" | "frequent"
+                - confidence_score: 0.0-1.0
+
+        Returns:
+            선호도 조정 프롬프트
+        """
+        adjustments = []
+
+        # 신뢰도가 너무 낮으면 개인화 안 함
+        confidence = preference.get("confidence_score", 0.0)
+        if confidence < 0.3:
+            return ""
+
+        adjustments.append("**개인 맞춤 설정** (이 사용자의 선호도):")
+
+        # 1. 응답 길이 조정
+        length_pref = preference.get("preferred_response_length", "medium")
+        if length_pref == "short":
+            adjustments.append("""
+- **응답 길이**: 짧고 간결하게 (1-2문단, 각 문단 2-3문장)
+  핵심만 전달하세요. 불필요한 설명은 생략하세요.""")
+        elif length_pref == "long":
+            adjustments.append("""
+- **응답 길이**: 자세하게 (2-3문단, 각 문단 3-5문장)
+  충분한 설명과 예시를 포함하세요. 근거를 함께 제시하세요.""")
+
+        # 2. 톤 조정
+        tone_pref = preference.get("preferred_tone", "mixed")
+        if tone_pref == "formal":
+            adjustments.append("""
+- **대화 톤**: 격식 있게
+  존댓말을 사용하고, 정중한 표현을 사용하세요.""")
+        elif tone_pref == "casual":
+            adjustments.append("""
+- **대화 톤**: 친근하게
+  편안하고 친근한 말투를 사용하세요.""")
+
+        # 3. 이모지 조정
+        emoji_pref = preference.get("emoji_preference", "moderate")
+        if emoji_pref == "none":
+            adjustments.append("""
+- **이모지**: 사용하지 마세요
+  이 사용자는 이모지를 선호하지 않습니다. 텍스트만 사용하세요.""")
+        elif emoji_pref == "frequent":
+            adjustments.append("""
+- **이모지**: 적극 활용
+  이 사용자는 이모지를 좋아합니다. 자연스럽게 이모지를 활용하여 친근함을 더하세요.""")
+        elif emoji_pref == "minimal":
+            adjustments.append("""
+- **이모지**: 최소한만
+  이모지는 꼭 필요한 경우에만 사용하세요.""")
+
+        return "\n".join(adjustments)
 
     def _format_conversation_history(self, history: List[Dict]) -> str:
         """대화 히스토리 포맷팅"""

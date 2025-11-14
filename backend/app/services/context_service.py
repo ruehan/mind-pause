@@ -12,6 +12,11 @@ from app.models.conversation_summary import ConversationSummary
 from app.models.user_memory import UserMemory
 from app.models.ai_character import AICharacter
 from app.prompts.prompt_builder import build_counseling_prompt
+from app.services.preference_learning_service import (
+    should_update_preferences,
+    update_user_preferences,
+    get_or_create_preference
+)
 
 
 def get_user_memories(
@@ -270,7 +275,7 @@ def build_conversation_context(
     use_advanced_prompting: bool = True
 ) -> Dict[str, Any]:
     """
-    완전한 대화 컨텍스트 구축 (Advanced Prompt Engineering 통합)
+    완전한 대화 컨텍스트 구축 (Advanced Prompt Engineering 통합 + Phase 2.2 개인화)
 
     Args:
         db: 데이터베이스 세션
@@ -283,6 +288,24 @@ def build_conversation_context(
     Returns:
         LLM에 전달할 컨텍스트 딕셔너리
     """
+    # 0. 사용자 선호도 가져오기 및 업데이트 (Phase 2.2)
+    user_preference_data = None
+    if use_advanced_prompting:
+        # 선호도 업데이트가 필요한지 체크
+        if should_update_preferences(db, user_id, character.id):
+            # 선호도 학습 업데이트 실행
+            update_user_preferences(db, user_id, character.id)
+
+        # 현재 선호도 가져오기
+        preference = get_or_create_preference(db, user_id, character.id)
+        user_preference_data = {
+            "preferred_response_length": preference.preferred_response_length,
+            "preferred_tone": preference.preferred_tone,
+            "emoji_preference": preference.emoji_preference,
+            "preferred_few_shot_count": preference.preferred_few_shot_count,
+            "confidence_score": preference.confidence_score
+        }
+
     # 1. 사용자 메모리 가져오기
     memories = get_user_memories(db, user_id, character.id)
 
@@ -374,19 +397,27 @@ def build_conversation_context(
         summary_texts = [s.summary for s in summaries[-3:]]
         enhanced_user_context["current_conversation_summary"] = "\n\n".join(summary_texts)
 
-    # 8. Advanced Prompt Engineering 적용
+    # 8. Advanced Prompt Engineering 적용 (Phase 2.2: 개인화 통합)
     if use_advanced_prompting:
         # 감정 카테고리 추출
         detected_emotion = emotion_data.get("category") if emotion_data else None
 
-        # 고급 프롬프트 생성
+        # Few-shot 예제 개수 결정 (선호도 기반)
+        few_shot_count = (
+            user_preference_data.get("preferred_few_shot_count", 3)
+            if user_preference_data
+            else 3
+        )
+
+        # 고급 프롬프트 생성 (선호도 포함)
         system_prompt = build_counseling_prompt(
             emotion=detected_emotion,
             use_few_shot=True,
-            few_shot_count=3,
+            few_shot_count=few_shot_count,
             use_cot=True,  # CoT 활성화: 메타-인지 형태 + Post-processing 필터로 안전하게 사용
             conversation_history=conversation_history[:-1] if len(conversation_history) > 1 else None,
-            user_context=enhanced_user_context
+            user_context=enhanced_user_context,
+            user_preference=user_preference_data  # Phase 2.2: 개인화
         )
 
         # 시스템 프롬프트를 첫 메시지에 포함

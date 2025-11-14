@@ -13,6 +13,7 @@ from app.models.report import Report
 from app.models.message_feedback import MessageFeedback
 from app.models.conversation_rating import ConversationRating
 from app.models.conversation_metrics import ConversationMetrics
+from app.models.user_prompt_preference import UserPromptPreference
 
 __all__ = [
     "User",
@@ -32,4 +33,5 @@ __all__ = [
     "MessageFeedback",
     "ConversationRating",
     "ConversationMetrics",
+    "UserPromptPreference",
 ]
