@@ -271,17 +271,19 @@ def build_conversation_context(
     conversation_id: UUID,
     user_id: UUID,
     character: AICharacter,
+    current_message: str = "",
     emotion_data: Dict[str, Any] = None,
     use_advanced_prompting: bool = True
 ) -> Dict[str, Any]:
     """
-    완전한 대화 컨텍스트 구축 (Advanced Prompt Engineering 통합 + Phase 2.2 개인화)
+    완전한 대화 컨텍스트 구축 (Phase 2.2: 개인화 + 동적 Few-shot)
 
     Args:
         db: 데이터베이스 세션
         conversation_id: 대화 ID
         user_id: 사용자 ID
         character: AI 캐릭터
+        current_message: 현재 사용자 메시지 (동적 Few-shot용)
         emotion_data: 감정 분석 데이터 (선택적)
         use_advanced_prompting: Few-shot, CoT 등 고급 프롬프팅 사용 여부
 
@@ -409,7 +411,7 @@ def build_conversation_context(
             else 3
         )
 
-        # 고급 프롬프트 생성 (선호도 포함)
+        # 고급 프롬프트 생성 (Phase 2.2: 선호도 + 동적 Few-shot)
         system_prompt = build_counseling_prompt(
             emotion=detected_emotion,
             use_few_shot=True,
@@ -417,7 +419,13 @@ def build_conversation_context(
             use_cot=True,  # CoT 활성화: 메타-인지 형태 + Post-processing 필터로 안전하게 사용
             conversation_history=conversation_history[:-1] if len(conversation_history) > 1 else None,
             user_context=enhanced_user_context,
-            user_preference=user_preference_data  # Phase 2.2: 개인화
+            user_preference=user_preference_data,  # Phase 2.2: 개인화
+            # Phase 2.2: 동적 Few-shot
+            db=db,
+            user_id=user_id,
+            character_id=character.id,
+            current_message=current_message,
+            use_dynamic_few_shot=True
         )
 
         # 시스템 프롬프트를 첫 메시지에 포함

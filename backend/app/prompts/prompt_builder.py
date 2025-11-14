@@ -5,13 +5,17 @@ Few-shot Learning, Chain-of-Thought, 감정별 특화 프롬프트를 통합하�
 최적화된 시스템 프롬프트를 생성하는 핵심 모듈
 """
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, TYPE_CHECKING
 from .few_shot_examples import (
     get_examples_by_emotion,
     get_random_examples,
     format_examples_for_prompt,
     FewShotExample
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+    from uuid import UUID
 
 
 class PromptBuilder:
@@ -132,7 +136,8 @@ class PromptBuilder:
         use_cot: bool = False,
         conversation_history: Optional[List[Dict]] = None,
         user_context: Optional[Dict] = None,
-        user_preference: Optional[Dict] = None
+        user_preference: Optional[Dict] = None,
+        custom_examples: Optional[List[FewShotExample]] = None
     ) -> str:
         """
         통합 시스템 프롬프트 생성 (개인화 지원)
@@ -163,9 +168,14 @@ class PromptBuilder:
             prompt_parts.append("\n---\n")
             prompt_parts.append(self.emotion_guidelines[emotion])
 
-        # 2. Few-shot 예시 추가
+        # 2. Few-shot 예시 추가 (Phase 2.2: 동적 예제 우선)
         if use_few_shot:
-            examples = self._get_relevant_examples(emotion, few_shot_count)
+            # 동적 예제가 제공되면 사용, 아니면 정적 예제
+            if custom_examples:
+                examples = custom_examples[:few_shot_count]
+            else:
+                examples = self._get_relevant_examples(emotion, few_shot_count)
+
             if examples:
                 prompt_parts.append("\n---\n")
                 prompt_parts.append("**참고할 상담 예시**:")
@@ -392,19 +402,56 @@ def build_counseling_prompt(
     few_shot_count: int = 3,
     use_cot: bool = False,
     conversation_history: Optional[List[Dict]] = None,
-    user_context: Optional[Dict] = None
+    user_context: Optional[Dict] = None,
+    user_preference: Optional[Dict] = None,
+    custom_examples: Optional[List[FewShotExample]] = None,
+    # Phase 2.2: 동적 Few-shot 지원
+    db: Optional['Session'] = None,
+    user_id: Optional['UUID'] = None,
+    character_id: Optional['UUID'] = None,
+    current_message: Optional[str] = None,
+    use_dynamic_few_shot: bool = True
 ) -> str:
     """
-    상담용 프롬프트 빌드 (간편 인터페이스)
+    상담용 프롬프트 빌드 (Phase 2.2: 개인화 + 동적 Few-shot)
 
-    사용 예시:
-        prompt = build_counseling_prompt(
-            emotion="불안",
-            use_few_shot=True,
-            few_shot_count=3,
-            use_cot=True
-        )
+    Args:
+        emotion: 감지된 감정
+        use_few_shot: Few-shot 사용 여부
+        few_shot_count: Few-shot 예제 개수
+        use_cot: CoT 사용 여부
+        conversation_history: 대화 히스토리
+        user_context: 사용자 컨텍스트
+        user_preference: 사용자 선호도
+        custom_examples: 직접 제공된 예제 (동적 Few-shot보다 우선)
+        db: 데이터베이스 세션 (동적 Few-shot용)
+        user_id: 사용자 ID (동적 Few-shot용)
+        character_id: 캐릭터 ID (동적 Few-shot용)
+        current_message: 현재 사용자 메시지 (동적 Few-shot용)
+        use_dynamic_few_shot: 동적 Few-shot 사용 여부
+
+    Returns:
+        완성된 시스템 프롬프트
     """
+    # Phase 2.2: 동적 Few-shot 예제 생성
+    final_examples = custom_examples
+
+    if final_examples is None and use_dynamic_few_shot and use_few_shot:
+        # 동적 Few-shot을 사용하려면 필요한 매개변수 확인
+        if db and user_id and character_id and current_message:
+            from app.services.dynamic_few_shot_service import get_hybrid_few_shot_examples
+
+            # 하이브리드 Few-shot 생성 (동적 50% + 정적 50%)
+            final_examples = get_hybrid_few_shot_examples(
+                db=db,
+                user_id=user_id,
+                character_id=character_id,
+                current_emotion=emotion,
+                current_message=current_message,
+                total_count=few_shot_count,
+                dynamic_ratio=0.5  # 동적 예제 50%
+            )
+
     builder = get_prompt_builder()
     return builder.build_system_prompt(
         emotion=emotion,
@@ -412,7 +459,9 @@ def build_counseling_prompt(
         few_shot_count=few_shot_count,
         use_cot=use_cot,
         conversation_history=conversation_history,
-        user_context=user_context
+        user_context=user_context,
+        user_preference=user_preference,
+        custom_examples=final_examples
     )
 
 

@@ -413,12 +413,13 @@ async def stream_chat_message(
         emotion_summary = format_emotion_summary(emotion_data)
         print(f"🎭 감정 감지: {emotion_summary}")
 
-    # 컨텍스트 구축 (메모리 + 요약 + 최근 메시지 + 감정 + Advanced Prompting)
+    # 컨텍스트 구축 (Phase 2.2: 개인화 + 동적 Few-shot)
     context = build_conversation_context(
         db=db,
         conversation_id=conversation_id,
         user_id=current_user.id,
         character=character,
+        current_message=message_data.content,  # Phase 2.2: 동적 Few-shot용
         emotion_data=emotion_data,
         use_advanced_prompting=True  # Advanced Prompt Engineering 활성화
     )
