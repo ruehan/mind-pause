@@ -27,6 +27,7 @@ from app.models import (
     MessageFeedback,
     ConversationRating,
     ConversationMetrics,
+    UserPromptPreference,
 )
 
 
