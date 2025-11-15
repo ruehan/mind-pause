@@ -185,38 +185,38 @@ export function ChatMessage({
             {timestamp}
           </span>
 
-          {/* AI 메시지 피드백 버튼 */}
+          {/* AI 메시지 피드백 버튼 - 개선된 UI */}
           {isAI && messageId && !isTyping && !isStreaming && (
-            <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className="flex gap-2 mt-2 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
               <button
                 onClick={() => handleFeedback(true)}
-                disabled={isSubmittingFeedback}
+                disabled={isSubmittingFeedback || feedback !== null}
                 className={`
-                  px-3 py-1 rounded-full text-xs transition-all duration-200
+                  px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95
                   ${feedback === true
-                    ? "bg-primary-100 text-primary-600 border border-primary-300"
-                    : "bg-neutral-50 text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
+                    ? "bg-primary-500 text-white border-2 border-primary-600 shadow-md animate-pulse-once"
+                    : "bg-white text-neutral-700 border border-neutral-300 hover:bg-primary-50 hover:border-primary-400 hover:text-primary-700"
                   }
-                  disabled:opacity-50 disabled:cursor-not-allowed
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
                 `}
                 title="도움이 되었어요"
               >
-                👍 도움됨
+                {feedback === true ? "✅ 감사합니다!" : "👍 도움됨"}
               </button>
               <button
                 onClick={() => handleFeedback(false)}
-                disabled={isSubmittingFeedback}
+                disabled={isSubmittingFeedback || feedback !== null}
                 className={`
-                  px-3 py-1 rounded-full text-xs transition-all duration-200
+                  px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95
                   ${feedback === false
-                    ? "bg-red-50 text-red-600 border border-red-300"
-                    : "bg-neutral-50 text-neutral-600 border border-neutral-200 hover:bg-neutral-100"
+                    ? "bg-orange-500 text-white border-2 border-orange-600 shadow-md animate-pulse-once"
+                    : "bg-white text-neutral-700 border border-neutral-300 hover:bg-orange-50 hover:border-orange-400 hover:text-orange-700"
                   }
-                  disabled:opacity-50 disabled:cursor-not-allowed
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
                 `}
-                title="도움이 안 되었어요"
+                title="개선이 필요해요"
               >
-                👎 아쉬워요
+                {feedback === false ? "📝 의견 감사해요!" : "👎 아쉬워요"}
               </button>
             </div>
           )}
