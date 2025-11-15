@@ -1,15 +1,16 @@
 """
 피드백 및 평가 API 엔드포인트
 """
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func, desc
 from pydantic import BaseModel, Field
 
 from app.db.database import get_db
-from app.models import MessageFeedback, ConversationRating, Message, Conversation, ConversationMetrics
+from app.models import MessageFeedback, ConversationRating, Message, Conversation, ConversationMetrics, AICharacter
 from app.core.security import get_current_user
 from app.models.user import User
 
@@ -53,6 +54,20 @@ class ConversationRatingResponse(BaseModel):
     rating: int
     feedback_text: Optional[str]
     created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class FeedbackStatsResponse(BaseModel):
+    """피드백 통계 응답"""
+    total_feedbacks: int
+    positive_feedbacks: int
+    negative_feedbacks: int
+    positive_ratio: float
+    total_conversations_rated: int
+    average_rating: Optional[float]
+    recent_feedbacks: List[MessageFeedbackResponse]
 
     class Config:
         from_attributes = True
@@ -234,3 +249,76 @@ async def get_conversation_rating(
     ).first()
 
     return rating
+
+
+@router.get("/stats", response_model=FeedbackStatsResponse)
+async def get_feedback_statistics(
+    days: int = Query(30, ge=1, le=365, description="최근 N일 통계"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    사용자 피드백 통계 조회
+
+    - 최근 N일간의 메시지 피드백 및 대화 평가 통계
+    - 긍정/부정 비율, 평균 별점 등 제공
+    """
+    # 기준 날짜 계산
+    start_date = datetime.utcnow() - timedelta(days=days)
+
+    # 메시지 피드백 통계
+    message_feedbacks = db.query(MessageFeedback).join(
+        Message, MessageFeedback.message_id == Message.id
+    ).join(
+        Conversation, Message.conversation_id == Conversation.id
+    ).filter(
+        Conversation.user_id == current_user.id,
+        MessageFeedback.created_at >= start_date
+    ).all()
+
+    total_feedbacks = len(message_feedbacks)
+    positive_feedbacks = sum(1 for f in message_feedbacks if f.is_helpful)
+    negative_feedbacks = total_feedbacks - positive_feedbacks
+    positive_ratio = (positive_feedbacks / total_feedbacks * 100) if total_feedbacks > 0 else 0.0
+
+    # 대화 평가 통계
+    conversation_ratings = db.query(ConversationRating).filter(
+        ConversationRating.user_id == current_user.id,
+        ConversationRating.created_at >= start_date
+    ).all()
+
+    total_conversations_rated = len(conversation_ratings)
+    average_rating = None
+    if total_conversations_rated > 0:
+        average_rating = sum(r.rating for r in conversation_ratings) / total_conversations_rated
+
+    # 최근 피드백 5개 (부정적 피드백 우선)
+    recent_feedbacks_query = db.query(MessageFeedback).join(
+        Message, MessageFeedback.message_id == Message.id
+    ).join(
+        Conversation, Message.conversation_id == Conversation.id
+    ).filter(
+        Conversation.user_id == current_user.id
+    ).order_by(
+        MessageFeedback.is_helpful.asc(),  # False (부정) 먼저
+        MessageFeedback.created_at.desc()
+    ).limit(5).all()
+
+    return FeedbackStatsResponse(
+        total_feedbacks=total_feedbacks,
+        positive_feedbacks=positive_feedbacks,
+        negative_feedbacks=negative_feedbacks,
+        positive_ratio=round(positive_ratio, 2),
+        total_conversations_rated=total_conversations_rated,
+        average_rating=round(average_rating, 2) if average_rating else None,
+        recent_feedbacks=[
+            MessageFeedbackResponse(
+                id=f.id,
+                message_id=f.message_id,
+                is_helpful=f.is_helpful,
+                feedback_text=f.feedback_text,
+                created_at=f.created_at,
+                updated_at=f.updated_at
+            ) for f in recent_feedbacks_query
+        ]
+    )
