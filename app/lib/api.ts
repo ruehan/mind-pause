@@ -1256,8 +1256,6 @@ export async function getFeedbackStats(days: number = 30): Promise<FeedbackStats
  * 사용자 AI 응답 선호도 인터페이스
  */
 export interface UserAIPreference {
-  id: string;
-  user_id: string;
   tone: string;
   length: string;
   empathy_level: string;
