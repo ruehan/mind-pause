@@ -1249,6 +1249,44 @@ export async function getFeedbackStats(days: number = 30): Promise<FeedbackStats
 }
 
 // ============================================
+// User Preferences API
+// ============================================
+
+/**
+ * 사용자 AI 응답 선호도 인터페이스
+ */
+export interface UserAIPreference {
+  id: string;
+  user_id: string;
+  tone: string;
+  length: string;
+  empathy_level: string;
+}
+
+export interface UserAIPreferenceUpdate {
+  tone: string;
+  length: string;
+  empathy_level: string;
+}
+
+/**
+ * 사용자 AI 응답 선호도 조회
+ */
+export async function getUserAIPreferences(): Promise<UserAIPreference> {
+  return apiRequest("/user/preferences");
+}
+
+/**
+ * 사용자 AI 응답 선호도 저장
+ */
+export async function saveUserAIPreferences(preferences: UserAIPreferenceUpdate): Promise<UserAIPreference> {
+  return apiRequest("/user/preferences", {
+    method: "POST",
+    body: JSON.stringify(preferences),
+  });
+}
+
+// ============================================
 // Metrics API
 // ============================================
 

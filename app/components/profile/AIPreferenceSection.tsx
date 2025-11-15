@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Bot, Volume2, FileText, Heart, Sparkles } from "lucide-react";
 import { Button } from "../Button";
 import { useToast } from "../ToastProvider";
+import { getUserAIPreferences, saveUserAIPreferences, type UserAIPreferenceUpdate } from "~/lib/api";
 
 interface AIPreference {
   tone: string;
@@ -45,13 +46,12 @@ export function AIPreferenceSection() {
   const loadPreferences = async () => {
     try {
       setIsLoading(true);
-      // TODO: API 호출로 실제 선호도 로드
-      // const data = await getUserAIPreferences();
-      // setPreferences(data);
-
-      // 임시 데이터
-      await new Promise(resolve => setTimeout(resolve, 500));
-      console.log("Loaded preferences:", preferences);
+      const data = await getUserAIPreferences();
+      setPreferences({
+        tone: data.tone,
+        length: data.length,
+        empathy_level: data.empathy_level,
+      });
     } catch (error) {
       console.error("Failed to load preferences:", error);
       toast.error("설정 불러오기 실패", "AI 응답 설정을 불러오는데 실패했습니다");
@@ -68,11 +68,7 @@ export function AIPreferenceSection() {
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      // TODO: API 호출로 실제 선호도 저장
-      // await saveUserAIPreferences(preferences);
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log("Saving preferences:", preferences);
+      await saveUserAIPreferences(preferences);
       toast.success("설정이 저장되었습니다", "AI가 이제 당신의 선호에 맞춰 응답합니다");
       setHasChanges(false);
     } catch (error) {
