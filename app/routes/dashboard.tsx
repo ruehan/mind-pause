@@ -5,6 +5,7 @@ import { StatCard } from "../components/dashboard/StatCard";
 import { AchievementBadge } from "../components/dashboard/AchievementBadge";
 import { ActivityStatsCard } from "../components/dashboard/ActivityStatsCard";
 import { RecentActivityTimeline } from "../components/dashboard/RecentActivityTimeline";
+import { FeedbackStatsCard } from "../components/dashboard/FeedbackStatsCard";
 import { FileText, Flame, MessageCircle, Trophy, Heart, BarChart3 } from "lucide-react";
 import { getUserDashboard, type UserDashboard as UserDashboardData } from "../lib/api";
 
@@ -201,6 +202,11 @@ export default function Dashboard() {
             <ActivityStatsCard summary={dashboardData.summary} />
           </div>
         )}
+
+        {/* Feedback Stats Card */}
+        <div className="mb-6">
+          <FeedbackStatsCard />
+        </div>
 
         {/* Recent Activity Timeline */}
         {dashboardData && (

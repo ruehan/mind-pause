@@ -1228,6 +1228,26 @@ export async function getConversationRating(conversationId: string): Promise<Con
   }
 }
 
+/**
+ * 피드백 통계 인터페이스
+ */
+export interface FeedbackStats {
+  total_feedbacks: number;
+  positive_feedbacks: number;
+  negative_feedbacks: number;
+  positive_ratio: number;
+  total_conversations_rated: number;
+  average_rating: number | null;
+  recent_feedbacks: MessageFeedback[];
+}
+
+/**
+ * 피드백 통계 조회
+ */
+export async function getFeedbackStats(days: number = 30): Promise<FeedbackStats> {
+  return apiRequest(`/feedback/stats?days=${days}`);
+}
+
 // ============================================
 // Metrics API
 // ============================================
