@@ -8,6 +8,7 @@ import { BadgeShowcase, defaultBadges } from "../components/challenge/BadgeShowc
 import { ProfileImageSection } from "../components/profile/ProfileImageSection";
 import { SocialLoginCard } from "../components/profile/SocialLoginCard";
 import { NotificationCheckbox } from "../components/profile/NotificationCheckbox";
+import { AIPreferenceSection } from "../components/profile/AIPreferenceSection";
 import { Button } from "../components/Button";
 import { useToast } from "../components/ToastProvider";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -28,7 +29,7 @@ export default function Profile() {
   const { user, logout } = useAuth();
   const toast = useToast();
   const [activeSection, setActiveSection] = useState<
-    "profile" | "stats" | "notification" | "security" | "account" | "data" | "info"
+    "profile" | "ai-preference" | "stats" | "notification" | "security" | "account" | "data" | "info"
   >("profile");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -168,6 +169,11 @@ export default function Profile() {
               {/* Badges */}
               <BadgeShowcase badges={defaultBadges} />
             </div>
+          )}
+
+          {/* AI Preference Section */}
+          {activeSection === "ai-preference" && (
+            <AIPreferenceSection />
           )}
 
           {/* Stats Detail Section */}

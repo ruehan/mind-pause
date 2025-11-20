@@ -1,9 +1,10 @@
-import { User, Bell, Lock, Globe, BarChart3, Info, Settings as SettingsIcon } from "lucide-react";
+import { User, Bell, Lock, Globe, BarChart3, Info, Settings as SettingsIcon, Bot } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface SettingsNavProps {
   activeSection:
     | "profile"
+    | "ai-preference"
     | "notification"
     | "security"
     | "account"
@@ -13,6 +14,7 @@ interface SettingsNavProps {
   onSectionChange: (
     section:
       | "profile"
+      | "ai-preference"
       | "notification"
       | "security"
       | "account"
@@ -22,8 +24,9 @@ interface SettingsNavProps {
   ) => void;
 }
 
-const navItems: Array<{ id: "profile" | "notification" | "security" | "account" | "data" | "info"; icon: LucideIcon; label: string }> = [
+const navItems: Array<{ id: "profile" | "ai-preference" | "notification" | "security" | "account" | "data" | "info"; icon: LucideIcon; label: string }> = [
   { id: "profile" as const, icon: User, label: "프로필" },
+  { id: "ai-preference" as const, icon: Bot, label: "AI 응답 설정" },
   { id: "notification" as const, icon: Bell, label: "알림" },
   { id: "security" as const, icon: Lock, label: "보안" },
   { id: "account" as const, icon: Globe, label: "계정" },

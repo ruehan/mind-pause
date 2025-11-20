@@ -2,6 +2,8 @@ import ReactNiceAvatar from "react-nice-avatar";
 import { ClientOnly } from "../ClientOnly";
 import { useState, useEffect } from "react";
 import type { AvatarOptions } from "../../lib/api";
+import { renderMarkdown } from "~/utils/markdown";
+import { submitMessageFeedback } from "~/lib/api";
 
 interface ChatMessageProps {
   role: "user" | "ai";
@@ -12,6 +14,7 @@ interface ChatMessageProps {
   isStreaming?: boolean;
   shouldTypeEffect?: boolean;
   onTypingComplete?: () => void;
+  messageId?: string; // AI 메시지 ID (피드백용)
 }
 
 export function ChatMessage({
@@ -23,11 +26,34 @@ export function ChatMessage({
   isStreaming = false,
   shouldTypeEffect = false,
   onTypingComplete,
+  messageId,
 }: ChatMessageProps) {
   const isAI = role === "ai";
   const [isVisible, setIsVisible] = useState(false);
   const [displayedContent, setDisplayedContent] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+
+  // 피드백 상태
+  const [feedback, setFeedback] = useState<boolean | null>(null); // true: 좋아요, false: 싫어요, null: 없음
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+
+  // 피드백 핸들러
+  const handleFeedback = async (isHelpful: boolean) => {
+    if (!messageId || isSubmittingFeedback) return;
+
+    setIsSubmittingFeedback(true);
+    try {
+      await submitMessageFeedback({
+        message_id: messageId,
+        is_helpful: isHelpful,
+      });
+      setFeedback(isHelpful);
+    } catch (error) {
+      console.error("피드백 제출 실패:", error);
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
+  };
 
   useEffect(() => {
     setIsVisible(true);
@@ -121,7 +147,7 @@ export function ChatMessage({
           </div>
         )}
 
-        <div className="flex flex-col">
+        <div className="flex flex-col group">
           {/* AI 이름 표시 */}
           {isAI && aiName && (
             <span className="text-caption text-neutral-600 mb-1 font-medium">
@@ -139,12 +165,13 @@ export function ChatMessage({
               }
             `}
           >
-            <p className="text-body leading-relaxed whitespace-pre-wrap">
-              {displayedContent}
-              {(isTyping || isStreaming) && (
-                <span className="inline-block w-1 h-4 bg-primary-500 ml-1 animate-pulse">|</span>
-              )}
-            </p>
+            <div
+              className="text-body leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(displayedContent) }}
+            />
+            {(isTyping || isStreaming) && (
+              <span className="inline-block w-1 h-4 bg-primary-500 ml-1 animate-pulse">|</span>
+            )}
           </div>
 
           {/* Timestamp */}
@@ -157,6 +184,42 @@ export function ChatMessage({
           >
             {timestamp}
           </span>
+
+          {/* AI 메시지 피드백 버튼 - 개선된 UI */}
+          {isAI && messageId && !isTyping && !isStreaming && (
+            <div className="flex gap-2 mt-2 opacity-60 group-hover:opacity-100 transition-opacity duration-200">
+              <button
+                onClick={() => handleFeedback(true)}
+                disabled={isSubmittingFeedback || feedback !== null}
+                className={`
+                  px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95
+                  ${feedback === true
+                    ? "bg-primary-500 text-white border-2 border-primary-600 shadow-md animate-pulse-once"
+                    : "bg-white text-neutral-700 border border-neutral-300 hover:bg-primary-50 hover:border-primary-400 hover:text-primary-700"
+                  }
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
+                `}
+                title="도움이 되었어요"
+              >
+                {feedback === true ? "✅ 감사합니다!" : "👍 도움됨"}
+              </button>
+              <button
+                onClick={() => handleFeedback(false)}
+                disabled={isSubmittingFeedback || feedback !== null}
+                className={`
+                  px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95
+                  ${feedback === false
+                    ? "bg-orange-500 text-white border-2 border-orange-600 shadow-md animate-pulse-once"
+                    : "bg-white text-neutral-700 border border-neutral-300 hover:bg-orange-50 hover:border-orange-400 hover:text-orange-700"
+                  }
+                  disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
+                `}
+                title="개선이 필요해요"
+              >
+                {feedback === false ? "📝 의견 감사해요!" : "👎 아쉬워요"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

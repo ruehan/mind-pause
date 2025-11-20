@@ -6,6 +6,7 @@ from typing import List
 from uuid import UUID
 from datetime import datetime
 import json
+import re
 
 from app.core.security import get_current_user
 from app.db.database import get_db
@@ -14,6 +15,7 @@ from app.models.conversation import Conversation
 from app.models.ai_character import AICharacter
 from app.models.message import Message
 from app.models.conversation_summary import ConversationSummary
+from app.models.conversation_metrics import ConversationMetrics
 from app.schemas.conversation import (
     ConversationCreate,
     ConversationUpdate,
@@ -25,8 +27,158 @@ from app.services.context_service import build_conversation_context, optimize_co
 from app.services.summary_service import check_summary_trigger, create_conversation_summary
 from app.services.memory_service import should_update_memory, update_user_memory
 from app.services.emotion_service import detect_emotion, format_emotion_summary
+from app.services.crisis_detection_service import detect_crisis_level
 
 router = APIRouter()
+
+
+# ============================================
+# 내부 프로세스 필터링
+# ============================================
+
+def filter_internal_process(text: str) -> str:
+    """
+    AI 응답에서 내부 사고 과정 마커 제거
+
+    CoT(Chain-of-Thought) 프롬프트로 인해 생성될 수 있는
+    내부 분석 구조를 사용자에게 보이지 않도록 필터링
+
+    Args:
+        text: 필터링할 텍스트
+
+    Returns:
+        필터링된 텍스트
+    """
+    if not text:
+        return text
+
+    # 전략 1: **상담사**: 이후의 실제 응답만 추출
+    match = re.search(r'\*\*상담사\*\*:\s*(.*)', text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+
+    # 전략 2: --- 이후의 실제 응답만 추출
+    if '---' in text:
+        parts = text.split('---')
+        # 마지막 부분이 실제 응답
+        return parts[-1].strip()
+
+    # 전략 3: ## 섹션 전체 제거 (섹션이 있지만 구분자가 없는 경우)
+    text = re.sub(
+        r'##\s*응답 생성 프로세스.*?(?=\n\n[^#\d*])',
+        '',
+        text,
+        flags=re.DOTALL | re.IGNORECASE
+    )
+
+    # 전략 4: 번호 리스트 형태의 내부 프로세스 제거 (문장 시작부분만)
+    # 하지만 일반 대화 내용은 보존
+    lines = text.split('\n')
+    filtered_lines = []
+    in_process_section = False
+
+    for line in lines:
+        # ## 또는 숫자. 로 시작하면 내부 프로세스 섹션 시작
+        if re.match(r'^(##|[0-9]+\.)\s', line):
+            in_process_section = True
+            continue
+        # **키워드**: 패턴이면 내부 프로세스
+        if re.match(r'^\*\*[^*]+\*\*:\s', line):
+            continue
+        # 빈 줄이 2개 연속이면 섹션 종료
+        if line.strip() == '':
+            if in_process_section:
+                in_process_section = False
+            filtered_lines.append(line)
+            continue
+        # 내부 프로세스 섹션이 아니면 보존
+        if not in_process_section:
+            filtered_lines.append(line)
+
+    text = '\n'.join(filtered_lines)
+
+    # 연속된 빈 줄 정리
+    text = re.sub(r'\n{3,}', '\n\n', text)
+
+    # 앞뒤 공백 제거
+    return text.strip()
+
+
+# ============================================
+# 메트릭 자동 수집
+# ============================================
+
+def update_conversation_metrics(
+    db: Session,
+    conversation_id: UUID,
+    user_content: str,
+    ai_content: str,
+    response_time_ms: float
+):
+    """
+    대화 메트릭 업데이트
+
+    Args:
+        db: 데이터베이스 세션
+        conversation_id: 대화 ID
+        user_content: 사용자 메시지 내용
+        ai_content: AI 응답 내용
+        response_time_ms: 응답 시간 (밀리초)
+    """
+    # 기존 메트릭 가져오기 또는 새로 생성
+    metrics = db.query(ConversationMetrics).filter(
+        ConversationMetrics.conversation_id == conversation_id
+    ).first()
+
+    if not metrics:
+        metrics = ConversationMetrics(conversation_id=conversation_id)
+        db.add(metrics)
+        db.flush()  # default 값 적용을 위해 flush
+
+    # 토큰 수 추정 (대략 4자 = 1토큰)
+    input_tokens = len(user_content) // 4
+    output_tokens = len(ai_content) // 4
+
+    # None 값 방어 코드 추가
+    if metrics.total_messages is None:
+        metrics.total_messages = 0
+    if metrics.user_messages is None:
+        metrics.user_messages = 0
+    if metrics.ai_messages is None:
+        metrics.ai_messages = 0
+    if metrics.total_input_tokens is None:
+        metrics.total_input_tokens = 0
+    if metrics.total_output_tokens is None:
+        metrics.total_output_tokens = 0
+
+    # 메시지 수 증가
+    metrics.total_messages += 2  # 사용자 + AI
+    metrics.user_messages += 1
+    metrics.ai_messages += 1
+
+    # 토큰 누적
+    metrics.total_input_tokens += input_tokens
+    metrics.total_output_tokens += output_tokens
+
+    # 평균 토큰 계산
+    metrics.avg_input_tokens = metrics.total_input_tokens / metrics.user_messages
+    metrics.avg_output_tokens = metrics.total_output_tokens / metrics.ai_messages
+
+    # 응답 시간 통계 업데이트
+    if metrics.avg_response_time_ms is None:
+        metrics.avg_response_time_ms = response_time_ms
+        metrics.min_response_time_ms = response_time_ms
+        metrics.max_response_time_ms = response_time_ms
+    else:
+        # 평균 업데이트 (누적 평균)
+        total_responses = metrics.ai_messages
+        metrics.avg_response_time_ms = (
+            (metrics.avg_response_time_ms * (total_responses - 1) + response_time_ms) / total_responses
+        )
+        metrics.min_response_time_ms = min(metrics.min_response_time_ms, response_time_ms)
+        metrics.max_response_time_ms = max(metrics.max_response_time_ms, response_time_ms)
+
+    db.commit()
 
 
 @router.post("", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
@@ -275,13 +427,31 @@ async def stream_chat_message(
         emotion_summary = format_emotion_summary(emotion_data)
         print(f"🎭 감정 감지: {emotion_summary}")
 
-    # 컨텍스트 구축 (메모리 + 요약 + 최근 메시지 + 감정)
+    # Phase 3.1: 위기 감지 (전문 상담사만 활성화)
+    crisis_level = "none"
+
+    if character.personality == "전문적인 심리 상담사":
+        crisis_data = detect_crisis_level(message_data.content)
+        crisis_level = crisis_data.get("level", "none")
+
+        # 위기 상황 로깅
+        if crisis_level != "none":
+            print(f"🚨 위기 감지 (전문 상담사): {crisis_level} (신뢰도: {crisis_data.get('confidence')})")
+            print(f"   - 카테고리: {crisis_data.get('categories')}")
+            print(f"   - 키워드: {crisis_data.get('keywords')}")
+    else:
+        print(f"ℹ️  위기 감지 비활성화: {character.name} ({character.personality})")
+
+    # 컨텍스트 구축 (Phase 2.2: 개인화 + 동적 Few-shot + Phase 3.1: 위기 대응)
     context = build_conversation_context(
         db=db,
         conversation_id=conversation_id,
         user_id=current_user.id,
         character=character,
-        emotion_data=emotion_data
+        current_message=message_data.content,  # Phase 2.2: 동적 Few-shot용
+        emotion_data=emotion_data,
+        crisis_level=crisis_level,  # Phase 3.1: 위기 대응
+        use_advanced_prompting=True  # Advanced Prompt Engineering 활성화
     )
 
     # 토큰 제한에 맞춰 최적화
@@ -292,16 +462,29 @@ async def stream_chat_message(
 
     # 스트리밍 응답 생성
     async def generate():
-        full_response = ""
+        raw_response = ""  # 필터링 전 원본
+        start_time = datetime.utcnow()  # 응답 시작 시간
 
         try:
-            # AI 응답 스트리밍
+            # 1단계: 전체 AI 응답 수집
             async for chunk in stream_gemini_response(messages):
-                full_response += chunk
-                # SSE 형식으로 전송
+                raw_response += chunk
+
+            # 응답 완료 시간
+            end_time = datetime.utcnow()
+            response_time_ms = (end_time - start_time).total_seconds() * 1000
+
+            # 2단계: 내부 프로세스 필터링
+            full_response = filter_internal_process(raw_response)
+
+            # 3단계: 필터링된 응답을 빠르게 chunk로 나눠서 스트리밍
+            # (사용자 경험을 위해 즉각적인 표시처럼 보이게)
+            chunk_size = 20  # 20자씩 전송
+            for i in range(0, len(full_response), chunk_size):
+                chunk = full_response[i:i + chunk_size]
                 yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
 
-            # AI 응답 저장
+            # AI 응답 저장 (필터링된 버전)
             ai_message = Message(
                 conversation_id=conversation_id,
                 role="assistant",
@@ -327,6 +510,15 @@ async def stream_chat_message(
 
             db.commit()
             db.refresh(ai_message)
+
+            # 메트릭 자동 수집 (응답 시간, 토큰 수 등)
+            update_conversation_metrics(
+                db=db,
+                conversation_id=conversation_id,
+                user_content=message_data.content,
+                ai_content=full_response,
+                response_time_ms=response_time_ms
+            )
 
             # 대화 요약 필요 여부 확인 및 자동 생성
             if check_summary_trigger(db, conversation_id):

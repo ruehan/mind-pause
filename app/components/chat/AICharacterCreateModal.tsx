@@ -111,10 +111,30 @@ const defaultAvatarOptions = {
 };
 
 const personalityPresets = [
-  { value: "공감하고 격려하는 친구", label: "따뜻한 친구" },
-  { value: "전문적인 심리 상담사", label: "전문 상담사" },
-  { value: "긍정적이고 밝은 멘토", label: "밝은 멘토" },
-  { value: "차분하고 지혜로운 선생님", label: "지혜로운 선생님" },
+  {
+    value: "공감하고 격려하는 친구",
+    label: "따뜻한 친구",
+    description: "반말로 편하게 대화하며 경험을 공유해요 💪",
+    icon: "🤗"
+  },
+  {
+    value: "전문적인 심리 상담사",
+    label: "전문 상담사",
+    description: "전문적인 심리 상담과 위기 감지 기능 제공 🏥",
+    icon: "👨‍⚕️"
+  },
+  {
+    value: "긍정적이고 밝은 멘토",
+    label: "밝은 멘토",
+    description: "긍정적인 에너지로 성장을 응원해요 🚀",
+    icon: "✨"
+  },
+  {
+    value: "차분하고 지혜로운 선생님",
+    label: "지혜로운 선생님",
+    description: "철학적 관점으로 깊은 성찰을 도와요 📚",
+    icon: "🧙‍♂️"
+  },
 ];
 
 interface AICharacterCreateModalProps {
@@ -328,7 +348,13 @@ export function AICharacterCreateModal({
                     {personalityPresets.map((preset) => (
                       <label
                         key={preset.value}
-                        className="flex items-center gap-3 p-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 cursor-pointer transition-colors"
+                        className={`
+                          flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all
+                          ${personality === preset.value
+                            ? "border-primary-500 bg-primary-50"
+                            : "border-neutral-200 hover:border-primary-300 hover:bg-neutral-50"
+                          }
+                        `}
                       >
                         <input
                           type="radio"
@@ -336,19 +362,31 @@ export function AICharacterCreateModal({
                           value={preset.value}
                           checked={personality === preset.value}
                           onChange={(e) => setPersonality(e.target.value)}
-                          className="text-primary-500 focus:ring-primary-500"
+                          className="text-primary-500 focus:ring-primary-500 mt-1"
                         />
-                        <div>
-                          <div className="text-body font-medium text-neutral-900">
-                            {preset.label}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-2xl">{preset.icon}</span>
+                            <div className="text-body font-semibold text-neutral-900">
+                              {preset.label}
+                            </div>
                           </div>
-                          <div className="text-body-sm text-neutral-600">
+                          <div className="text-body-sm text-neutral-600 mb-1">
+                            {preset.description}
+                          </div>
+                          <div className="text-caption text-neutral-500">
                             {preset.value}
                           </div>
                         </div>
                       </label>
                     ))}
-                    <label className="flex items-start gap-3 p-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 cursor-pointer transition-colors">
+                    <label className={`
+                      flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all
+                      ${personality === "custom"
+                        ? "border-primary-500 bg-primary-50"
+                        : "border-neutral-200 hover:border-primary-300 hover:bg-neutral-50"
+                      }
+                    `}>
                       <input
                         type="radio"
                         name="personality"
@@ -358,8 +396,11 @@ export function AICharacterCreateModal({
                         className="text-primary-500 focus:ring-primary-500 mt-1"
                       />
                       <div className="flex-1">
-                        <div className="text-body font-medium text-neutral-900 mb-2">
-                          직접 입력
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-2xl">✏️</span>
+                          <div className="text-body font-semibold text-neutral-900">
+                            직접 입력
+                          </div>
                         </div>
                         <input
                           type="text"

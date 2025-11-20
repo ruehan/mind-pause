@@ -1152,3 +1152,180 @@ export interface UserDashboard {
 export async function getUserDashboard(): Promise<UserDashboard> {
   return apiRequest("/dashboard");
 }
+
+// ============================================
+// Feedback API
+// ============================================
+
+export interface MessageFeedback {
+  id: string;
+  message_id: string;
+  is_helpful: boolean;
+  feedback_text: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversationRating {
+  id: string;
+  conversation_id: string;
+  rating: number;
+  feedback_text: string | null;
+  created_at: string;
+}
+
+export interface MessageFeedbackRequest {
+  message_id: string;
+  is_helpful: boolean;
+  feedback_text?: string;
+}
+
+export interface ConversationRatingRequest {
+  conversation_id: string;
+  rating: number;
+  feedback_text?: string;
+}
+
+/**
+ * 메시지 피드백 등록/수정
+ */
+export async function submitMessageFeedback(data: MessageFeedbackRequest): Promise<MessageFeedback> {
+  return apiRequest("/feedback/message", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 메시지 피드백 조회
+ */
+export async function getMessageFeedback(messageId: string): Promise<MessageFeedback | null> {
+  try {
+    return await apiRequest(`/feedback/message/${messageId}`);
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * 대화 만족도 평가 등록/수정
+ */
+export async function submitConversationRating(data: ConversationRatingRequest): Promise<ConversationRating> {
+  return apiRequest("/feedback/conversation", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
+ * 대화 만족도 평가 조회
+ */
+export async function getConversationRating(conversationId: string): Promise<ConversationRating | null> {
+  try {
+    return await apiRequest(`/feedback/conversation/${conversationId}`);
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * 피드백 통계 인터페이스
+ */
+export interface FeedbackStats {
+  total_feedbacks: number;
+  positive_feedbacks: number;
+  negative_feedbacks: number;
+  positive_ratio: number;
+  total_conversations_rated: number;
+  average_rating: number | null;
+  recent_feedbacks: MessageFeedback[];
+}
+
+/**
+ * 피드백 통계 조회
+ */
+export async function getFeedbackStats(days: number = 30): Promise<FeedbackStats> {
+  return apiRequest(`/feedback/stats?days=${days}`);
+}
+
+// ============================================
+// User Preferences API
+// ============================================
+
+/**
+ * 사용자 AI 응답 선호도 인터페이스
+ */
+export interface UserAIPreference {
+  tone: string;
+  length: string;
+  empathy_level: string;
+}
+
+export interface UserAIPreferenceUpdate {
+  tone: string;
+  length: string;
+  empathy_level: string;
+}
+
+/**
+ * 사용자 AI 응답 선호도 조회
+ */
+export async function getUserAIPreferences(): Promise<UserAIPreference> {
+  return apiRequest("/user/preferences");
+}
+
+/**
+ * 사용자 AI 응답 선호도 저장
+ */
+export async function saveUserAIPreferences(preferences: UserAIPreferenceUpdate): Promise<UserAIPreference> {
+  return apiRequest("/user/preferences", {
+    method: "POST",
+    body: JSON.stringify(preferences),
+  });
+}
+
+// ============================================
+// Metrics API
+// ============================================
+
+export interface MetricsOverview {
+  total_conversations: number;
+  total_messages: number;
+  avg_messages_per_conversation: number;
+  avg_response_time_ms: number | null;
+  min_response_time_ms: number | null;
+  max_response_time_ms: number | null;
+  avg_input_tokens: number | null;
+  avg_output_tokens: number | null;
+  total_tokens_used: number;
+  total_feedbacks: number;
+  positive_feedbacks: number;
+  negative_feedbacks: number;
+  feedback_ratio: number;
+  total_ratings: number;
+  average_rating: number | null;
+}
+
+export interface DailyMetric {
+  date: string;
+  conversations: number;
+  messages: number;
+  avg_response_time_ms: number | null;
+  positive_feedbacks: number;
+  negative_feedbacks: number;
+  avg_rating: number | null;
+}
+
+/**
+ * 전체 메트릭 개요 조회
+ */
+export async function getMetricsOverview(): Promise<MetricsOverview> {
+  return apiRequest("/metrics/overview");
+}
+
+/**
+ * 일일 메트릭 조회
+ */
+export async function getDailyMetrics(days: number = 7): Promise<DailyMetric[]> {
+  return apiRequest(`/metrics/daily?days=${days}`);
+}
