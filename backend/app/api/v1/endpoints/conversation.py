@@ -27,6 +27,7 @@ from app.services.context_service import build_conversation_context, optimize_co
 from app.services.summary_service import check_summary_trigger, create_conversation_summary
 from app.services.memory_service import should_update_memory, update_user_memory
 from app.services.emotion_service import detect_emotion, format_emotion_summary
+from app.services.crisis_detection_service import detect_crisis_level
 
 router = APIRouter()
 
@@ -413,7 +414,22 @@ async def stream_chat_message(
         emotion_summary = format_emotion_summary(emotion_data)
         print(f"🎭 감정 감지: {emotion_summary}")
 
-    # 컨텍스트 구축 (Phase 2.2: 개인화 + 동적 Few-shot)
+    # Phase 3.1: 위기 감지 (전문 상담사만 활성화)
+    crisis_level = "none"
+
+    if character.personality == "전문적인 심리 상담사":
+        crisis_data = detect_crisis_level(message_data.content)
+        crisis_level = crisis_data.get("level", "none")
+
+        # 위기 상황 로깅
+        if crisis_level != "none":
+            print(f"🚨 위기 감지 (전문 상담사): {crisis_level} (신뢰도: {crisis_data.get('confidence')})")
+            print(f"   - 카테고리: {crisis_data.get('categories')}")
+            print(f"   - 키워드: {crisis_data.get('keywords')}")
+    else:
+        print(f"ℹ️  위기 감지 비활성화: {character.name} ({character.personality})")
+
+    # 컨텍스트 구축 (Phase 2.2: 개인화 + 동적 Few-shot + Phase 3.1: 위기 대응)
     context = build_conversation_context(
         db=db,
         conversation_id=conversation_id,
@@ -421,6 +437,7 @@ async def stream_chat_message(
         character=character,
         current_message=message_data.content,  # Phase 2.2: 동적 Few-shot용
         emotion_data=emotion_data,
+        crisis_level=crisis_level,  # Phase 3.1: 위기 대응
         use_advanced_prompting=True  # Advanced Prompt Engineering 활성화
     )
 

@@ -273,10 +273,11 @@ def build_conversation_context(
     character: AICharacter,
     current_message: str = "",
     emotion_data: Dict[str, Any] = None,
+    crisis_level: str = "none",
     use_advanced_prompting: bool = True
 ) -> Dict[str, Any]:
     """
-    완전한 대화 컨텍스트 구축 (Phase 2.2: 개인화 + 동적 Few-shot)
+    완전한 대화 컨텍스트 구축 (Phase 2.2: 개인화 + 동적 Few-shot + Phase 3.1: 위기 대응)
 
     Args:
         db: 데이터베이스 세션
@@ -285,6 +286,7 @@ def build_conversation_context(
         character: AI 캐릭터
         current_message: 현재 사용자 메시지 (동적 Few-shot용)
         emotion_data: 감정 분석 데이터 (선택적)
+        crisis_level: 위기 수준 ("none", "medium", "high", "critical")
         use_advanced_prompting: Few-shot, CoT 등 고급 프롬프팅 사용 여부
 
     Returns:
@@ -345,9 +347,13 @@ def build_conversation_context(
             "content": msg.content
         })
 
-    # 7. 고급 사용자 컨텍스트 구성 (기존 메모리 + 다른 채팅방 내용)
+    # 7. 고급 사용자 컨텍스트 구성 (기존 메모리 + 다른 채팅방 내용 + 캐릭터 정보)
     enhanced_user_context = {
-        "nickname": character.name,  # 캐릭터 이름 사용
+        # 🆕 캐릭터 정보 (프롬프트에 반영)
+        "character_name": character.name,
+        "character_personality": character.personality,
+        "character_description": character.description,
+        # 기존 정보
         "conversation_count": db.query(Conversation).filter(
             Conversation.user_id == user_id,
             Conversation.character_id == character.id
@@ -411,7 +417,7 @@ def build_conversation_context(
             else 3
         )
 
-        # 고급 프롬프트 생성 (Phase 2.2: 선호도 + 동적 Few-shot)
+        # 고급 프롬프트 생성 (Phase 2.2: 선호도 + 동적 Few-shot + Phase 3.1: 위기 대응)
         system_prompt = build_counseling_prompt(
             emotion=detected_emotion,
             use_few_shot=True,
@@ -425,7 +431,9 @@ def build_conversation_context(
             user_id=user_id,
             character_id=character.id,
             current_message=current_message,
-            use_dynamic_few_shot=True
+            use_dynamic_few_shot=True,
+            # Phase 3.1: 위기 대응
+            crisis_level=crisis_level
         )
 
         # 시스템 프롬프트를 첫 메시지에 포함
