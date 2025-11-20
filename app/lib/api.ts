@@ -104,6 +104,25 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 }
 
 /**
+ * 게스트 로그인
+ */
+export async function guestLogin(): Promise<AuthResponse> {
+  return apiRequest<AuthResponse>("/auth/guest-login", {
+    method: "POST",
+  });
+}
+
+/**
+ * 게스트 → 정회원 전환
+ */
+export async function convertGuest(data: SignupRequest): Promise<User> {
+  return apiRequest<User>("/auth/convert-guest", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/**
  * 현재 사용자 정보 조회
  */
 export async function getCurrentUser(): Promise<User> {

@@ -12,6 +12,7 @@ from app.schemas.ai_character import (
 from app.models.ai_character import AICharacter
 from app.models.user import User
 from app.core.security import get_current_user
+from app.api.dependencies import check_guest_limits
 
 router = APIRouter()
 
@@ -43,6 +44,9 @@ async def create_character(
     ### 응답
     - 생성된 AI 캐릭터 정보
     """
+    # 게스트 사용자 제한 체크 (1개까지만 생성 가능)
+    await check_guest_limits(current_user, db, resource_type="ai_character", max_count=1)
+
     # 사용자의 기존 활성 캐릭터를 비활성화
     db.query(AICharacter).filter(
         AICharacter.user_id == current_user.id,

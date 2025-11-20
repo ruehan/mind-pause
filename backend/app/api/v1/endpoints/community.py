@@ -6,6 +6,7 @@ from uuid import UUID
 
 from app.db.database import get_db
 from app.core.security import get_current_user
+from app.api.dependencies import require_registered_user
 from app.models.user import User
 from app.models.post import Post
 from app.models.comment import Comment
@@ -141,6 +142,7 @@ async def get_post(
     "/posts",
     response_model=PostResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_registered_user)],
     summary="게시글 작성",
     description="새로운 게시글을 작성합니다"
 )
@@ -299,6 +301,7 @@ async def get_comments(
     "/comments",
     response_model=CommentResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_registered_user)],
     summary="댓글 작성",
     description="게시글에 댓글을 작성합니다"
 )
@@ -426,6 +429,7 @@ async def delete_comment(
     "/likes",
     response_model=LikeResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(require_registered_user)],
     summary="좋아요 추가",
     description="게시글 또는 댓글에 좋아요를 추가합니다"
 )

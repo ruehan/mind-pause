@@ -11,6 +11,7 @@ import re
 from app.core.security import get_current_user
 from app.db.database import get_db
 from app.models.user import User
+from app.api.dependencies import check_guest_limits
 from app.models.conversation import Conversation
 from app.models.ai_character import AICharacter
 from app.models.message import Message
@@ -193,6 +194,9 @@ async def create_conversation(
     - **character_id**: 대화할 AI 캐릭터 ID
     - **title**: 선택적 대화 제목 (없으면 첫 메시지에서 자동 생성)
     """
+    # 게스트 사용자 제한 체크 (1개까지만 생성 가능)
+    await check_guest_limits(current_user, db, resource_type="conversation", max_count=1)
+
     # AI 캐릭터 존재 및 소유권 확인
     character = db.query(AICharacter).filter(
         AICharacter.id == conversation_data.character_id,

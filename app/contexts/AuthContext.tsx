@@ -16,6 +16,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  guestLogin: () => Promise<void>;
   signup: (
     email: string,
     nickname: string,
@@ -80,6 +81,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
   };
 
+  const guestLogin = async () => {
+    const response = await api.guestLogin();
+    api.saveToken(response.access_token);
+
+    // 게스트 로그인 후 사용자 정보 가져오기
+    const userData = await api.getCurrentUser();
+    setUser(userData);
+  };
+
   const signup = async (email: string, nickname: string, password: string) => {
     const userData = await api.signup({ email, nickname, password });
     setUser(userData);
@@ -123,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         login,
+        guestLogin,
         signup,
         logout,
         refreshUser,
