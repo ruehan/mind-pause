@@ -4,6 +4,7 @@ import { Search, TrendingUp, Clock, Heart, MessageCircle, X } from "lucide-react
 import { AppLayout } from "../components/AppLayout";
 import { PostCard } from "../components/community/PostCard";
 import { Button } from "../components/Button";
+import { Spinner } from "../components/Spinner";
 import { useToast } from "../components/ToastProvider";
 import { useAuth } from "../contexts/AuthContext";
 import * as api from "../lib/api";
@@ -265,7 +266,7 @@ export default function Community() {
             {/* Posts Grid */}
             {isLoading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+                <Spinner size="lg" variant="breathing" className="mx-auto" />
               </div>
             ) : posts.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl border border-neutral-200">

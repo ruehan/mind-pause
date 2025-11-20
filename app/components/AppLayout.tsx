@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { DesktopNav } from "./DesktopNav";
 import { BottomNav } from "./BottomNav";
+import { Spinner } from "./Spinner";
 import { useAuth } from "../contexts/AuthContext";
 
 interface AppLayoutProps {
@@ -25,7 +26,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <Spinner size="lg" variant="breathing" className="mx-auto mb-4" />
           <p className="text-body text-neutral-600">로딩 중...</p>
         </div>
       </div>

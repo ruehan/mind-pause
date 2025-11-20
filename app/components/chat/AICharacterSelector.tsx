@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AvatarPreview } from "./AvatarPreview";
 import { Button } from "../Button";
+import { Spinner } from "../Spinner";
 import { useToast } from "../ToastProvider";
 import * as api from "../../lib/api";
 
@@ -91,7 +92,7 @@ export function AICharacterSelector({
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+              <Spinner size="lg" variant="breathing" />
             </div>
           ) : (
             <>

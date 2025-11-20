@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { AppLayout } from "../components/AppLayout";
+import { Spinner } from "../components/Spinner";
 import * as api from "~/lib/api";
 import type { Challenge, UserChallenge, ChallengeTemplate } from "~/lib/api";
 import { ChallengeCard } from "~/components/challenge/ChallengeCard";
@@ -138,7 +139,7 @@ export default function ChallengePage() {
       <AppLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <Spinner size="lg" variant="breathing" className="mx-auto mb-4" />
             <p className="text-body text-neutral-600">로딩 중...</p>
           </div>
         </div>

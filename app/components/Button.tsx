@@ -56,12 +56,13 @@ export function Button({
   const combinedClassName = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`;
 
   const isDisabled = disabled || loading;
-  const spinnerColor = variant === "secondary" || variant === "ghost" ? "primary" : "white";
   const spinnerSize = size === "sm" ? "sm" : "md";
+  // 버튼 variant에 따라 로딩 스타일 선택
+  const spinnerVariant = variant === "secondary" || variant === "ghost" ? "spin" : "dots";
 
   const content = loading ? (
     <div className="flex items-center gap-2">
-      <Spinner size={spinnerSize} color={spinnerColor} />
+      <Spinner size={spinnerSize} variant={spinnerVariant} />
       <span>{loadingText || children}</span>
     </div>
   ) : (

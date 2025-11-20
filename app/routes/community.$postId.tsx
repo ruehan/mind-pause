@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { AppLayout } from "../components/AppLayout";
 import { Button } from "../components/Button";
+import { Spinner } from "../components/Spinner";
 import { useToast } from "../components/ToastProvider";
 import { useAuth } from "../contexts/AuthContext";
 import * as api from "../lib/api";
@@ -225,7 +226,7 @@ export default function CommunityPost() {
     return (
       <AppLayout>
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
+          <Spinner size="lg" variant="breathing" className="mx-auto" />
         </div>
       </AppLayout>
     );

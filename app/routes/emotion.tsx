@@ -6,6 +6,7 @@ import { EmotionHistoryCard } from "../components/emotion/EmotionHistoryCard";
 import { WeeklyEmotionCalendar } from "../components/emotion/WeeklyEmotionCalendar";
 import { MonthlyEmotionChart } from "../components/emotion/MonthlyEmotionChart";
 import { AccordionSection } from "../components/Accordion";
+import { Spinner } from "../components/Spinner";
 import { useToast } from "../components/ToastProvider";
 import * as api from "../lib/api";
 
@@ -239,7 +240,7 @@ export default function EmotionLog() {
         >
           {isLoading ? (
             <div className="text-center py-16">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-500 mx-auto"></div>
+              <Spinner size="xl" variant="breathing" className="mx-auto" />
               <p className="mt-4 text-body text-neutral-600">데이터를 불러오는 중...</p>
             </div>
           ) : (
