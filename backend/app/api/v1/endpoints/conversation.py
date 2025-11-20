@@ -133,10 +133,23 @@ def update_conversation_metrics(
     if not metrics:
         metrics = ConversationMetrics(conversation_id=conversation_id)
         db.add(metrics)
+        db.flush()  # default 값 적용을 위해 flush
 
     # 토큰 수 추정 (대략 4자 = 1토큰)
     input_tokens = len(user_content) // 4
     output_tokens = len(ai_content) // 4
+
+    # None 값 방어 코드 추가
+    if metrics.total_messages is None:
+        metrics.total_messages = 0
+    if metrics.user_messages is None:
+        metrics.user_messages = 0
+    if metrics.ai_messages is None:
+        metrics.ai_messages = 0
+    if metrics.total_input_tokens is None:
+        metrics.total_input_tokens = 0
+    if metrics.total_output_tokens is None:
+        metrics.total_output_tokens = 0
 
     # 메시지 수 증가
     metrics.total_messages += 2  # 사용자 + AI
