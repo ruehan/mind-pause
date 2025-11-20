@@ -21,6 +21,8 @@ function escapeHtml(text: string): string {
  * 지원 형식:
  * - **bold** → <strong>bold</strong>
  * - *italic* → <em>italic</em>
+ * - - 리스트 → <ul><li>리스트</li></ul>
+ * - 1. 번호 리스트 → <ol><li>번호 리스트</li></ol>
  * - \n → <br>
  */
 export function renderMarkdown(text: string): string {
@@ -33,7 +35,27 @@ export function renderMarkdown(text: string): string {
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
   // *italic* 변환 (이미 bold로 처리되지 않은 것만)
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  html = html.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+
+  // 번호 리스트 변환 (1. 2. 3. ...)
+  html = html.replace(/(?:^|\n)(\d+\.\s+.+?)(?=\n\d+\.\s+|\n\n|$)/g, (match) => {
+    const items = match.trim().split(/\n(?=\d+\.\s+)/);
+    const listItems = items
+      .map(item => item.replace(/^\d+\.\s+/, ''))
+      .map(item => `<li>${item}</li>`)
+      .join('');
+    return `<ol class="list-decimal ml-4 my-2 space-y-1">${listItems}</ol>`;
+  });
+
+  // 불릿 리스트 변환 (- 또는 * 시작)
+  html = html.replace(/(?:^|\n)([-*]\s+.+?)(?=\n[-*]\s+|\n\n|$)/g, (match) => {
+    const items = match.trim().split(/\n(?=[-*]\s+)/);
+    const listItems = items
+      .map(item => item.replace(/^[-*]\s+/, ''))
+      .map(item => `<li>${item}</li>`)
+      .join('');
+    return `<ul class="list-disc ml-4 my-2 space-y-1">${listItems}</ul>`;
+  });
 
   // 줄바꿈 변환
   html = html.replace(/\n/g, '<br>');
