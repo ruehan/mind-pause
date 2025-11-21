@@ -56,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         try {
           const userData = await api.getCurrentUser();
+          console.log("AuthContext: Loaded user data", userData);
           setUser(userData);
         } catch (error) {
           // 토큰이 유효하지 않으면 제거
@@ -74,10 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await api.login({ email, password });
+    console.log("AuthContext: Login successful", response);
     api.saveToken(response.access_token);
+    console.log("AuthContext: Token saved to localStorage", localStorage.getItem("access_token")?.substring(0, 20) + "...");
 
-    // 로그인 후 사용자 정보 가져오기
-    const userData = await api.getCurrentUser();
+    // 로그인 후 사용자 정보 가져오기 (토큰 명시적 전달)
+    const userData = await api.getCurrentUser(response.access_token);
+    console.log("AuthContext: User loaded after login", userData);
+    console.log("AuthContext: is_anonymous status:", userData.is_anonymous);
     setUser(userData);
   };
 

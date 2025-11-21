@@ -7,8 +7,18 @@ interface RecentActivityTimelineProps {
 }
 
 export function RecentActivityTimeline({ activities }: RecentActivityTimelineProps) {
+  interface ActivityItem {
+    type: "emotion" | "post" | "comment" | "challenge";
+    id: string;
+    title: string;
+    content: string;
+    timestamp: Date;
+    link: string;
+    meta?: string;
+  }
+
   // 모든 활동을 하나의 배열로 합치고 시간순 정렬
-  const allActivities = [
+  const allActivities: ActivityItem[] = [
     ...activities.emotion_logs.map((log) => ({
       type: "emotion" as const,
       id: log.id,

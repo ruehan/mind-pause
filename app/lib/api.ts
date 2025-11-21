@@ -16,6 +16,13 @@ export class UnauthorizedError extends Error {
   }
 }
 
+export class ForbiddenError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ForbiddenError";
+  }
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -50,10 +57,11 @@ export interface User {
  */
 async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  explicitToken?: string
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  const token = localStorage.getItem("access_token");
+  const token = explicitToken || localStorage.getItem("access_token");
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -62,11 +70,16 @@ async function apiRequest<T>(
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
+    console.log(`API Request to ${endpoint}: Using token`, token.substring(0, 20) + "...");
+  } else {
+    console.log(`API Request to ${endpoint}: No token found`);
   }
 
   const response = await fetch(url, {
     ...options,
     headers,
+    cache: "no-store",
+    credentials: "omit", // 쿠키 간섭 방지
   });
 
   if (!response.ok) {
@@ -75,6 +88,11 @@ async function apiRequest<T>(
     // 401 에러는 UnauthorizedError로 throw
     if (response.status === 401) {
       throw new UnauthorizedError(error.detail || "인증이 만료되었습니다");
+    }
+
+    // 403 에러는 ForbiddenError로 throw
+    if (response.status === 403) {
+      throw new ForbiddenError(error.detail || "접근 권한이 없습니다");
     }
 
     throw new Error(error.detail || "API 요청 실패");
@@ -122,13 +140,15 @@ export async function convertGuest(data: SignupRequest): Promise<User> {
   });
 }
 
+// ... (skip other functions)
+
 /**
  * 현재 사용자 정보 조회
  */
-export async function getCurrentUser(): Promise<User> {
+export async function getCurrentUser(token?: string): Promise<User> {
   return apiRequest<User>("/auth/me", {
     method: "GET",
-  });
+  }, token);
 }
 
 /**
@@ -203,6 +223,7 @@ export interface AICharacter {
   description?: string;
   avatar_options?: AvatarOptions;
   system_prompt?: string;
+  traits: string[];
   is_active: boolean;
   created_at: string;
   updated_at: string;

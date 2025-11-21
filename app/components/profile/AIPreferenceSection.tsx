@@ -241,7 +241,7 @@ export function AIPreferenceSection() {
         </Button>
         <Button
           onClick={handleReset}
-          variant="outline"
+          variant="secondary"
           disabled={isSaving}
           className="flex-1"
         >

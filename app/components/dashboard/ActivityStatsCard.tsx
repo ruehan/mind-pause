@@ -6,7 +6,20 @@ interface ActivityStatsCardProps {
 }
 
 export function ActivityStatsCard({ summary }: ActivityStatsCardProps) {
-  const stats = [
+  interface StatItem {
+    label: string;
+    value: number;
+    unit: string;
+    trend?: "up" | "down" | null;
+    highlight?: boolean;
+  }
+
+  interface StatCategory {
+    category: string;
+    items: StatItem[];
+  }
+
+  const stats: StatCategory[] = [
     {
       category: "감정 기록",
       items: [

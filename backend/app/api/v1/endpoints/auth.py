@@ -8,7 +8,7 @@ import string
 from app.db.database import get_db
 from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, ErrorResponse
 from app.models.user import User, AuthProvider
-from app.core.security import get_password_hash, verify_password, create_access_token
+from app.core.security import get_password_hash, verify_password, create_access_token, get_current_user as get_authenticated_user
 
 router = APIRouter()
 
@@ -261,7 +261,7 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
         }
     }
 )
-async def get_current_user(db: Session = Depends(get_db)):
+async def get_current_user(current_user: User = Depends(get_authenticated_user)):
     """
     ## 현재 사용자 정보 조회
 
@@ -277,17 +277,8 @@ async def get_current_user(db: Session = Depends(get_db)):
     ### 주의
     - 이 엔드포인트는 JWT 인증이 필요합니다
     - 토큰이 없거나 만료된 경우 401 에러 반환
-    - (현재는 임시로 첫 번째 사용자 반환 - 추후 JWT 미들웨어 추가 예정)
     """
-    # TODO: JWT 토큰에서 user_id 추출
-    # 임시로 첫 번째 사용자 반환
-    user = db.query(User).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="사용자를 찾을 수 없습니다"
-        )
-    return user
+    return current_user
 
 
 @router.post(
@@ -408,7 +399,7 @@ async def guest_login(db: Session = Depends(get_db)):
 async def convert_guest(
     user_data: UserCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_authenticated_user)
 ):
     """
     ## 게스트 → 정회원 전환

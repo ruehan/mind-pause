@@ -11,6 +11,7 @@ interface InputProps {
   helperText?: string;
   required?: boolean;
   disabled?: boolean;
+  className?: string;
 }
 
 export function Input({
@@ -23,6 +24,7 @@ export function Input({
   helperText,
   required = false,
   disabled = false,
+  className = "",
 }: InputProps) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -56,6 +58,7 @@ export function Input({
                 ? "border-error focus:ring-error focus:border-error"
                 : "border-neutral-300 focus:ring-primary-500 focus:border-primary-500"
             }
+            ${className}
           `}
         />
 

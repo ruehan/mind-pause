@@ -16,4 +16,12 @@ export default [
 	route("admin", "routes/admin.tsx"),
 	route("error", "routes/error.tsx"),
 	route("avatar-demo", "routes/avatar-demo.tsx"),
+	route("home-improve", "routes/home_improve.tsx"),
+	route("login-improve", "routes/login_improve.tsx"),
+	route("dashboard-improve", "routes/dashboard_improve.tsx"),
+	route("emotion-improve", "routes/emotion_improve.tsx"),
+	route("chat-improve", "routes/chat_improve.tsx"),
+	route("community-improve", "routes/community_improve.tsx"),
+	route("challenge-improve", "routes/challenge_improve.tsx"),
+	route("profile-improve", "routes/profile_improve.tsx"),
 ] satisfies RouteConfig;

@@ -140,7 +140,7 @@ const personalityPresets = [
 interface AICharacterCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (character: api.AICharacter) => void;
 }
 
 export function AICharacterCreateModal({
@@ -222,7 +222,12 @@ export function AICharacterCreateModal({
       });
 
       toast.success("성공", "AI 친구가 생성되었습니다");
-      onSuccess();
+      onSuccess(await api.createAICharacter({
+        name: name.trim(),
+        personality: finalPersonality.trim(),
+        description: description.trim() || undefined,
+        avatar_options: avatar,
+      }));
       onClose();
     } catch (error) {
       if (error instanceof api.UnauthorizedError) {
