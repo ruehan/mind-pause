@@ -37,15 +37,31 @@ async def create_emotion_log(
     db: Session = Depends(get_db)
 ):
     """감정 기록 생성"""
+    
+    # AI 피드백 생성 (제공되지 않은 경우 자동 생성)
+    ai_feedback = emotion_data.ai_feedback
+    if not ai_feedback:
+        from app.services.emotion_feedback_service import generate_emotion_feedback
+        try:
+            ai_feedback = await generate_emotion_feedback(
+                db=db,
+                user_id=current_user.id,
+                emotion_value=emotion_data.emotion_value,
+                emotion_label=emotion_data.emotion_label,
+                note=emotion_data.note
+            )
+        except Exception as e:
+            print(f"AI 피드백 생성 실패: {str(e)}")
+            # 피드백 생성 실패 시에도 기록은 저장
+            ai_feedback = None
 
-    # AI 피드백은 프론트엔드에서 생성하여 전달
     emotion_log = EmotionLog(
         user_id=current_user.id,
         emotion_value=emotion_data.emotion_value,
         emotion_label=emotion_data.emotion_label,
         emotion_emoji=emotion_data.emotion_emoji,
         note=emotion_data.note,
-        ai_feedback=emotion_data.ai_feedback
+        ai_feedback=ai_feedback
     )
 
     db.add(emotion_log)

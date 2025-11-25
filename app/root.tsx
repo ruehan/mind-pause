@@ -24,6 +24,7 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css",
   },
+  { rel: "icon", type: "image/png", href: "/logo.png" },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -55,7 +56,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     const publicPaths = ["/", "/login"];
     const isPublicPath = publicPaths.some((path) =>
       location.pathname === path || location.pathname.startsWith(path + "/")
-    );
+    ) || location.pathname.includes("improve");
 
     if (!isAuthenticated && !isPublicPath) {
       navigate("/", { replace: true });
