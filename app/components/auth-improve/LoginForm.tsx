@@ -1,16 +1,49 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "~/components/Button";
 import { Input } from "~/components/Input";
 import { Mail, Lock, Github, Chrome } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "~/contexts/AuthContext";
+import { useToast } from "~/components/ToastProvider";
+import { SocialLoginButtons } from "./SocialLoginButtons";
 
 export function LoginForm() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const { showToast } = useToast();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      showToast("이메일과 비밀번호를 모두 입력해주세요", { type: "error" });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await login(email, password);
+      showToast("로그인 성공!", { type: "success" });
+      navigate("/dashboard");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "이메일 또는 비밀번호가 올바르지 않습니다";
+      showToast(errorMessage, { type: "error" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+      <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-4">
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 z-10" />
@@ -20,6 +53,7 @@ export function LoginForm() {
               value={email}
               onChange={setEmail}
               className="pl-10 py-6 bg-neutral-50 border-neutral-200 focus:bg-white transition-colors"
+              disabled={isLoading}
             />
           </div>
           <div className="relative">
@@ -30,6 +64,7 @@ export function LoginForm() {
               value={password}
               onChange={setPassword}
               className="pl-10 py-6 bg-neutral-50 border-neutral-200 focus:bg-white transition-colors"
+              disabled={isLoading}
             />
           </div>
         </div>
@@ -44,8 +79,14 @@ export function LoginForm() {
           </Link>
         </div>
 
-        <Button variant="primary" size="lg" className="w-full py-6 text-lg shadow-primary hover:shadow-primary-strong transition-all duration-300">
-          로그인하기
+        <Button 
+          type="submit" 
+          variant="primary" 
+          size="lg" 
+          className="w-full py-6 text-lg shadow-primary hover:shadow-primary-strong transition-all duration-300"
+          disabled={isLoading}
+        >
+          {isLoading ? "로그인 중..." : "로그인하기"}
         </Button>
       </form>
 
@@ -58,21 +99,14 @@ export function LoginForm() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <button className="flex items-center justify-center gap-2 px-4 py-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200">
-          <Chrome className="w-5 h-5" />
-          <span className="font-medium text-neutral-700">Google</span>
-        </button>
-        <button className="flex items-center justify-center gap-2 px-4 py-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all duration-200">
-          <Github className="w-5 h-5" />
-          <span className="font-medium text-neutral-700">GitHub</span>
-        </button>
-      </div>
+      <SocialLoginButtons />
+
+
 
       <p className="text-center text-neutral-600">
         아직 계정이 없으신가요?{" "}
         <Link to="?mode=signup" className="text-primary-600 font-bold hover:underline">
-          3초 만에 회원가입
+          회원가입
         </Link>
       </p>
     </div>

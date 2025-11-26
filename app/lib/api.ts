@@ -195,6 +195,97 @@ export function isTokenValid(): boolean {
   return hasToken() && !isTokenExpired();
 }
 
+// ========================================
+// Image Upload
+// ========================================
+
+export interface UploadResponse {
+  url: string;
+  public_id: string;
+  format: string;
+  width: number;
+  height: number;
+  size: number;
+}
+
+/**
+ * 이미지 업로드
+ */
+export async function uploadImage(
+  file: File,
+  folder: string = "mind-pause"
+): Promise<UploadResponse> {
+  const token = localStorage.getItem("access_token");
+  const formData = new FormData();
+  formData.append("file", file);
+  
+  const url = `${API_BASE_URL}/upload/image?folder=${encodeURIComponent(folder)}`;
+  
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+  
+  if (!response.ok) {
+    const error: ApiError = await response.json();
+    
+    if (response.status === 401) {
+      throw new UnauthorizedError(error.detail || "인증이 만료되었습니다");
+    }
+    
+    throw new Error(error.detail || "이미지 업로드 실패");
+  }
+  
+  return response.json();
+}
+
+/**
+ * 이미지 삭제
+ */
+export async function deleteImage(publicId: string): Promise<void> {
+  const token = localStorage.getItem("access_token");
+  const url = `${API_BASE_URL}/upload/image/${encodeURIComponent(publicId)}`;
+  
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (!response.ok) {
+    const error: ApiError = await response.json();
+    
+    if (response.status === 401) {
+      throw new UnauthorizedError(error.detail || "인증이 만료되었습니다");
+    }
+    
+    throw new Error(error.detail || "이미지 삭제 실패");
+  }
+}
+
+// ========================================
+// User Profile
+// ========================================
+
+export interface UserProfileUpdate {
+  nickname?: string;
+  profile_image_url?: string;
+}
+
+/**
+ * 사용자 프로필 업데이트
+ */
+export async function updateUserProfile(data: UserProfileUpdate): Promise<User> {
+  return apiRequest<User>("/user/profile", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
 /**
  * AI 캐릭터 관련 인터페이스
  */
@@ -345,8 +436,16 @@ export interface MessageCreate {
 /**
  * 대화 목록 조회
  */
-export async function getConversations(skip = 0, limit = 20): Promise<Conversation[]> {
-  return apiRequest<Conversation[]>(`/chat/conversations?skip=${skip}&limit=${limit}`, {
+export async function getConversations(
+  skip = 0, 
+  limit = 20, 
+  characterId?: string
+): Promise<Conversation[]> {
+  let url = `/chat/conversations?skip=${skip}&limit=${limit}`;
+  if (characterId) {
+    url += `&character_id=${characterId}`;
+  }
+  return apiRequest<Conversation[]>(url, {
     method: "GET",
   });
 }

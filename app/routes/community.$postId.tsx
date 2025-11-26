@@ -264,11 +264,19 @@ export default function CommunityPost() {
           {/* Post Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                <span className="text-h4 text-primary-600">
-                  {post.is_anonymous ? "🙈" : post.user?.nickname?.[0] || "?"}
-                </span>
-              </div>
+              {post.is_anonymous || !post.user?.profile_image_url ? (
+                <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
+                  <span className="text-h4 text-primary-600">
+                    {post.is_anonymous ? "🙈" : post.user?.nickname?.[0] || "?"}
+                  </span>
+                </div>
+              ) : (
+                <img
+                  src={post.user.profile_image_url}
+                  alt={post.user.nickname || "User"}
+                  className="w-10 h-10 rounded-full object-cover border border-primary-100"
+                />
+              )}
               <div>
                 <p className="text-body-sm font-medium text-neutral-900">
                   {post.is_anonymous ? "익명" : post.user?.nickname || "알 수 없음"}
@@ -385,11 +393,19 @@ export default function CommunityPost() {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
-                        <span className="text-body-sm text-primary-600">
-                          {comment.is_anonymous ? "🙈" : comment.user?.nickname?.[0] || "?"}
-                        </span>
-                      </div>
+                      {comment.is_anonymous || !comment.user?.profile_image_url ? (
+                        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+                          <span className="text-body-sm text-primary-600">
+                            {comment.is_anonymous ? "🙈" : comment.user?.nickname?.[0] || "?"}
+                          </span>
+                        </div>
+                      ) : (
+                        <img
+                          src={comment.user.profile_image_url}
+                          alt={comment.user.nickname || "User"}
+                          className="w-8 h-8 rounded-full object-cover border border-primary-100"
+                        />
+                      )}
                       <div>
                         <p className="text-body-sm font-medium text-neutral-900">
                           {comment.is_anonymous ? "익명" : comment.user?.nickname || "알 수 없음"}

@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     LLM_TEMPERATURE: float = 0.7  # 응답의 창의성 (0.0 ~ 1.0)
     LLM_MAX_OUTPUT_TOKENS: int = 2048  # 최대 출력 토큰 수
 
+    # Cloudinary 설정
+    CLOUDINARY_CLOUD_NAME: str
+    CLOUDINARY_API_KEY: str
+    CLOUDINARY_API_SECRET: str
+
     class Config:
         env_file = ".env"
         case_sensitive = True

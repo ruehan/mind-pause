@@ -8,10 +8,8 @@ export function Footer() {
           {/* Logo and Description */}
           <div className="md:col-span-2">
             <Link to="/" className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-lavender-500 rounded-lg flex items-center justify-center">
-                <span className="text-white text-xl font-bold">,</span>
-              </div>
-              <span className="text-h5 font-bold text-neutral-900">
+              <img src="/logo.png" alt="마음쉼표 로고" className="w-16 h-16 rounded-lg" />
+              <span className="text-2xl font-bold text-neutral-900 tracking-tight">
                 마음쉼표
               </span>
             </Link>

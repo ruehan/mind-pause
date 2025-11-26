@@ -10,7 +10,8 @@ import {
   Search,
   Menu,
   X,
-  Heart
+  Heart,
+  HelpCircle
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "~/contexts/AuthContext";
@@ -25,13 +26,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const navigation = [
-    { name: "대시보드", href: "/dashboard-improve", icon: LayoutDashboard },
-    { name: "감정 기록", href: "/emotion-improve", icon: Heart },
-    { name: "마음 대화", href: "/chat-improve", icon: MessageCircle },
-    { name: "감정 분석", href: "/metrics", icon: BarChart3 },
-    { name: "커뮤니티", href: "/community-improve", icon: MessageCircle },
-    { name: "챌린지", href: "/challenge-improve", icon: Trophy },
-    { name: "설정", href: "/profile-improve", icon: Settings },
+    { name: "대시보드", href: "/dashboard", icon: LayoutDashboard },
+    { name: "감정 기록", href: "/emotion", icon: Heart },
+    { name: "마음 대화", href: "/chat", icon: MessageCircle },
+    { name: "커뮤니티", href: "/community", icon: MessageCircle },
+    { name: "챌린지", href: "/challenge", icon: Trophy },
+    { name: "설정", href: "/profile", icon: Settings },
   ];
 
   return (
@@ -54,10 +54,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Logo */}
           <div className="p-6 border-b border-neutral-100">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-lavender-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">,</span>
-              </div>
-              <span className="text-xl font-bold text-neutral-900">마음쉼표</span>
+              <img src="/logo.png" alt="마음쉼표 로고" className="w-14 h-14 rounded-lg" />
+              <span className="text-xl font-bold text-neutral-900 tracking-tight">마음쉼표</span>
             </Link>
           </div>
 
@@ -136,7 +134,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Link 
+                to="/qna_dashboard"
+                className="p-2 text-neutral-500 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors"
+                title="자주 묻는 질문"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </Link>
               <button className="relative p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-50 rounded-full transition-colors">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>

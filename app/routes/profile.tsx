@@ -1,46 +1,46 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { AppLayout } from "../components/AppLayout";
-import { SettingsNav } from "../components/profile/SettingsNav";
-import { ProfileHeader } from "../components/profile/ProfileHeader";
-import { ProfileStatistics } from "../components/profile/ProfileStatistics";
-import { BadgeShowcase, defaultBadges } from "../components/challenge/BadgeShowcase";
-import { ProfileImageSection } from "../components/profile/ProfileImageSection";
-import { SocialLoginCard } from "../components/profile/SocialLoginCard";
-import { NotificationCheckbox } from "../components/profile/NotificationCheckbox";
-import { AIPreferenceSection } from "../components/profile/AIPreferenceSection";
-import { Button } from "../components/Button";
-import { useToast } from "../components/ToastProvider";
-import { ConfirmDialog } from "../components/ConfirmDialog";
-import { useAuth } from "../contexts/AuthContext";
+import { DashboardLayout } from "~/components/dashboard-improve/DashboardLayout";
+import { ProfileLayout } from "~/components/profile-improve/ProfileLayout";
+import { SettingsNav } from "~/components/profile-improve/SettingsNav";
+import { ProfileHeader } from "~/components/profile-improve/ProfileHeader";
+import { ProfileStatistics } from "~/components/profile-improve/ProfileStatistics";
+import { BadgeShowcase, defaultBadges } from "~/components/profile-improve/BadgeShowcase";
+import { NotificationCheckbox } from "~/components/profile/NotificationCheckbox"; // Reuse existing
+import { ImageUpload } from "~/components/ImageUpload";
+import { Button } from "~/components/Button";
+import { useToast } from "~/components/ToastProvider";
+import { ConfirmDialog } from "~/components/ConfirmDialog";
+import { useAuth } from "~/contexts/AuthContext";
+import { updateUserProfile } from "~/lib/api";
+import type { UploadResponse } from "~/lib/api";
+import { X } from "lucide-react";
+import type { Route } from "./+types/profile";
 
-export function meta() {
+export function meta({}: Route.MetaArgs) {
   return [
     { title: "프로필 설정 - 마음쉼표" },
-    {
-      name: "description",
-      content: "나의 프로필과 설정을 관리하세요",
-    },
+    { name: "description", content: "나의 프로필과 설정을 관리하세요" },
   ];
 }
 
-export default function Profile() {
+export default function ProfileImprove() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const toast = useToast();
+  
   const [activeSection, setActiveSection] = useState<
-    "profile" | "ai-preference" | "stats" | "notification" | "security" | "account" | "data" | "info"
+    "profile" | "stats" | "notification" | "security" | "account" | "data" | "info"
   >("profile");
+  
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isShowingImageUpload, setIsShowingImageUpload] = useState(false);
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
-  // User data from auth context
   const [nickname, setNickname] = useState(user?.nickname || "");
   const [profileImage, setProfileImage] = useState<string | undefined>(user?.profile_image_url || undefined);
 
-  // Update nickname and profile image when user data changes
   useEffect(() => {
     if (user) {
       setNickname(user.nickname);
@@ -56,349 +56,251 @@ export default function Profile() {
     challenge: true,
   });
 
-  const handleImageChange = (file: File) => {
-    // TODO: Upload image to server
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setProfileImage(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-    console.log("Uploading image:", file);
-  };
-
-  const handleImageDelete = () => {
-    setProfileImage(undefined);
-    console.log("Deleting profile image");
-  };
-
-  const handleSaveProfile = async () => {
-    setIsSavingProfile(true);
+  const handleNicknameChange = async (newNickname: string) => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log("Saving profile:", { nickname, profileImage });
-      toast.success("변경사항이 저장되었습니다", "프로필이 성공적으로 업데이트되었습니다");
+      await updateUserProfile({ nickname: newNickname });
+      setNickname(newNickname);
+      toast.success("성공", "닉네임이 변경되었습니다.");
     } catch (error) {
-      toast.error("저장 실패", "프로필 저장 중 오류가 발생했습니다");
-    } finally {
-      setIsSavingProfile(false);
+      toast.error("오류", error instanceof Error ? error.message : "닉네임 변경에 실패했습니다.");
+      throw error;
+    }
+  };
+
+  const handleImageUploadSuccess = async (response: UploadResponse) => {
+    try {
+      await updateUserProfile({ profile_image_url: response.url });
+      setProfileImage(response.url);
+      toast.success("성공", "프로필 이미지가 변경되었습니다.");
+    } catch (error) {
+      toast.error("오류", error instanceof Error ? error.message : "이미지 변경에 실패했습니다.");
+      throw error;
     }
   };
 
   const handleSaveNotifications = async () => {
     setIsSavingNotifications(true);
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log("Saving notifications:", emailNotifications);
-      toast.success("알림 설정이 저장되었습니다", "변경사항이 적용되었습니다");
+      toast.success("저장 완료", "알림 설정이 저장되었습니다.");
     } catch (error) {
-      toast.error("저장 실패", "알림 설정 저장 중 오류가 발생했습니다");
+      toast.error("오류", "저장 중 문제가 발생했습니다.");
     } finally {
       setIsSavingNotifications(false);
     }
   };
 
-  const handleSocialConnect = (provider: string) => {
-    console.log("Connecting to:", provider);
-    // TODO: Implement OAuth flow
-  };
-
-  const handleSocialDisconnect = (provider: string) => {
-    console.log("Disconnecting from:", provider);
-    // TODO: Implement disconnect
-  };
-
   const handleLogout = () => {
     logout();
-    toast.showToast("로그아웃되었습니다", { type: "success" });
+    toast.success("로그아웃", "성공적으로 로그아웃되었습니다.");
     navigate("/");
   };
 
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true);
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log("Deleting account");
-      toast.success("계정 탈퇴 처리됨", "7일 이내 복구 가능합니다");
+      toast.success("탈퇴 처리됨", "7일 이내 복구 가능합니다.");
       setIsDeleteDialogOpen(false);
-      // TODO: Redirect to login page
+      navigate("/");
     } catch (error) {
-      toast.error("탈퇴 실패", "계정 탈퇴 처리 중 오류가 발생했습니다");
+      toast.error("오류", "탈퇴 처리 중 문제가 발생했습니다.");
     } finally {
       setIsDeletingAccount(false);
     }
   };
 
   return (
-    <AppLayout>
-      <div className="flex h-full -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
-        {/* Settings Navigation Sidebar */}
-        <div className="hidden lg:block">
+    <DashboardLayout>
+      <ProfileLayout>
+        <div className="animate-fade-in space-y-8">
+          {/* Header Section */}
+          <ProfileHeader
+            nickname={nickname}
+            email={user?.is_anonymous ? "게스트 계정" : (user?.email || "이메일 없음")}
+            joinDate={user?.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : "2024.01.01"}
+            profileImage={profileImage}
+            completionPercentage={75}
+            onNicknameChange={handleNicknameChange}
+            onImageUpload={handleImageUploadSuccess}
+            isShowingImageUpload={isShowingImageUpload}
+            onToggleImageUpload={() => setIsShowingImageUpload(!isShowingImageUpload)}
+          />
+
+          {/* Navigation Tabs */}
           <SettingsNav
             activeSection={activeSection}
             onSectionChange={setActiveSection}
           />
-        </div>
 
-        {/* Content Area */}
-        <div className="flex-1 p-6 lg:p-8 max-w-6xl mx-auto w-full bg-neutral-50 overflow-y-auto">
-          {/* Profile Overview Section */}
-          {activeSection === "profile" && (
-            <div className="space-y-8">
-              {/* Profile Header */}
-              <ProfileHeader
-                nickname={nickname}
-                email={user?.email || "이메일 없음"}
-                joinDate={user?.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }) : ""}
-                profileImage={profileImage}
-                completionPercentage={75}
-              />
-
-              {/* Statistics */}
-              <ProfileStatistics
-                totalEmotionLogs={125}
-                averageEmotionScore={2.3}
-                challengeCompletionRate={87}
-                communityLikes={42}
-                communityComments={18}
-                currentStreak={5}
-              />
-
-              {/* Badges */}
-              <BadgeShowcase badges={defaultBadges} />
-            </div>
-          )}
-
-          {/* AI Preference Section */}
-          {activeSection === "ai-preference" && (
-            <AIPreferenceSection />
-          )}
-
-          {/* Stats Detail Section */}
-          {activeSection === "stats" && (
-            <div>
-              <h1 className="text-h2 text-neutral-900 mb-6 flex items-center gap-2">
-                📊 상세 통계
-              </h1>
-              <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-                <p className="text-body text-neutral-600">
-                  상세 통계 기능은 곧 제공될 예정입니다.
-                </p>
+          {/* Main Content */}
+          <div className="min-h-[400px]">
+            {activeSection === "profile" && (
+              <div className="animate-fade-in">
+                <ProfileStatistics
+                  totalEmotionLogs={125}
+                  averageEmotionScore={2.3}
+                  challengeCompletionRate={87}
+                  communityLikes={42}
+                  communityComments={18}
+                  currentStreak={5}
+                />
+                <BadgeShowcase badges={defaultBadges} />
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Notification Section */}
-          {activeSection === "notification" && (
-            <div>
-              <h1 className="text-h2 text-neutral-900 mb-6 flex items-center gap-2">
-                🔔 알림 설정
-              </h1>
-
-              <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6 mb-6">
-                <h3 className="text-h4 text-neutral-900 mb-4">📧 이메일 알림</h3>
-                <div className="space-y-4">
-                  <NotificationCheckbox
-                    label="매일 감정 기록 리마인더 (오후 8시)"
-                    checked={emailNotifications.dailyReminder}
-                    onChange={(checked) =>
-                      setEmailNotifications({
-                        ...emailNotifications,
-                        dailyReminder: checked,
-                      })
-                    }
-                  />
-                  <NotificationCheckbox
-                    label="주간 감정 요약 리포트 (일요일 오전 10시)"
-                    checked={emailNotifications.weeklySummary}
-                    onChange={(checked) =>
-                      setEmailNotifications({
-                        ...emailNotifications,
-                        weeklySummary: checked,
-                      })
-                    }
-                  />
-                  <NotificationCheckbox
-                    label="새로운 댓글 알림"
-                    checked={emailNotifications.newComment}
-                    onChange={(checked) =>
-                      setEmailNotifications({
-                        ...emailNotifications,
-                        newComment: checked,
-                      })
-                    }
-                  />
-                  <NotificationCheckbox
-                    label="공감 알림"
-                    checked={emailNotifications.like}
-                    onChange={(checked) =>
-                      setEmailNotifications({
-                        ...emailNotifications,
-                        like: checked,
-                      })
-                    }
-                  />
-                  <NotificationCheckbox
-                    label="챌린지 시작 및 완료 알림"
-                    checked={emailNotifications.challenge}
-                    onChange={(checked) =>
-                      setEmailNotifications({
-                        ...emailNotifications,
-                        challenge: checked,
-                      })
-                    }
-                  />
+            {activeSection === "notification" && (
+              <div className="animate-fade-in">
+                <h2 className="text-h2 font-bold text-neutral-900 mb-6">알림 설정</h2>
+                <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm p-6 mb-6">
+                  <h3 className="text-h4 font-bold text-neutral-900 mb-4">이메일 알림</h3>
+                  <div className="space-y-4">
+                    <NotificationCheckbox
+                      label="매일 감정 기록 리마인더 (오후 8시)"
+                      checked={emailNotifications.dailyReminder}
+                      onChange={(checked) => setEmailNotifications({ ...emailNotifications, dailyReminder: checked })}
+                    />
+                    <NotificationCheckbox
+                      label="주간 감정 요약 리포트 (일요일 오전 10시)"
+                      checked={emailNotifications.weeklySummary}
+                      onChange={(checked) => setEmailNotifications({ ...emailNotifications, weeklySummary: checked })}
+                    />
+                    <NotificationCheckbox
+                      label="새로운 댓글 알림"
+                      checked={emailNotifications.newComment}
+                      onChange={(checked) => setEmailNotifications({ ...emailNotifications, newComment: checked })}
+                    />
+                    <NotificationCheckbox
+                      label="공감 알림"
+                      checked={emailNotifications.like}
+                      onChange={(checked) => setEmailNotifications({ ...emailNotifications, like: checked })}
+                    />
+                    <NotificationCheckbox
+                      label="챌린지 시작 및 완료 알림"
+                      checked={emailNotifications.challenge}
+                      onChange={(checked) => setEmailNotifications({ ...emailNotifications, challenge: checked })}
+                    />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Button
+                    variant="primary"
+                    onClick={handleSaveNotifications}
+                    loading={isSavingNotifications}
+                  >
+                    변경사항 저장
+                  </Button>
                 </div>
               </div>
+            )}
 
-              <div className="text-center">
-                <Button
-                  variant="primary"
-                  size="lg"
-                  onClick={handleSaveNotifications}
-                  loading={isSavingNotifications}
-                  loadingText="저장 중..."
-                >
-                  변경사항 저장
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Security Section */}
-          {activeSection === "security" && (
-            <div>
-              <h1 className="text-h2 text-neutral-900 mb-6 flex items-center gap-2">
-                🔒 보안 설정
-              </h1>
-
-              <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-                <h3 className="text-h4 text-neutral-900 mb-4">🔑 비밀번호 변경</h3>
-                <p className="text-body text-neutral-600 mb-6">
-                  비밀번호 변경 기능은 곧 제공될 예정입니다.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Account Section */}
-          {activeSection === "account" && (
-            <div className="space-y-6">
-              <h1 className="text-h2 text-neutral-900 mb-6 flex items-center gap-2">
-                🌐 계정 관리
-              </h1>
-
-              {/* Logout Section */}
-              <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-                <h3 className="text-h4 text-neutral-900 mb-4 flex items-center gap-2">
-                  🚪 로그아웃
-                </h3>
-                <p className="text-body text-neutral-600 mb-4">
-                  현재 계정에서 로그아웃합니다. 로그인 세션은 30분 후 자동으로 만료됩니다.
-                </p>
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  onClick={handleLogout}
-                  className="w-full"
-                >
-                  로그아웃
-                </Button>
-              </div>
-
-              {/* Delete Account Section */}
-              <div className="bg-red-50 rounded-xl border-2 border-red-200 p-6">
-                <h3 className="text-h4 text-red-700 font-bold mb-4 flex items-center gap-2">
-                  ⚠️ 계정 탈퇴
-                </h3>
-                <div className="text-sm text-neutral-700 space-y-2 mb-4">
-                  <p>탈퇴 시 주의사항:</p>
-                  <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>모든 감정 기록 및 데이터가 영구적으로 삭제됩니다</li>
-                    <li>커뮤니티 게시글 및 댓글은 익명 처리됩니다</li>
-                    <li>탈퇴 후 30일간 재가입이 제한됩니다</li>
-                    <li>탈퇴 후 7일 이내 복구 가능 (이후 영구 삭제)</li>
-                  </ul>
+            {activeSection === "account" && (
+              <div className="animate-fade-in space-y-6">
+                <h2 className="text-h2 font-bold text-neutral-900 mb-6">계정 관리</h2>
+                
+                <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm p-6">
+                  <h3 className="text-h4 font-bold text-neutral-900 mb-2">로그아웃</h3>
+                  <p className="text-body-sm text-neutral-600 mb-4">
+                    현재 기기에서 로그아웃합니다.
+                  </p>
+                  <Button variant="secondary" onClick={handleLogout}>
+                    로그아웃
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  className="w-full bg-red-600 text-white hover:bg-red-700"
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                >
-                  계정 탈퇴하기
-                </Button>
+
+                <div className="bg-red-50/80 backdrop-blur-md rounded-2xl border border-red-100 p-6">
+                  <h3 className="text-h4 font-bold text-red-700 mb-2">계정 탈퇴</h3>
+                  <p className="text-body-sm text-red-600/80 mb-4">
+                    탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
+                  </p>
+                  <Button 
+                    variant="ghost" 
+                    className="bg-red-100 text-red-700 hover:bg-red-200"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                  >
+                    계정 탈퇴하기
+                  </Button>
+                </div>
               </div>
+            )}
 
-              <ConfirmDialog
-                open={isDeleteDialogOpen}
-                onOpenChange={setIsDeleteDialogOpen}
-                title="정말 탈퇴하시겠습니까?"
-                description="계정을 탈퇴하면 모든 데이터가 삭제됩니다. 탈퇴 후 7일 이내 복구 가능하며, 이후에는 영구적으로 삭제됩니다."
-                confirmText="탈퇴하기"
-                cancelText="취소"
-                variant="danger"
-                onConfirm={handleDeleteAccount}
-                loading={isDeletingAccount}
-              />
-            </div>
-          )}
-
-          {/* Data Section */}
-          {activeSection === "data" && (
-            <div>
-              <h1 className="text-h2 text-neutral-900 mb-6 flex items-center gap-2">
-                📊 데이터 관리
-              </h1>
-              <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-                <p className="text-body text-neutral-600">
-                  데이터 내보내기 및 삭제 기능은 곧 제공될 예정입니다.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Info Section */}
-          {activeSection === "info" && (
-            <div>
-              <h1 className="text-h2 text-neutral-900 mb-6 flex items-center gap-2">
-                ℹ️ 앱 정보
-              </h1>
-              <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-                <div className="space-y-4 text-body text-neutral-700">
-                  <div>
-                    <p className="font-semibold">앱 버전</p>
-                    <p className="text-neutral-600">1.0.0</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">마지막 업데이트</p>
-                    <p className="text-neutral-600">2024년 1월 15일</p>
-                  </div>
-                  <div className="pt-4 border-t border-neutral-200 space-y-2">
-                    <button className="block text-primary-600 hover:text-primary-700">
-                      이용약관
-                    </button>
-                    <button className="block text-primary-600 hover:text-primary-700">
-                      개인정보 처리방침
-                    </button>
-                    <button className="block text-primary-600 hover:text-primary-700">
-                      오픈소스 라이선스
-                    </button>
-                    <button className="block text-primary-600 hover:text-primary-700">
-                      고객센터 문의
-                    </button>
-                  </div>
-                  <p className="text-sm text-neutral-500 pt-4">
-                    © 2024 마음쉼표. All rights reserved.
+            {/* Placeholder for other sections */}
+            {["stats", "security", "data", "info"].includes(activeSection) && (
+              <div className="animate-fade-in">
+                <h2 className="text-h2 font-bold text-neutral-900 mb-6">
+                  {activeSection === "stats" && "통계 및 분석"}
+                  {activeSection === "security" && "보안 설정"}
+                  {activeSection === "data" && "데이터 관리"}
+                  {activeSection === "info" && "앱 정보"}
+                </h2>
+                <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm p-12 text-center">
+                  <div className="text-4xl mb-4">🚧</div>
+                  <h3 className="text-h4 font-bold text-neutral-900 mb-2">준비 중인 기능입니다</h3>
+                  <p className="text-body text-neutral-500">
+                    더 나은 서비스를 위해 열심히 준비하고 있습니다.
                   </p>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </AppLayout>
+
+        <ConfirmDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          title="정말 탈퇴하시겠습니까?"
+          description="계정을 탈퇴하면 모든 데이터가 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
+          confirmText="탈퇴하기"
+          cancelText="취소"
+          variant="danger"
+          onConfirm={handleDeleteAccount}
+          loading={isDeletingAccount}
+        />
+
+        {/* Image Upload Modal */}
+        {isShowingImageUpload && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setIsShowingImageUpload(false)}>
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 p-6 animate-scale-in" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-h3 font-bold text-neutral-900">프로필 이미지 변경</h3>
+                <button
+                  onClick={() => setIsShowingImageUpload(false)}
+                  className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-neutral-500" />
+                </button>
+              </div>
+              
+              {profileImage && (
+                <div className="mb-4 flex justify-center">
+                  <div className="relative">
+                    <img src={profileImage} alt="현재 프로필" className="w-24 h-24 rounded-full object-cover border-4 border-neutral-200" />
+                    <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-neutral-100 px-3 py-1 rounded-full text-xs text-neutral-600">
+                      현재 이미지
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <ImageUpload
+                onUploadSuccess={handleImageUploadSuccess}
+                folder="profiles"
+                maxSizeMB={5}
+                showPreview={true}
+              />
+              
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={() => setIsShowingImageUpload(false)}
+                  className="px-4 py-2 text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </ProfileLayout>
+    </DashboardLayout>
   );
 }

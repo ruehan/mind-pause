@@ -69,7 +69,7 @@ export function FeaturesSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-24 bg-neutral-50 relative overflow-hidden">
+    <section id="features" ref={sectionRef} className="py-24 bg-neutral-50 relative overflow-hidden">
       {/* Background Decoration */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent"></div>
       

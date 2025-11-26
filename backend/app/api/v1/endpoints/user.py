@@ -175,3 +175,71 @@ async def save_user_preferences(
             length=preference_data.length,
             empathy_level=preference_data.empathy_level
         )
+
+
+# ==================== User Profile Update ====================
+
+class UserProfileUpdate(BaseModel):
+    """사용자 프로필 업데이트 요청"""
+    nickname: Optional[str] = Field(None, min_length=2, max_length=20, description="닉네임")
+    profile_image_url: Optional[str] = Field(None, description="프로필 이미지 URL")
+
+
+class UserProfileResponse(BaseModel):
+    """사용자 프로필 응답"""
+    id: str
+    email: Optional[str]
+    nickname: str
+    profile_image_url: Optional[str]
+    role: str
+    is_anonymous: bool
+    created_at: str
+    
+    class Config:
+        from_attributes = True
+
+
+@router.patch("/profile", response_model=UserProfileResponse)
+async def update_user_profile(
+    profile_data: UserProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    사용자 프로필 업데이트
+    
+    - nickname: 닉네임 변경
+    - profile_image_url: 프로필 이미지 URL 변경
+    """
+    # 닉네임 업데이트
+    if profile_data.nickname is not None:
+        # 닉네임 중복 확인 (자신 제외)
+        existing_user = db.query(User).filter(
+            User.nickname == profile_data.nickname,
+            User.id != current_user.id
+        ).first()
+        
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="이미 사용 중인 닉네임입니다"
+            )
+        
+        current_user.nickname = profile_data.nickname
+    
+    # 프로필 이미지 업데이트
+    if profile_data.profile_image_url is not None:
+        current_user.profile_image_url = profile_data.profile_image_url
+    
+    db.commit()
+    db.refresh(current_user)
+    
+    return UserProfileResponse(
+        id=str(current_user.id),
+        email=current_user.email,
+        nickname=current_user.nickname,
+        profile_image_url=current_user.profile_image_url,
+        role=current_user.role,
+        is_anonymous=current_user.is_anonymous,
+        created_at=current_user.created_at.isoformat()
+    )

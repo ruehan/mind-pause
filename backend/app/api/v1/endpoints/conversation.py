@@ -227,6 +227,7 @@ async def create_conversation(
 async def list_conversations(
     skip: int = Query(0, ge=0, description="건너뛸 항목 수"),
     limit: int = Query(20, ge=1, le=100, description="가져올 최대 항목 수"),
+    character_id: UUID = Query(None, description="필터링할 AI 캐릭터 ID"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -235,10 +236,16 @@ async def list_conversations(
 
     - **skip**: 페이지네이션을 위한 오프셋
     - **limit**: 한 번에 가져올 대화 수 (최대 100)
+    - **character_id**: 특정 AI 캐릭터와의 대화만 필터링 (선택)
     """
-    conversations = db.query(Conversation).filter(
+    query = db.query(Conversation).filter(
         Conversation.user_id == current_user.id
-    ).order_by(
+    )
+
+    if character_id:
+        query = query.filter(Conversation.character_id == character_id)
+
+    conversations = query.order_by(
         desc(Conversation.updated_at)
     ).offset(skip).limit(limit).all()
 

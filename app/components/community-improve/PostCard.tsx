@@ -19,6 +19,7 @@ interface PostCardProps {
   commentCount: number;
   isLiked: boolean;
   isAuthor: boolean;
+  authorProfileImage?: string | null;
   recentComments: Comment[];
   onClick: () => void;
   onLike: (id: string, isLiked: boolean) => void;
@@ -37,6 +38,7 @@ export function PostCard({
   commentCount,
   isLiked,
   isAuthor,
+  authorProfileImage,
   recentComments,
   onClick,
   onLike,
@@ -57,12 +59,20 @@ export function PostCard({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className={`
-              w-10 h-10 rounded-full flex items-center justify-center shadow-inner
-              ${isAnonymous ? "bg-neutral-100 text-neutral-400" : "bg-gradient-to-br from-primary-100 to-primary-200 text-primary-600"}
-            `}>
-              <User className="w-5 h-5" />
-            </div>
+            {isAnonymous || !authorProfileImage ? (
+              <div className={`
+                w-10 h-10 rounded-full flex items-center justify-center shadow-inner
+                ${isAnonymous ? "bg-neutral-100 text-neutral-400" : "bg-gradient-to-br from-primary-100 to-primary-200 text-primary-600"}
+              `}>
+                <User className="w-5 h-5" />
+              </div>
+            ) : (
+              <img 
+                src={authorProfileImage} 
+                alt={author} 
+                className="w-10 h-10 rounded-full object-cover shadow-sm border border-primary-100"
+              />
+            )}
             <div>
               <p className="text-body-sm font-bold text-neutral-900">
                 {isAnonymous ? "익명" : author}

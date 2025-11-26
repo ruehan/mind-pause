@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
-import { Search, TrendingUp, Clock, Heart, MessageCircle, X } from "lucide-react";
-import { AppLayout } from "../components/AppLayout";
-import { PostCard } from "../components/community/PostCard";
-import { Button } from "../components/Button";
-import { Spinner } from "../components/Spinner";
-import { useToast } from "../components/ToastProvider";
-import { useAuth } from "../contexts/AuthContext";
-import * as api from "../lib/api";
+import { TrendingUp, Clock, PenLine } from "lucide-react";
+import { DashboardLayout } from "~/components/dashboard-improve/DashboardLayout";
+import { CommunityLayout } from "~/components/community-improve/CommunityLayout";
+import { CommunityHeader } from "~/components/community-improve/CommunityHeader";
+import { PostCard } from "~/components/community-improve/PostCard";
+import { PopularPostsWidget } from "~/components/community-improve/PopularPostsWidget";
+import { Spinner } from "~/components/Spinner";
+import { useToast } from "~/components/ToastProvider";
+import { useAuth } from "~/contexts/AuthContext";
+import * as api from "~/lib/api";
+import type { Route } from "./+types/community";
 
-export function meta() {
+export function meta({}: Route.MetaArgs) {
   return [
     { title: "커뮤니티 - 마음쉼표" },
-    {
-      name: "description",
-      content: "함께 나누고 공감하는 따뜻한 공간",
-    },
+    { name: "description", content: "함께 나누고 공감하는 따뜻한 공간" },
   ];
 }
 
@@ -26,8 +26,7 @@ const extractFirstImage = (htmlContent: string): string | null => {
   return match ? match[1] : null;
 };
 
-
-export default function Community() {
+export default function CommunityImprove() {
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();
@@ -75,7 +74,6 @@ export default function Community() {
               .slice(0, 2);
             commentsMap[post.id] = sortedComments;
           } catch (error) {
-            // 댓글 로드 실패는 무시 (빈 배열로 처리)
             commentsMap[post.id] = [];
           }
         })
@@ -119,7 +117,6 @@ export default function Community() {
     e.preventDefault();
     const trimmedQuery = searchQuery.trim();
 
-    // 검색어가 변경되면 첫 페이지로 리셋
     if (trimmedQuery !== activeSearch) {
       setPage(1);
     }
@@ -158,78 +155,37 @@ export default function Community() {
       } else {
         await api.createLike({ post_id: postId, comment_id: undefined });
       }
+      // Optimistic update or reload
+      loadPosts();
     } catch (error) {
       console.error("좋아요 오류:", error);
       toast.error("오류", "좋아요 처리 중 오류가 발생했습니다");
-      throw error; // PostCard에서 이전 상태로 복구하도록
     }
   };
 
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto">
-        {/* Header with Search */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3">
-              <span className="text-4xl">💬</span>
-              <div>
-                <h1 className="text-h2 text-neutral-900">커뮤니티</h1>
-                <p className="text-body text-neutral-600 mt-1">
-                  함께 나누고 공감하는 따뜻한 공간
-                </p>
-              </div>
-            </div>
+    <DashboardLayout>
+      <CommunityLayout>
+        <CommunityHeader
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSearchSubmit={handleSearch}
+          onClearSearch={handleClearSearch}
+          onWriteClick={handleWritePost}
+          activeSearch={activeSearch}
+        />
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="게시글 검색..."
-                  className="w-full pl-10 pr-10 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-                {(searchQuery || activeSearch) && (
-                  <button
-                    type="button"
-                    onClick={handleClearSearch}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
-                    aria-label="검색 초기화"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-            </form>
-
-            {/* Write Button (Desktop) */}
-            <div className="hidden md:block">
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={handleWritePost}
-                className="flex items-center gap-2"
-              >
-                ✏️ 글쓰기
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-3">
             {/* Search Result Header */}
             {activeSearch && (
-              <div className="mb-4 p-4 bg-primary-50 border border-primary-200 rounded-lg">
+              <div className="mb-6 p-4 bg-white/60 backdrop-blur border border-primary-200 rounded-xl animate-fade-in">
                 <p className="text-body text-neutral-700">
-                  <span className="font-semibold text-primary-700">"{activeSearch}"</span> 검색 결과
+                  <span className="font-bold text-primary-700">"{activeSearch}"</span> 검색 결과
                   <button
                     onClick={handleClearSearch}
-                    className="ml-3 text-body-sm text-primary-600 hover:text-primary-700 underline"
+                    className="ml-3 text-sm text-primary-600 hover:text-primary-700 underline font-medium"
                   >
                     전체 글 보기
                   </button>
@@ -238,25 +194,29 @@ export default function Community() {
             )}
 
             {/* Sort Tabs */}
-            <div className="flex items-center gap-2 mb-6">
+            <div className="flex items-center gap-3 mb-6">
               <button
                 onClick={() => setSortBy("popular")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  sortBy === "popular"
-                    ? "bg-primary-100 text-primary-700"
-                    : "text-neutral-600 hover:bg-neutral-100"
-                }`}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200
+                  ${sortBy === "popular"
+                    ? "bg-primary-600 text-white shadow-md shadow-primary-200"
+                    : "bg-white text-neutral-600 hover:bg-neutral-50 border border-neutral-200"
+                  }
+                `}
               >
                 <TrendingUp className="w-4 h-4" />
                 인기순
               </button>
               <button
                 onClick={() => setSortBy("latest")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                  sortBy === "latest"
-                    ? "bg-primary-100 text-primary-700"
-                    : "text-neutral-600 hover:bg-neutral-100"
-                }`}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all duration-200
+                  ${sortBy === "latest"
+                    ? "bg-primary-600 text-white shadow-md shadow-primary-200"
+                    : "bg-white text-neutral-600 hover:bg-neutral-50 border border-neutral-200"
+                  }
+                `}
               >
                 <Clock className="w-4 h-4" />
                 최신순
@@ -265,167 +225,142 @@ export default function Community() {
 
             {/* Posts Grid */}
             {isLoading ? (
-              <div className="text-center py-12">
-                <Spinner size="lg" variant="breathing" className="mx-auto" />
+              <div className="flex justify-center py-20">
+                <Spinner size="xl" variant="breathing" />
               </div>
             ) : posts.length === 0 ? (
-              <div className="text-center py-12 bg-white rounded-xl border border-neutral-200">
+              <div className="text-center py-20 bg-white/60 backdrop-blur rounded-2xl border border-neutral-200/60">
+                <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
+                  📝
+                </div>
                 {activeSearch ? (
                   <>
-                    <p className="text-body text-neutral-600 mb-2">
-                      <span className="font-semibold">"{activeSearch}"</span>에 대한 검색 결과가 없습니다.
+                    <p className="text-h4 font-bold text-neutral-900 mb-2">
+                      검색 결과가 없습니다
                     </p>
-                    <p className="text-body-sm text-neutral-500">
-                      다른 검색어로 시도해보세요.
+                    <p className="text-body text-neutral-500 mb-6">
+                      다른 검색어로 시도해보거나 새로운 글을 작성해보세요.
                     </p>
-                    <Button
-                      variant="secondary"
+                    <button
                       onClick={handleClearSearch}
-                      className="mt-4"
+                      className="text-primary-600 font-medium hover:underline"
                     >
                       전체 글 보기
-                    </Button>
+                    </button>
                   </>
                 ) : (
                   <>
-                    <p className="text-body text-neutral-600">
-                      아직 게시글이 없습니다. 첫 번째 글을 작성해보세요!
+                    <p className="text-h4 font-bold text-neutral-900 mb-2">
+                      아직 게시글이 없습니다
                     </p>
-                    <Button
-                      variant="primary"
+                    <p className="text-body text-neutral-500 mb-6">
+                      첫 번째 글의 주인공이 되어보세요!
+                    </p>
+                    <button
                       onClick={handleWritePost}
-                      className="mt-4"
+                      className="px-6 py-2.5 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors"
                     >
                       글쓰기
-                    </Button>
+                    </button>
                   </>
                 )}
               </div>
             ) : (
-              <>
-                <div className="space-y-3">
-                  {posts.map((post) => {
-                    const imageUrl = extractFirstImage(post.content);
-                    // 해당 포스트의 댓글 데이터 가져오기
-                    const comments = postComments[post.id] || [];
-                    const recentComments = comments.map(comment => ({
-                      author: comment.user?.nickname || "익명",
-                      content: comment.content,
-                      timestamp: formatDate(comment.created_at)
-                    }));
+              <div className="space-y-4">
+                {posts.map((post) => {
+                  const imageUrl = extractFirstImage(post.content);
+                  const comments = postComments[post.id] || [];
+                  const recentComments = comments.map(comment => ({
+                    author: comment.user?.nickname || "익명",
+                    content: comment.content,
+                    timestamp: formatDate(comment.created_at)
+                  }));
 
-                    return (
-                      <PostCard
-                        key={post.id}
-                        id={post.id}
-                        author={post.user?.nickname || "익명"}
-                        isAnonymous={post.is_anonymous}
-                        timestamp={formatDate(post.created_at)}
-                        title={post.title}
-                        content={post.content}
-                        imageUrl={imageUrl}
-                        tags={[]}
-                        likeCount={post.num_likes}
-                        commentCount={post.num_comments}
-                        isLiked={post.is_liked || false}
-                        isAuthor={user?.id === post.user_id}
-                        recentComments={recentComments}
-                        onClick={() => handlePostClick(post.id)}
-                        onLike={handleLike}
-                      />
-                    );
-                  })}
-                </div>
+                  return (
+                    <PostCard
+                      key={post.id}
+                      id={post.id}
+                      author={post.user?.nickname || "익명"}
+                      authorProfileImage={!post.is_anonymous ? post.user?.profile_image_url : null}
+                      isAnonymous={post.is_anonymous}
+                      timestamp={formatDate(post.created_at)}
+                      title={post.title}
+                      content={post.content}
+                      imageUrl={imageUrl}
+                      tags={[]}
+                      likeCount={post.num_likes}
+                      commentCount={post.num_comments}
+                      isLiked={post.is_liked || false}
+                      isAuthor={user?.id === post.user_id}
+                      recentComments={recentComments}
+                      onClick={() => handlePostClick(post.id)}
+                      onLike={handleLike}
+                    />
+                  );
+                })}
 
                 {/* Load More Button */}
-                <div className="text-center mt-8">
+                <div className="text-center pt-8">
                   <button
                     onClick={() => setPage((p) => p + 1)}
-                    className="px-6 py-3 bg-white border border-neutral-200 rounded-lg text-neutral-700 hover:bg-neutral-50 hover:border-primary-300 font-medium transition-colors"
+                    className="
+                      px-8 py-3 bg-white border border-neutral-200 rounded-xl 
+                      text-neutral-600 font-medium hover:bg-neutral-50 hover:border-primary-300 hover:text-primary-600
+                      transition-all duration-200 shadow-sm
+                    "
                   >
-                    더보기 →
+                    더보기
                   </button>
                 </div>
-              </>
+              </div>
             )}
           </div>
 
-          {/* Sidebar - Popular Posts */}
-          <div className="hidden lg:block">
-            <div className="sticky top-4 space-y-4">
-              {/* Popular Posts Widget */}
-              <div className="bg-white rounded-xl border border-neutral-200 p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-5 h-5 text-primary-600" />
-                  <h3 className="text-h4 text-neutral-900 font-semibold">
-                    인기 게시글
-                  </h3>
-                </div>
-                <div className="space-y-3">
-                  {popularPosts.map((post, index) => (
-                    <button
-                      key={post.id}
-                      onClick={() => handlePostClick(post.id)}
-                      className="w-full text-left p-3 rounded-lg hover:bg-neutral-50 transition-colors group"
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="text-h4 font-bold text-primary-500 min-w-[24px]">
-                          {index + 1}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-body-sm font-medium text-neutral-900 line-clamp-2 group-hover:text-primary-600 transition-colors">
-                            {post.title}
-                          </p>
-                          <div className="flex items-center gap-3 mt-2 text-caption text-neutral-500">
-                            <span className="flex items-center gap-1">
-                              <Heart className="w-3 h-3" />
-                              {post.num_likes}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MessageCircle className="w-3 h-3" />
-                              {post.num_comments}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* Sidebar */}
+          <div className="hidden lg:block space-y-6">
+            <div className="sticky top-6 space-y-6">
+              {/* Popular Posts */}
+              <PopularPostsWidget posts={popularPosts} onPostClick={handlePostClick} />
 
               {/* Community Guidelines */}
-              <div className="bg-gradient-to-br from-primary-50 to-lavender-50 rounded-xl p-5 border border-primary-100">
-                <h3 className="text-body-sm font-semibold text-neutral-900 mb-3">
-                  📝 커뮤니티 가이드
+              <div className="bg-gradient-to-br from-primary-50 to-lavender-50 rounded-2xl p-6 border border-primary-100 shadow-sm">
+                <h3 className="text-body font-bold text-neutral-900 mb-4 flex items-center gap-2">
+                  <span>🛡️</span> 커뮤니티 가이드
                 </h3>
-                <ul className="space-y-2 text-caption text-neutral-600">
+                <ul className="space-y-3 text-sm text-neutral-600">
                   <li className="flex items-start gap-2">
-                    <span className="text-primary-600">•</span>
-                    <span>서로 존중하고 배려해주세요</span>
+                    <span className="text-primary-500 font-bold">•</span>
+                    <span>서로 존중하고 배려하는 언어를 사용해주세요.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-primary-600">•</span>
-                    <span>개인정보 공유는 주의해주세요</span>
+                    <span className="text-primary-500 font-bold">•</span>
+                    <span>개인정보 공유는 신중하게 해주세요.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="text-primary-600">•</span>
-                    <span>긍정적인 대화를 나눠요</span>
+                    <span className="text-primary-500 font-bold">•</span>
+                    <span>고민을 나눌 때는 따뜻한 위로를 건네주세요.</span>
                   </li>
                 </ul>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Floating Write Button (Mobile) */}
-      <button
-        onClick={handleWritePost}
-        className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 text-white rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-primary-600 transition-colors z-10"
-        aria-label="글쓰기"
-      >
-        ✏️
-      </button>
-    </AppLayout>
+        {/* Mobile Floating Write Button */}
+        <button
+          onClick={handleWritePost}
+          className="
+            md:hidden fixed bottom-20 right-6 w-14 h-14 
+            bg-gradient-to-r from-primary-500 to-primary-600 
+            text-white rounded-full shadow-lg shadow-primary-500/40 
+            flex items-center justify-center 
+            hover:scale-105 active:scale-95 transition-all duration-200 z-50
+          "
+          aria-label="글쓰기"
+        >
+          <PenLine className="w-6 h-6" />
+        </button>
+      </CommunityLayout>
+    </DashboardLayout>
   );
 }

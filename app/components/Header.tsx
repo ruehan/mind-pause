@@ -11,11 +11,9 @@ export function Header() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-lavender-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl font-bold">,</span>
-            </div>
-            <span className="text-h5 font-bold text-neutral-900">
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/logo.png" alt="마음쉼표 로고" className="w-14 h-14 rounded-lg" />
+            <span className="text-xl font-bold text-neutral-900 tracking-tight">
               마음쉼표
             </span>
           </Link>
@@ -23,23 +21,23 @@ export function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <a
-              href="#features"
+              href="/#about"
               className="text-body text-neutral-700 hover:text-primary-600 transition-colors"
             >
               서비스 소개
             </a>
             <a
-              href="#features"
+              href="/#features"
               className="text-body text-neutral-700 hover:text-primary-600 transition-colors"
             >
               기능
             </a>
-            <a
-              href="#faq"
+            <Link
+              to="/qna"
               className="text-body text-neutral-700 hover:text-primary-600 transition-colors"
             >
-              FAQ
-            </a>
+              자주 묻는 질문
+            </Link>
           </nav>
 
           {/* Desktop CTA Buttons */}
@@ -71,26 +69,26 @@ export function Header() {
           <div className="md:hidden py-4 border-t border-neutral-200 animate-fade-in">
             <nav className="flex flex-col space-y-4">
               <a
-                href="#features"
+                href="/#about"
                 className="text-body text-neutral-700 hover:text-primary-600 transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 서비스 소개
               </a>
               <a
-                href="#features"
+                href="/#features"
                 className="text-body text-neutral-700 hover:text-primary-600 transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 기능
               </a>
-              <a
-                href="#faq"
+              <Link
+                to="/qna"
                 className="text-body text-neutral-700 hover:text-primary-600 transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                FAQ
-              </a>
+                자주 묻는 질문
+              </Link>
               <div className="pt-4 flex flex-col space-y-3">
                 <Button variant="ghost" href="/login" size="md">
                   로그인

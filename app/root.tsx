@@ -53,7 +53,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
 
-    const publicPaths = ["/", "/login"];
+    const publicPaths = ["/", "/login", "/qna"];
     const isPublicPath = publicPaths.some((path) =>
       location.pathname === path || location.pathname.startsWith(path + "/")
     ) || location.pathname.includes("improve");

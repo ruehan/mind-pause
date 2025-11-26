@@ -9,6 +9,7 @@ interface ChatMessageProps {
   timestamp: string;
   avatarOptions?: any;
   aiName?: string;
+  userProfileImage?: string | null;
   isStreaming?: boolean;
   shouldTypeEffect?: boolean;
   onTypingComplete?: () => void;
@@ -20,6 +21,7 @@ export function ChatMessage({
   timestamp,
   avatarOptions,
   aiName,
+  userProfileImage,
   isStreaming,
   shouldTypeEffect,
   onTypingComplete,
@@ -53,12 +55,19 @@ export function ChatMessage({
   return (
     <div className={`flex w-full mb-6 ${isUser ? "justify-end" : "justify-start"}`}>
       <div className={`flex max-w-[85%] md:max-w-[75%] gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
-        {/* Avatar */}
         <div className="flex-shrink-0 mt-1">
           {isUser ? (
-            <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center shadow-sm">
-              <User className="w-6 h-6 text-primary-600" />
-            </div>
+            userProfileImage ? (
+              <img 
+                src={userProfileImage} 
+                alt="User" 
+                className="w-10 h-10 rounded-full object-cover shadow-sm border border-primary-100"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center shadow-sm">
+                <User className="w-6 h-6 text-primary-600" />
+              </div>
+            )
           ) : (
             <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm border border-neutral-100 overflow-hidden">
               {avatarOptions ? (
