@@ -27,6 +27,11 @@ class ActivitySummary(BaseModel):
     # AI 채팅 통계
     total_conversations: int
     conversations_this_week: int
+    
+    # 변화율 통계 (전주 대비 %)
+    emotion_logs_trend: Optional[float] = None
+    conversations_trend: Optional[float] = None
+    challenges_trend: Optional[float] = None
 
 
 class RecentEmotionLog(BaseModel):

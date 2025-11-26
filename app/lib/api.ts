@@ -1232,9 +1232,14 @@ export interface ActivitySummary {
   comments_this_week: number;
   active_challenges: number;
   completed_challenges: number;
-  current_best_streak: number;
+  current_best_streak: number; // AI 채팅 통계
   total_conversations: number;
   conversations_this_week: number;
+  
+  // 변화율 통계 (전주 대비 %)
+  emotion_logs_trend?: number | null;
+  conversations_trend?: number | null;
+  challenges_trend?: number | null;
 }
 
 export interface RecentEmotionLog {
@@ -1285,11 +1290,31 @@ export interface UserDashboard {
   recent_activities: RecentActivities;
 }
 
+export interface EmotionTrendPoint {
+  date: string;
+  emotion_type: string;
+  avg_intensity: number;
+  count: number;
+}
+
+export interface WeeklyEmotionTrend {
+  start_date: string;
+  end_date: string;
+  data_points: EmotionTrendPoint[];
+}
+
 /**
  * 사용자 대시보드 조회
  */
 export async function getUserDashboard(): Promise<UserDashboard> {
-  return apiRequest("/dashboard");
+  return apiRequest<UserDashboard>("/dashboard");
+}
+
+/**
+ * 주간 감정 흐름 데이터 조회
+ */
+export async function getEmotionTrend(days: number = 7): Promise<WeeklyEmotionTrend> {
+  return apiRequest<WeeklyEmotionTrend>(`/dashboard/emotion-trend?days=${days}`);
 }
 
 // ============================================
