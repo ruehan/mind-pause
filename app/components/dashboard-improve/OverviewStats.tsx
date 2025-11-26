@@ -56,30 +56,47 @@ interface OverviewStatsProps {
     conversations_this_week: number;
     completed_challenges: number;
     active_challenges: number;
+    emotion_logs_trend?: number | null;
+    conversations_trend?: number | null;
+    challenges_trend?: number | null;
   };
 }
 
 export function OverviewStats({ summary }: OverviewStatsProps) {
+  // 트렌드 데이터 준비
+  const createTrend = (value: number | null | undefined, context: string) => {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+    
+    const isPositive = value >= 0;
+    return {
+      value: Math.abs(value),
+      label: `지난주 대비 ${isPositive ? '증가' : '감소'}`,
+      isPositive
+    };
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <StatItem
         title="이번 주 감정 기록"
         value={`${summary.emotion_logs_this_week}회`}
-        trend={{ value: 12, label: "지난주 대비 증가", isPositive: true }}
+        trend={createTrend(summary.emotion_logs_trend, 'emotion')}
         icon={FileText}
         color="primary"
       />
       <StatItem
         title="AI 대화"
         value={`${summary.total_conversations}회`}
-        trend={{ value: 5, label: "지난주 대비 증가", isPositive: true }}
+        trend={createTrend(summary.conversations_trend, 'conversation')}
         icon={MessageCircle}
         color="lavender"
       />
       <StatItem
         title="완료한 챌린지"
         value={`${summary.completed_challenges}개`}
-        trend={{ value: 2, label: "이번 달 달성", isPositive: true }}
+        trend={createTrend(summary.challenges_trend, 'challenge')}
         icon={Trophy}
         color="orange"
       />
