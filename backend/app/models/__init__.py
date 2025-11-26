@@ -14,6 +14,10 @@ from app.models.message_feedback import MessageFeedback
 from app.models.conversation_rating import ConversationRating
 from app.models.conversation_metrics import ConversationMetrics
 from app.models.user_prompt_preference import UserPromptPreference
+from app.models.subscription_plan import SubscriptionPlan, SubscriptionTier
+from app.models.subscription import Subscription, SubscriptionStatus
+from app.models.token_usage import TokenUsage
+from app.models.token_quota import TokenQuota
 
 __all__ = [
     "User",
@@ -34,4 +38,10 @@ __all__ = [
     "ConversationRating",
     "ConversationMetrics",
     "UserPromptPreference",
+    "SubscriptionPlan",
+    "SubscriptionTier",
+    "Subscription",
+    "SubscriptionStatus",
+    "TokenUsage",
+    "TokenQuota",
 ]

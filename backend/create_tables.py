@@ -28,6 +28,10 @@ from app.models import (
     ConversationRating,
     ConversationMetrics,
     UserPromptPreference,
+    SubscriptionPlan,
+    Subscription,
+    TokenUsage,
+    TokenQuota,
 )
 
 

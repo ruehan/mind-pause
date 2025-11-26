@@ -48,14 +48,14 @@ async def stream_gemini_response(
         })
 
     try:
-        # 스트리밍 응답 생성
-        response = model.generate_content(
+        # 비동기 스트리밍 응답 생성
+        response = await model.generate_content_async(
             gemini_messages,
             stream=True
         )
 
-        # 청크 단위로 응답 생성
-        for chunk in response:
+        # 청크 단위로 응답 생성 (비동기 반복)
+        async for chunk in response:
             if chunk.text:
                 yield chunk.text
 

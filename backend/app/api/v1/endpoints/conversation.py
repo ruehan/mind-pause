@@ -29,6 +29,7 @@ from app.services.summary_service import check_summary_trigger, create_conversat
 from app.services.memory_service import should_update_memory, update_user_memory
 from app.services.emotion_service import detect_emotion, format_emotion_summary
 from app.services.crisis_detection_service import detect_crisis_level
+from app.services.token_tracker import TokenTracker
 
 router = APIRouter()
 
@@ -180,6 +181,23 @@ def update_conversation_metrics(
         metrics.max_response_time_ms = max(metrics.max_response_time_ms, response_time_ms)
 
     db.commit()
+    
+    # Phase 1: 토큰 사용량 추적 시스템에 기록
+    # user_id는 conversation에서 가져와야 함
+    conversation = db.query(Conversation).filter(
+        Conversation.id == conversation_id
+    ).first()
+    
+    if conversation:
+        TokenTracker.record_usage(
+            db=db,
+            user_id=conversation.user_id,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            conversation_id=conversation_id,
+            model_name="gemini-2.5-flash-lite",
+            purpose="chat"
+        )
 
 
 @router.post("", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
@@ -430,8 +448,19 @@ async def stream_chat_message(
     db.commit()
     db.refresh(user_message)
 
-    # 감정 감지 (비동기)
-    emotion_data = await detect_emotion(message_data.content)
+    # 감정 감지 (비동기, 타임아웃 적용)
+    import asyncio
+    try:
+        emotion_data = await asyncio.wait_for(detect_emotion(message_data.content), timeout=3.0)
+    except asyncio.TimeoutError:
+        print("⚠️ 감정 감지 시간 초과 (기본값 사용)")
+        emotion_data = {
+            "primary_emotion": "neutral",
+            "emotion_category": "neutral",
+            "intensity": 0.0,
+            "secondary_emotions": [],
+            "response_style": "balanced"
+        }
 
     # 감정 정보 로깅 (디버깅용)
     if emotion_data.get("intensity", 0) > 0.3:
@@ -454,15 +483,22 @@ async def stream_chat_message(
         print(f"ℹ️  위기 감지 비활성화: {character.name} ({character.personality})")
 
     # 컨텍스트 구축 (Phase 2.2: 개인화 + 동적 Few-shot + Phase 3.1: 위기 대응)
-    context = build_conversation_context(
-        db=db,
-        conversation_id=conversation_id,
-        user_id=current_user.id,
-        character=character,
-        current_message=message_data.content,  # Phase 2.2: 동적 Few-shot용
-        emotion_data=emotion_data,
-        crisis_level=crisis_level,  # Phase 3.1: 위기 대응
-        use_advanced_prompting=True  # Advanced Prompt Engineering 활성화
+    # 동기 DB 작업을 별도 스레드에서 실행하여 이벤트 루프 차단 방지
+    import asyncio
+    loop = asyncio.get_running_loop()
+    
+    context = await loop.run_in_executor(
+        None,
+        lambda: build_conversation_context(
+            db=db,
+            conversation_id=conversation_id,
+            user_id=current_user.id,
+            character=character,
+            current_message=message_data.content,  # Phase 2.2: 동적 Few-shot용
+            emotion_data=emotion_data,
+            crisis_level=crisis_level,  # Phase 3.1: 위기 대응
+            use_advanced_prompting=True  # Advanced Prompt Engineering 활성화
+        )
     )
 
     # 토큰 제한에 맞춰 최적화

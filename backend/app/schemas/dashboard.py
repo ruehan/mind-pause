@@ -98,3 +98,9 @@ class UserDashboard(BaseModel):
     """사용자 대시보드 전체 데이터"""
     summary: ActivitySummary
     recent_activities: RecentActivities
+    
+    # Aggregated Stats (Optional)
+    emotion_trend: Optional[dict] = None
+    feedback_stats: Optional[dict] = None
+    token_usage: Optional[dict] = None
+

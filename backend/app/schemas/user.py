@@ -90,12 +90,19 @@ class Token(BaseModel):
     """토큰 응답 스키마"""
     access_token: str = Field(..., description="JWT 액세스 토큰", example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
     token_type: str = Field(default="bearer", description="토큰 타입", example="bearer")
+    user: Optional["UserResponse"] = Field(None, description="사용자 정보 (로그인 시 반환)")
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
-                "token_type": "bearer"
+                "token_type": "bearer",
+                "user": {
+                    "id": "123e4567-e89b-12d3-a456-426614174000",
+                    "email": "user@example.com",
+                    "nickname": "마음쉼표유저",
+                    "role": "USER"
+                }
             }
         }
     )

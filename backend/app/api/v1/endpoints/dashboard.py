@@ -13,6 +13,8 @@ from app.models.comment import Comment
 from app.models.like import Like
 from app.models.conversation import Conversation
 from app.models.challenge import UserChallenge, Challenge, ChallengeStatus
+from app.models.token_usage import TokenUsage
+from app.services.token_tracker import TokenTracker
 from app.schemas.dashboard import (
     UserDashboard,
     ActivitySummary,
@@ -277,9 +279,99 @@ async def get_user_dashboard(
         challenge_activities=challenge_activity_list
     )
 
+    # ============================================
+    # 추가 통계 데이터 (Aggregation)
+    # ============================================
+    
+    # 1. 감정 트렌드 (최근 7일)
+    from app.api.v1.endpoints.dashboard import get_emotion_trend
+    # Note: get_emotion_trend is an async endpoint function, but we can reuse its logic or call it if we refactor.
+    # For now, let's duplicate the logic slightly or better yet, extract it. 
+    # Since I cannot easily extract to a new file in this single step without making it messy, 
+    # I will use the logic directly here for efficiency.
+    
+    # Emotion Trend Logic
+    trend_days = 7
+    trend_start_date = today - timedelta(days=trend_days - 1)
+    trend_logs = db.query(EmotionLog).filter(
+        EmotionLog.user_id == current_user.id,
+        func.date(EmotionLog.created_at) >= trend_start_date,
+        func.date(EmotionLog.created_at) <= today
+    ).all()
+    
+    from collections import defaultdict
+    grouped_data = defaultdict(lambda: defaultdict(list))
+    for log in trend_logs:
+        grouped_data[log.created_at.date()][log.emotion_label].append(log.emotion_value)
+    
+    trend_result = []
+    curr = trend_start_date
+    while curr <= today:
+        if curr in grouped_data:
+            for emotion, values in grouped_data[curr].items():
+                trend_result.append({
+                    "date": curr.isoformat(),
+                    "emotion_type": emotion,
+                    "avg_intensity": round(sum(values) / len(values), 1),
+                    "count": len(values)
+                })
+        curr += timedelta(days=1)
+        
+    emotion_trend_data = {
+        "start_date": trend_start_date.isoformat(),
+        "end_date": today.isoformat(),
+        "data_points": trend_result
+    }
+
+    # 2. 피드백 통계 (최근 30일)
+    from app.services.feedback_service import get_feedback_stats
+    feedback_stats_data = get_feedback_stats(db, current_user.id, days=30)
+
+    # 3. 토큰 사용량
+    from app.services.token_tracker import TokenTracker
+    # Token usage summary logic
+    now = datetime.utcnow()
+    month_start_dt = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    token_month = db.query(func.sum(TokenUsage.total_tokens)).filter(
+        TokenUsage.user_id == current_user.id,
+        TokenUsage.created_at >= month_start_dt
+    ).scalar() or 0
+    
+    week_start_dt = now - timedelta(days=now.weekday())
+    week_start_dt = week_start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    token_week = db.query(func.sum(TokenUsage.total_tokens)).filter(
+        TokenUsage.user_id == current_user.id,
+        TokenUsage.created_at >= week_start_dt
+    ).scalar() or 0
+    
+    today_start_dt = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    token_today = db.query(func.sum(TokenUsage.total_tokens)).filter(
+        TokenUsage.user_id == current_user.id,
+        TokenUsage.created_at >= today_start_dt
+    ).scalar() or 0
+    
+    token_remaining = TokenTracker.get_remaining_tokens(db, current_user.id)
+    token_quota = TokenTracker.get_or_create_quota(db, current_user.id)
+    token_plan = TokenTracker.get_user_plan(db, current_user.id)
+    
+    token_usage_data = {
+        "current_month_total": token_month,
+        "current_week_total": token_week,
+        "today_total": token_today,
+        "quota": {
+            **token_remaining,
+            "last_reset_at": token_quota.last_reset_at
+        },
+        "tier": current_user.subscription_tier.value,
+        "tier_name": token_plan.name if token_plan else "알 수 없음"
+    }
+
     return UserDashboard(
         summary=summary,
-        recent_activities=recent_activities
+        recent_activities=recent_activities,
+        emotion_trend=emotion_trend_data,
+        feedback_stats=feedback_stats_data,
+        token_usage=token_usage_data
     )
 
 

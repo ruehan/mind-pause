@@ -38,6 +38,7 @@ export interface SignupRequest {
 export interface AuthResponse {
   access_token: string;
   token_type: string;
+  user?: User; // 로그인 시 함께 반환되는 사용자 정보
 }
 
 export interface User {
@@ -1288,6 +1289,9 @@ export interface RecentActivities {
 export interface UserDashboard {
   summary: ActivitySummary;
   recent_activities: RecentActivities;
+  emotion_trend?: WeeklyEmotionTrend;
+  feedback_stats?: FeedbackStats;
+  token_usage?: TokenUsageSummary;
 }
 
 export interface EmotionTrendPoint {
@@ -1435,8 +1439,48 @@ export interface UserAIPreferenceUpdate {
  * 사용자 AI 응답 선호도 조회
  */
 export async function getUserAIPreferences(): Promise<UserAIPreference> {
-  return apiRequest("/user/preferences");
+  return apiRequest(`/user/prompt-preference`);
 }
+
+// ==================== 토큰 사용량 API ====================
+
+export interface TokenQuota {
+  monthly_limit: number;
+  monthly_used: number;
+  monthly_remaining: number;
+  daily_limit: number;
+  daily_used: number;
+  daily_remaining: number;
+  bonus_tokens: number;
+  last_reset_at: string;
+}
+
+export interface TokenUsageSummary {
+  current_month_total: number;
+  current_week_total: number;
+  today_total: number;
+  quota: TokenQuota;
+  tier: string;
+  tier_name: string;
+}
+
+export async function getTokenUsageSummary(): Promise<TokenUsageSummary> {
+  return apiRequest("/token-usage/summary");
+}
+
+export async function getTokenQuota(): Promise<TokenQuota> {
+  return apiRequest("/token-usage/quota");
+}
+
+// ==================== 구독 관리 API ====================
+
+export async function upgradeSubscription(tier: "FREE" | "PREMIUM"): Promise<void> {
+  return apiRequest("/subscription/upgrade", {
+    method: "POST",
+    body: JSON.stringify({ tier }),
+  });
+}
+
 
 /**
  * 사용자 AI 응답 선호도 저장

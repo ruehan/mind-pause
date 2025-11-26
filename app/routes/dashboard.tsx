@@ -3,6 +3,8 @@ import { DashboardLayout } from "~/components/dashboard-improve/DashboardLayout"
 import { OverviewStats } from "~/components/dashboard-improve/OverviewStats";
 import { EmotionChart } from "~/components/dashboard-improve/EmotionChart";
 import { RecentActivityFeed } from "~/components/dashboard-improve/RecentActivityFeed";
+import { FeedbackStatsCard } from "~/components/dashboard-improve/FeedbackStatsCard";
+import { TokenUsageCard } from "~/components/dashboard-improve/TokenUsageCard";
 import { getUserDashboard, type UserDashboard as UserDashboardData } from "~/lib/api";
 import { useAuth } from "~/contexts/AuthContext";
 import { Spinner } from "~/components/Spinner";
@@ -66,7 +68,7 @@ export default function DashboardImprove() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column (Chart) */}
           <div className="lg:col-span-2 h-96">
-            <EmotionChart />
+            <EmotionChart initialData={dashboardData?.emotion_trend} />
           </div>
 
           {/* Right Column (Activity Feed) */}
@@ -74,6 +76,12 @@ export default function DashboardImprove() {
             {dashboardData && <RecentActivityFeed activities={dashboardData.recent_activities} />}
           </div>
         </div>
+
+        {/* Feedback Stats Section */}
+        <FeedbackStatsCard initialData={dashboardData?.feedback_stats} />
+
+        {/* Token Usage Section */}
+        <TokenUsageCard initialData={dashboardData?.token_usage} />
       </div>
     </DashboardLayout>
   );

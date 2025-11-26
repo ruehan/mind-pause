@@ -95,7 +95,8 @@ async def detect_emotion(message: str) -> Dict[str, Any]:
 - intensity는 메시지에서 드러나는 감정의 강도 (0.0=없음, 1.0=매우 강함)"""
 
     try:
-        response = model.generate_content(prompt)
+        # 비동기 호출로 변경
+        response = await model.generate_content_async(prompt)
         response_text = response.text.strip()
 
         # JSON 추출 (```json``` 마크다운 제거)

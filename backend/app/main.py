@@ -73,6 +73,10 @@ app = FastAPI(
     ]
 )
 
+# Gzip middleware
+from fastapi.middleware.gzip import GZipMiddleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,

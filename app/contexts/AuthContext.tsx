@@ -79,20 +79,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     api.saveToken(response.access_token);
     console.log("AuthContext: Token saved to localStorage", localStorage.getItem("access_token")?.substring(0, 20) + "...");
 
-    // 로그인 후 사용자 정보 가져오기 (토큰 명시적 전달)
-    const userData = await api.getCurrentUser(response.access_token);
-    console.log("AuthContext: User loaded after login", userData);
-    console.log("AuthContext: is_anonymous status:", userData.is_anonymous);
-    setUser(userData);
+    // 로그인 응답에 사용자 정보가 있으면 바로 사용 (API 호출 절약)
+    if (response.user) {
+      console.log("AuthContext: User loaded from login response", response.user);
+      setUser(response.user);
+    } else {
+      // 없으면 기존 방식대로 호출 (하위 호환성)
+      const userData = await api.getCurrentUser(response.access_token);
+      console.log("AuthContext: User loaded after login (fallback)", userData);
+      setUser(userData);
+    }
   };
 
   const guestLogin = async () => {
     const response = await api.guestLogin();
     api.saveToken(response.access_token);
 
-    // 게스트 로그인 후 사용자 정보 가져오기
-    const userData = await api.getCurrentUser();
-    setUser(userData);
+    // 로그인 응답에 사용자 정보가 있으면 바로 사용 (API 호출 절약)
+    if (response.user) {
+      setUser(response.user);
+    } else {
+      // 게스트 로그인 후 사용자 정보 가져오기
+      const userData = await api.getCurrentUser();
+      setUser(userData);
+    }
   };
 
   const signup = async (email: string, nickname: string, password: string) => {

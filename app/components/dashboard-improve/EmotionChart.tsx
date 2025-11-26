@@ -15,12 +15,24 @@ const EMOTION_COLORS: Record<string, string> = {
   "피곤": "#EC4899",     // pink
 };
 
-export function EmotionChart() {
-  const [data, setData] = useState<WeeklyEmotionTrend | null>(null);
-  const [loading, setLoading] = useState(true);
+export function EmotionChart({ initialData }: { initialData?: WeeklyEmotionTrend }) {
+  const [data, setData] = useState<WeeklyEmotionTrend | null>(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
   const [days, setDays] = useState(7);
 
   useEffect(() => {
+    // 초기 데이터가 있고, 날짜 변경이 없는 경우 (기본값 7일) 패치 스킵
+    if (initialData && days === 7 && !data) {
+        setData(initialData);
+        setLoading(false);
+        return;
+    }
+
+    // 이미 데이터가 있고 날짜가 7일이면 스킵 (초기 로딩)
+    if (initialData && days === 7 && data === initialData) {
+        return;
+    }
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -34,7 +46,7 @@ export function EmotionChart() {
     };
 
     fetchData();
-  }, [days]);
+  }, [days, initialData]);
 
   // 차트용 데이터 변환 (날짜별로 그룹화)
   const chartData = data ? transformDataForChart(data) : [];

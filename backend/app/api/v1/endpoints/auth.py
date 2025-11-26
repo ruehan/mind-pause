@@ -224,7 +224,11 @@ async def login(login_data: UserLogin, db: Session = Depends(get_db)):
         data={"sub": str(user.id), "email": user.email}
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "user": user
+    }
 
 
 @router.get(
@@ -359,7 +363,11 @@ async def guest_login(db: Session = Depends(get_db)):
         data={"sub": str(guest_user.id), "is_guest": True}
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "user": guest_user
+    }
 
 
 @router.post(
